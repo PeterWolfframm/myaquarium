@@ -2,6 +2,7 @@ import { useState, useEffect } from 'preact/hooks';
 import AquariumContainer from './components/AquariumContainer';
 import TimerOverlay from './components/TimerOverlay';
 import AquariumSettings from './components/AquariumSettings';
+import DataPanel from './components/DataPanel';
 
 function App() {
   const [mood, setMood] = useState('work');
@@ -79,10 +80,6 @@ function App() {
         time={time} 
         mood={mood} 
         onMoodChange={handleMoodChange}
-        visibleCubes={visibleCubes}
-        fishInfo={fishInfo}
-        viewportPosition={viewportPosition}
-        tileDimensions={tileDimensions}
       />
       <button className="settings-button" onClick={toggleSettings}>
         ⚙️ Settings
@@ -94,6 +91,12 @@ function App() {
       <AquariumSettings 
         isVisible={showSettings}
         onClose={closeSettings}
+      />
+      <DataPanel 
+        visibleCubes={visibleCubes}
+        fishInfo={fishInfo}
+        viewportPosition={viewportPosition}
+        tileDimensions={tileDimensions}
       />
     </div>
   );

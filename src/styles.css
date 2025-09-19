@@ -159,6 +159,17 @@ body {
         padding: 6px 10px;
         font-size: 0.8em;
     }
+    
+    .data-panel {
+        padding: 10px 15px;
+        min-width: 200px;
+        top: 60px;
+        right: 15px;
+    }
+    
+    .data-section {
+        gap: 6px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -178,6 +189,13 @@ body {
     .viewport-info {
         padding: 5px 8px;
         font-size: 0.75em;
+    }
+    
+    .data-panel {
+        padding: 8px 12px;
+        min-width: 180px;
+        top: 50px;
+        right: 10px;
     }
 }
 
@@ -393,4 +411,24 @@ body {
 .settings-button:hover {
     background: rgba(0, 204, 255, 0.2);
     border-color: #00ccff;
+}
+
+/* Data Panel Styles */
+.data-panel {
+    position: absolute;
+    top: 70px;
+    right: 20px;
+    z-index: 10;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 15px 20px;
+    border-radius: 10px;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    min-width: 250px;
+}
+
+.data-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
