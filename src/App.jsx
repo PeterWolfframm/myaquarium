@@ -6,6 +6,11 @@ function App() {
   const [mood, setMood] = useState('work');
   const [time, setTime] = useState('25:00');
   const [visibleCubes, setVisibleCubes] = useState(0);
+  const [fishInfo, setFishInfo] = useState({ horizontalCount: 0, verticalCount: 0, total: 0 });
+  const [viewportPosition, setViewportPosition] = useState({ 
+    currentX: 0, currentY: 0, maxX: 0, maxY: 0, 
+    percentageX: 0, percentageY: 0, tileX: 0, tileY: 0 
+  });
   const [aquariumRef, setAquariumRef] = useState(null);
 
   // Timer logic (optional - could be enhanced later)
@@ -20,18 +25,26 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
-  // Update visible cubes count periodically
+  // Update visible cubes count, fish info, and viewport position periodically
   useEffect(() => {
     if (!aquariumRef) return;
     
-    const updateVisibleCubes = () => {
-      if (aquariumRef && aquariumRef.getVisibleCubesCount) {
-        setVisibleCubes(aquariumRef.getVisibleCubesCount());
+    const updateAquariumInfo = () => {
+      if (aquariumRef) {
+        if (aquariumRef.getVisibleCubesCount) {
+          setVisibleCubes(aquariumRef.getVisibleCubesCount());
+        }
+        if (aquariumRef.getVisibleFishInfo) {
+          setFishInfo(aquariumRef.getVisibleFishInfo());
+        }
+        if (aquariumRef.getViewportPosition) {
+          setViewportPosition(aquariumRef.getViewportPosition());
+        }
       }
     };
     
     // Update every 100ms for smooth updates during navigation
-    const interval = setInterval(updateVisibleCubes, 100);
+    const interval = setInterval(updateAquariumInfo, 100);
     
     return () => clearInterval(interval);
   }, [aquariumRef]);
@@ -51,6 +64,8 @@ function App() {
         mood={mood} 
         onMoodChange={handleMoodChange}
         visibleCubes={visibleCubes}
+        fishInfo={fishInfo}
+        viewportPosition={viewportPosition}
       />
       <AquariumContainer 
         mood={mood} 

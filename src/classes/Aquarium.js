@@ -515,6 +515,112 @@ export class Aquarium {
         }
     }
     
+    getVisibleFishInfo() {
+        if (!this.viewport || !this.app || !this.fishManager) {
+            return {
+                horizontalCount: 0,
+                verticalCount: 0,
+                total: 0
+            };
+        }
+        
+        try {
+            // Get viewport bounds in world coordinates
+            const viewportBounds = this.viewport.getVisibleBounds();
+            const visibleFish = [];
+            
+            // Check each fish to see if it's visible
+            this.fishManager.fish.forEach(fish => {
+                const fishX = fish.sprite.x;
+                const fishY = fish.sprite.y;
+                
+                if (fishX >= viewportBounds.x && 
+                    fishX <= viewportBounds.x + viewportBounds.width &&
+                    fishY >= viewportBounds.y && 
+                    fishY <= viewportBounds.y + viewportBounds.height) {
+                    visibleFish.push({ x: fishX, y: fishY });
+                }
+            });
+            
+            // Count unique horizontal and vertical positions
+            const horizontalPositions = new Set();
+            const verticalPositions = new Set();
+            
+            visibleFish.forEach(fish => {
+                // Group by tile-sized regions for counting
+                const horizontalTile = Math.floor(fish.x / this.tileSize);
+                const verticalTile = Math.floor(fish.y / this.tileSize);
+                
+                horizontalPositions.add(horizontalTile);
+                verticalPositions.add(verticalTile);
+            });
+            
+            return {
+                horizontalCount: horizontalPositions.size,
+                verticalCount: verticalPositions.size,
+                total: visibleFish.length
+            };
+        } catch (error) {
+            console.warn('Error calculating visible fish info:', error);
+            return {
+                horizontalCount: 0,
+                verticalCount: 0,
+                total: 0
+            };
+        }
+    }
+    
+    getViewportPosition() {
+        if (!this.viewport || !this.app) {
+            return {
+                currentX: 0,
+                currentY: 0,
+                maxX: 0,
+                maxY: 0,
+                percentageX: 0,
+                percentageY: 0,
+                tileX: 0,
+                tileY: 0
+            };
+        }
+        
+        try {
+            // Get current viewport center position
+            const center = this.viewport.center;
+            
+            // Calculate position as percentage of total world
+            const percentageX = Math.max(0, Math.min(100, (center.x / this.worldWidth) * 100));
+            const percentageY = Math.max(0, Math.min(100, (center.y / this.worldHeight) * 100));
+            
+            // Calculate current tile position
+            const tileX = Math.floor(center.x / this.tileSize);
+            const tileY = Math.floor(center.y / this.tileSize);
+            
+            return {
+                currentX: Math.round(center.x),
+                currentY: Math.round(center.y),
+                maxX: this.worldWidth,
+                maxY: this.worldHeight,
+                percentageX: Math.round(percentageX * 10) / 10, // Round to 1 decimal
+                percentageY: Math.round(percentageY * 10) / 10,
+                tileX: Math.max(0, Math.min(this.tilesHorizontal - 1, tileX)),
+                tileY: Math.max(0, Math.min(this.tilesVertical - 1, tileY))
+            };
+        } catch (error) {
+            console.warn('Error calculating viewport position:', error);
+            return {
+                currentX: 0,
+                currentY: 0,
+                maxX: 0,
+                maxY: 0,
+                percentageX: 0,
+                percentageY: 0,
+                tileX: 0,
+                tileY: 0
+            };
+        }
+    }
+    
     destroy() {
         if (this.app) {
             this.app.destroy(true, true);

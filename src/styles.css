@@ -16,7 +16,6 @@ body {
     width: 100vw;
     height: 100vh;
     background: linear-gradient(180deg, #004466 0%, #001133 100%);
-    border: 2px solid #006699;
     border-radius: 8px;
     overflow: hidden;
 }
@@ -83,16 +82,40 @@ body {
     box-shadow: 0 0 15px rgba(0, 204, 255, 0.6);
 }
 
-.cube-counter {
+.info-panel {
     margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.cube-counter,
+.fish-info,
+.viewport-info {
     padding: 8px 12px;
     background: rgba(0, 51, 102, 0.8);
     border-radius: 6px;
     border: 1px solid rgba(255, 255, 255, 0.2);
     color: #00ccff;
-    font-size: 0.9em;
+    font-size: 0.85em;
     font-weight: bold;
     text-align: center;
+}
+
+.fish-counts,
+.viewport-position {
+    color: #00ccff;
+}
+
+.viewport-info {
+    background: rgba(0, 68, 102, 0.8);
+    border: 1px solid rgba(0, 204, 255, 0.3);
+}
+
+.fish-info {
+    background: rgba(102, 51, 0, 0.8);
+    border: 1px solid rgba(255, 153, 0, 0.3);
+    color: #ffaa00;
 }
 
 /* Responsive design */
@@ -113,6 +136,17 @@ body {
     .timer-overlay {
         padding: 10px 15px;
     }
+    
+    .info-panel {
+        gap: 6px;
+    }
+    
+    .cube-counter,
+    .fish-info,
+    .viewport-info {
+        padding: 6px 10px;
+        font-size: 0.8em;
+    }
 }
 
 @media (max-width: 480px) {
@@ -124,5 +158,12 @@ body {
     .mood-controls button {
         padding: 8px 12px;
         width: 100%;
+    }
+    
+    .cube-counter,
+    .fish-info,
+    .viewport-info {
+        padding: 5px 8px;
+        font-size: 0.75em;
     }
 }
