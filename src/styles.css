@@ -1,0 +1,116 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background: #001122;
+    color: white;
+    overflow: hidden;
+}
+
+.aquarium-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(180deg, #004466 0%, #001133 100%);
+    border: 2px solid #006699;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+#aquarium-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+}
+
+.timer-overlay {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    text-align: center;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 15px 25px;
+    border-radius: 10px;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.timer {
+    font-size: 2em;
+    font-weight: bold;
+    color: #00ccff;
+    margin-bottom: 10px;
+    text-shadow: 0 0 10px rgba(0, 204, 255, 0.5);
+}
+
+.mood-controls {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.mood-controls button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    background: rgba(0, 102, 153, 0.8);
+    color: white;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.mood-controls button:hover {
+    background: rgba(0, 153, 204, 1);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 153, 204, 0.4);
+}
+
+.mood-controls button.active {
+    background: #00ccff;
+    color: #001122;
+    font-weight: bold;
+    box-shadow: 0 0 15px rgba(0, 204, 255, 0.6);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .aquarium-container {
+        height: 100vh;
+    }
+    
+    .timer {
+        font-size: 1.5em;
+    }
+    
+    .mood-controls button {
+        padding: 6px 12px;
+        font-size: 0.8em;
+    }
+    
+    .timer-overlay {
+        padding: 10px 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .mood-controls {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .mood-controls button {
+        padding: 8px 12px;
+        width: 100%;
+    }
+}
