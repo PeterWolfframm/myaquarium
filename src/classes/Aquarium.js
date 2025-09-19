@@ -36,6 +36,7 @@ export class Aquarium {
         this.fishContainer = null;
         this.bubbleContainer = null;
         this.gridContainer = null;
+        this.grid = null;
         
         // Orange cube properties
         this.orangeCube = null;
@@ -122,6 +123,20 @@ export class Aquarium {
         this.app.view.addEventListener('contextmenu', e => e.preventDefault());
     }
     
+    calculateMinZoomScale() {
+        // Calculate minimum scale needed to show all vertical tiles
+        // This ensures we can't zoom out further than showing the entire world height
+        if (!this.app || this.worldHeight <= 0) {
+            return 0.1; // Fallback to original minimum
+        }
+        
+        const viewportHeight = this.app.screen.height;
+        const minScale = viewportHeight / this.worldHeight;
+        
+        // Ensure we have a reasonable minimum (not too small)
+        return Math.max(0.05, minScale);
+    }
+
     setupViewport() {
         // Create viewport with pixi-viewport
         this.viewport = new Viewport({
@@ -135,10 +150,13 @@ export class Aquarium {
         // Add viewport to stage
         this.app.stage.addChild(this.viewport);
         
+        // Calculate minimum scale to show all vertical tiles
+        const minScale = this.calculateMinZoomScale();
+        
         // Configure viewport plugins - only clamping, no mouse interactions
         this.viewport
             .clampZoom({
-                minScale: 0.1,
+                minScale: minScale,
                 maxScale: 3.0
             })
             .clamp({
@@ -180,7 +198,11 @@ export class Aquarium {
         grid.eventMode = 'none';
         grid.cursor = 'default';
         
-        grid.lineStyle(1, 0xFFFFFF, 0.3); // White lines with low opacity
+        // Calculate line width based on current viewport scale for consistent appearance
+        const currentScale = this.viewport ? this.viewport.scale.x : 1;
+        const lineWidth = Math.max(0.5, 1 / currentScale); // Inverse scale to maintain consistent visual width
+        
+        grid.lineStyle(lineWidth, 0xFFFFFF, 0.3); // White lines with low opacity
         
         // Vertical lines
         for (let x = 0; x <= this.tilesHorizontal; x++) {
@@ -197,6 +219,35 @@ export class Aquarium {
         }
         
         this.gridContainer.addChild(grid);
+        
+        // Store the grid reference for updates
+        this.grid = grid;
+    }
+    
+    updateGridForScale() {
+        // Update grid line width based on current scale to maintain consistent appearance
+        if (!this.grid || !this.viewport) return;
+        
+        const currentScale = this.viewport.scale.x;
+        const lineWidth = Math.max(0.5, 1 / currentScale); // Inverse scale to maintain consistent visual width
+        
+        // Clear and redraw the grid with new line width
+        this.grid.clear();
+        this.grid.lineStyle(lineWidth, 0xFFFFFF, 0.3);
+        
+        // Vertical lines
+        for (let x = 0; x <= this.tilesHorizontal; x++) {
+            const xPos = x * this.tileSize;
+            this.grid.moveTo(xPos, 0);
+            this.grid.lineTo(xPos, this.worldHeight);
+        }
+        
+        // Horizontal lines
+        for (let y = 0; y <= this.tilesVertical; y++) {
+            const yPos = y * this.tileSize;
+            this.grid.moveTo(0, yPos);
+            this.grid.lineTo(this.worldWidth, yPos);
+        }
     }
     
     createOrangeCube() {
@@ -419,15 +470,20 @@ export class Aquarium {
                 
                 const currentScale = this.viewport.scale.x;
                 const zoomFactor = 1.2; // 20% zoom change
+                const minScale = this.calculateMinZoomScale();
                 
                 if (e.key === '+' || e.key === '=') {
                     // Zoom in
                     const newScale = Math.min(3.0, currentScale * zoomFactor);
                     this.viewport.setZoom(newScale, true);
+                    // Update grid to maintain consistent line width
+                    this.updateGridForScale();
                 } else if (e.key === '-') {
-                    // Zoom out
-                    const newScale = Math.max(0.1, currentScale / zoomFactor);
+                    // Zoom out - respect minimum scale to show all vertical tiles
+                    const newScale = Math.max(minScale, currentScale / zoomFactor);
                     this.viewport.setZoom(newScale, true);
+                    // Update grid to maintain consistent line width
+                    this.updateGridForScale();
                 }
             }
         });
@@ -478,6 +534,10 @@ export class Aquarium {
         // Update viewport screen size and world size
         this.viewport.resize(this.app.screen.width, this.app.screen.height, this.worldWidth, this.worldHeight);
         
+        // Recalculate and update minimum zoom scale after resize
+        const minScale = this.calculateMinZoomScale();
+        this.viewport.plugins.get('clamp-zoom').options.minScale = minScale;
+        
         // Recalculate safe zone based on screen size
         const screenCenterX = this.app.screen.width / 2;
         const screenCenterY = this.app.screen.height / 2;
@@ -495,6 +555,7 @@ export class Aquarium {
         // Recreate grid with new dimensions
         if (this.gridContainer) {
             this.gridContainer.removeChildren();
+            this.grid = null; // Clear the reference before recreating
             this.createGrid();
             
             // Update orange cube size and position
