@@ -13,11 +13,12 @@ export class Aquarium {
         
         // Tile grid properties
         this.tileSize = 64; // 64 pixels per tile
-        this.tilesVertical = 1; // Will be calculated based on screen height
+        this.tilesVertical = 64; // Fixed to 64 tiles vertically
+        this.tilesHorizontal = 300; // Fixed to 300 tiles horizontally
         
-        // World dimensions (will be calculated based on screen and tile size)
-        this.worldWidth = 6000;
-        this.worldHeight = window.innerHeight;
+        // World dimensions (calculated from fixed tile counts)
+        this.worldWidth = this.tilesHorizontal * this.tileSize; // 300 * 64 = 19200px
+        this.worldHeight = this.tilesVertical * this.tileSize; // 64 * 64 = 4096px
         
         // Safe zone for UI overlay (center area)
         this.safeZone = {
@@ -62,29 +63,30 @@ export class Aquarium {
     }
     
     calculateDimensions() {
-        // Calculate number of tiles based on fixed 64-pixel tile size
-        this.worldHeight = window.innerHeight;
-        this.tilesVertical = Math.ceil(this.worldHeight / this.tileSize);
+        // Dimensions are now fixed: 64 tiles vertically, 300 tiles horizontally
+        // World dimensions remain constant regardless of screen size
+        this.worldWidth = this.tilesHorizontal * this.tileSize; // 300 * 64 = 19200px
+        this.worldHeight = this.tilesVertical * this.tileSize; // 64 * 64 = 4096px
         
-        // Calculate horizontal tiles to maintain aspect ratio or extend as needed
-        this.tilesHorizontal = Math.ceil(this.worldWidth / this.tileSize);
-        
-        // Adjust world dimensions to fit exact number of tiles
-        this.worldHeight = this.tilesVertical * this.tileSize;
-        this.worldWidth = this.tilesHorizontal * this.tileSize;
+        console.log(`Aquarium dimensions: ${this.worldWidth}x${this.worldHeight} (${this.tilesHorizontal}x${this.tilesVertical} tiles)`);
+        console.log(`Screen dimensions: ${window.innerWidth}x${window.innerHeight}`);
     }
     
     createPixiApp() {
-        // Create Pixi application
+        // Set global PIXI settings before creating application
+        PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
+        PIXI.settings.ROUND_PIXELS = true;
+        
+        // Create Pixi application with safer settings
         this.app = new PIXI.Application({
             view: this.canvasElement,
             resizeTo: this.canvasElement.parentElement,
             backgroundColor: 0x001133,
-            antialias: false // Keep pixel art sharp
+            antialias: false, // Keep pixel art sharp
+            powerPreference: 'default', // Use safer power preference
+            resolution: 1, // Fixed resolution to avoid scaling issues
+            eventMode: 'static' // Ensure proper event handling in PIXI v7+
         });
-        
-        // Set scale mode to NEAREST for sharp pixel art
-        PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
         
         // Disable context menu on right click
         this.app.view.addEventListener('contextmenu', e => e.preventDefault());
@@ -97,7 +99,7 @@ export class Aquarium {
             screenHeight: this.app.screen.height,
             worldWidth: this.worldWidth,
             worldHeight: this.worldHeight,
-            interaction: this.app.renderer.plugins.interaction
+            events: this.app.renderer.events
         });
         
         // Add viewport to stage
@@ -122,8 +124,11 @@ export class Aquarium {
                 underflow: 'center'
             });
         
-        // Start centered but ensure cube is visible
-        this.viewport.moveCenter(this.worldWidth / 2, this.worldHeight / 2);
+        // Start centered horizontally but show ground at bottom
+        // Position viewport to show the ground (bottom of world) and center horizontally
+        const viewportCenterX = this.worldWidth / 2;
+        const viewportCenterY = this.worldHeight - (this.app.screen.height / 2);
+        this.viewport.moveCenter(viewportCenterX, Math.max(this.app.screen.height / 2, viewportCenterY));
     }
     
     createLayers() {
@@ -144,10 +149,11 @@ export class Aquarium {
         // Create visible tile grid
         const grid = new PIXI.Graphics();
         
-        // Disable interactivity to prevent PIXI event errors
+        // Properly disable interactivity to prevent PIXI event errors
         grid.interactive = false;
         grid.interactiveChildren = false;
         grid.eventMode = 'none';
+        grid.cursor = 'default';
         
         grid.lineStyle(1, 0xFFFFFF, 0.3); // White lines with low opacity
         
@@ -172,10 +178,11 @@ export class Aquarium {
         // Create orange cube sprite
         this.orangeCube = new PIXI.Graphics();
         
-        // Disable interactivity to prevent PIXI event errors
+        // Properly disable interactivity to prevent PIXI event errors
         this.orangeCube.interactive = false;
         this.orangeCube.interactiveChildren = false;
         this.orangeCube.eventMode = 'none';
+        this.orangeCube.cursor = 'default';
         
         this.orangeCube.clear();
         this.orangeCube.beginFill(0xFF6600); // Orange color
@@ -348,10 +355,29 @@ export class Aquarium {
     }
     
     setupEventListeners() {
-        // Optional: Toggle bubbles with 'B' key
+        // Horizontal navigation with arrow keys
         window.addEventListener('keydown', (e) => {
             if (e.key.toLowerCase() === 'b') {
                 this.bubbleContainer.visible = !this.bubbleContainer.visible;
+            }
+            
+            // Horizontal navigation
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                e.preventDefault();
+                
+                if (!this.viewport) return;
+                
+                const moveDistance = this.tileSize * 5; // Move 5 tiles at a time
+                const currentX = this.viewport.center.x;
+                const currentY = this.viewport.center.y;
+                
+                if (e.key === 'ArrowLeft') {
+                    const newX = Math.max(this.app.screen.width / 2, currentX - moveDistance);
+                    this.viewport.moveCenter(newX, currentY);
+                } else if (e.key === 'ArrowRight') {
+                    const newX = Math.min(this.worldWidth - this.app.screen.width / 2, currentX + moveDistance);
+                    this.viewport.moveCenter(newX, currentY);
+                }
             }
         });
     }
@@ -458,6 +484,35 @@ export class Aquarium {
             fish: this.fishManager ? this.fishManager.fish.length : 0,
             bubbles: this.bubbleManager ? this.bubbleManager.bubbles.length : 0
         };
+    }
+    
+    getVisibleCubesCount() {
+        if (!this.viewport || !this.app) return 0;
+        
+        try {
+            // Get viewport bounds in world coordinates
+            const viewportBounds = this.viewport.getVisibleBounds();
+            
+            // Calculate which tiles are visible
+            const leftTile = Math.floor(viewportBounds.x / this.tileSize);
+            const rightTile = Math.ceil((viewportBounds.x + viewportBounds.width) / this.tileSize);
+            const topTile = Math.floor(viewportBounds.y / this.tileSize);
+            const bottomTile = Math.ceil((viewportBounds.y + viewportBounds.height) / this.tileSize);
+            
+            // Clamp to grid bounds
+            const startX = Math.max(0, leftTile);
+            const endX = Math.min(this.tilesHorizontal, rightTile);
+            const startY = Math.max(0, topTile);
+            const endY = Math.min(this.tilesVertical, bottomTile);
+            
+            // Count visible grid tiles (our "self made cubes")
+            const visibleTiles = (endX - startX) * (endY - startY);
+            
+            return Math.max(0, visibleTiles);
+        } catch (error) {
+            console.warn('Error calculating visible cubes:', error);
+            return 0;
+        }
     }
     
     destroy() {

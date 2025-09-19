@@ -1,4 +1,4 @@
-function TimerOverlay({ time, mood, onMoodChange }) {
+function TimerOverlay({ time, mood, onMoodChange, visibleCubes }) {
   const moods = [
     { id: 'work', label: 'Work' },
     { id: 'pause', label: 'Pause' },
@@ -18,6 +18,9 @@ function TimerOverlay({ time, mood, onMoodChange }) {
             {label}
           </button>
         ))}
+      </div>
+      <div className="cube-counter">
+        Visible Cubes: {visibleCubes || 0}
       </div>
     </div>
   );

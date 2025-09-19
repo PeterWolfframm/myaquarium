@@ -127,7 +127,7 @@ export class BubbleManager {
             for (let i = 0; i < bubblesToAdd; i++) {
                 const bubble = new Bubble(this.worldWidth, this.worldHeight);
                 this.bubbles.push(bubble);
-                this.particleContainer.addChild(bubble.sprite);
+                this.bubbleContainer.addChild(bubble.sprite);
             }
         } else if (clampedCount < this.bubbles.length) {
             // Remove excess bubbles

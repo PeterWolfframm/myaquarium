@@ -5,6 +5,8 @@ import TimerOverlay from './components/TimerOverlay';
 function App() {
   const [mood, setMood] = useState('work');
   const [time, setTime] = useState('25:00');
+  const [visibleCubes, setVisibleCubes] = useState(0);
+  const [aquariumRef, setAquariumRef] = useState(null);
 
   // Timer logic (optional - could be enhanced later)
   useEffect(() => {
@@ -18,8 +20,28 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
+  // Update visible cubes count periodically
+  useEffect(() => {
+    if (!aquariumRef) return;
+    
+    const updateVisibleCubes = () => {
+      if (aquariumRef && aquariumRef.getVisibleCubesCount) {
+        setVisibleCubes(aquariumRef.getVisibleCubesCount());
+      }
+    };
+    
+    // Update every 100ms for smooth updates during navigation
+    const interval = setInterval(updateVisibleCubes, 100);
+    
+    return () => clearInterval(interval);
+  }, [aquariumRef]);
+
   const handleMoodChange = (newMood) => {
     setMood(newMood);
+  };
+
+  const handleAquariumReady = (aquarium) => {
+    setAquariumRef(aquarium);
   };
 
   return (
@@ -27,9 +49,13 @@ function App() {
       <TimerOverlay 
         time={time} 
         mood={mood} 
-        onMoodChange={handleMoodChange} 
+        onMoodChange={handleMoodChange}
+        visibleCubes={visibleCubes}
       />
-      <AquariumContainer mood={mood} />
+      <AquariumContainer 
+        mood={mood} 
+        onAquariumReady={handleAquariumReady}
+      />
     </div>
   );
 }

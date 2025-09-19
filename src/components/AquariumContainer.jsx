@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'preact/hooks';
 import { Aquarium } from '../classes/Aquarium.js';
 
-function AquariumContainer({ mood }) {
+function AquariumContainer({ mood, onAquariumReady }) {
   const canvasRef = useRef(null);
   const aquariumRef = useRef(null);
 
@@ -9,6 +9,11 @@ function AquariumContainer({ mood }) {
     // Initialize aquarium when component mounts
     if (canvasRef.current && !aquariumRef.current) {
       aquariumRef.current = new Aquarium(canvasRef.current);
+      
+      // Notify parent component that aquarium is ready
+      if (onAquariumReady) {
+        onAquariumReady(aquariumRef.current);
+      }
     }
 
     // Cleanup when component unmounts
