@@ -432,3 +432,39 @@ body {
     flex-direction: column;
     gap: 8px;
 }
+
+/* Grid Toggle Styles */
+.grid-toggle {
+    padding: 8px 12px;
+    background: rgba(51, 51, 153, 0.8);
+    border-radius: 6px;
+    border: 1px solid rgba(153, 153, 255, 0.3);
+    color: #9999ff;
+    font-size: 0.85em;
+    font-weight: bold;
+    text-align: center;
+}
+
+.grid-toggle-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.grid-toggle-label:hover {
+    color: #bbbbff;
+}
+
+.grid-toggle-checkbox {
+    width: 16px;
+    height: 16px;
+    accent-color: #9999ff;
+    cursor: pointer;
+}
+
+.grid-toggle-text {
+    user-select: none;
+}

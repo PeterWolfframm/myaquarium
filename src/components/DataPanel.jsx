@@ -1,4 +1,8 @@
+import { useAquariumStore } from '../stores/aquariumStore.js';
+
 function DataPanel({ visibleCubes, fishInfo, viewportPosition, tileDimensions }) {
+  const { showGrid, toggleGrid } = useAquariumStore();
+
   return (
     <div className="data-panel">
       <div className="data-section">
@@ -20,6 +24,17 @@ function DataPanel({ visibleCubes, fishInfo, viewportPosition, tileDimensions })
             Position: Tile ({viewportPosition?.tileX || 0}, {viewportPosition?.tileY || 0}) | 
             {viewportPosition?.percentageX || 0}% H, {viewportPosition?.percentageY || 0}% V
           </div>
+        </div>
+        <div className="grid-toggle">
+          <label className="grid-toggle-label">
+            <input 
+              type="checkbox" 
+              checked={showGrid} 
+              onChange={toggleGrid}
+              className="grid-toggle-checkbox"
+            />
+            <span className="grid-toggle-text">Show Grid</span>
+          </label>
         </div>
       </div>
     </div>

@@ -47,6 +47,9 @@ export class Aquarium {
         // Current mood
         this.currentMood = 'work';
         
+        // Grid visibility state
+        this.showGrid = this.store.showGrid;
+        
         this.init();
     }
     
@@ -91,10 +94,19 @@ export class Aquarium {
     }
     
     updateFromStore(newState) {
+        // Check if grid visibility has changed
+        const gridVisibilityChanged = newState.showGrid !== this.showGrid;
+        
         this.store = newState;
         if (this.app && this.viewport) {
             this.updateDimensionsFromStore(false);
             this.resize();
+        }
+        
+        // Update grid visibility if changed
+        if (gridVisibilityChanged) {
+            this.showGrid = newState.showGrid;
+            this.updateGridVisibility();
         }
     }
     
@@ -222,6 +234,9 @@ export class Aquarium {
         
         // Store the grid reference for updates
         this.grid = grid;
+        
+        // Set initial visibility based on store state
+        this.updateGridVisibility();
     }
     
     updateGridForScale() {
@@ -247,6 +262,13 @@ export class Aquarium {
             const yPos = y * this.tileSize;
             this.grid.moveTo(0, yPos);
             this.grid.lineTo(this.worldWidth, yPos);
+        }
+    }
+    
+    updateGridVisibility() {
+        // Toggle grid container visibility
+        if (this.gridContainer) {
+            this.gridContainer.visible = this.showGrid;
         }
     }
     

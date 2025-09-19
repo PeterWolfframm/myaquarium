@@ -1,24 +1,37 @@
 import * as PIXI from 'pixi.js';
+import { BUBBLE_CONFIG, COLORS, PERFORMANCE } from '../constants/index.js';
+import { randomRange } from '../utils/performance.js';
 
+/**
+ * Individual bubble entity with floating animation
+ */
 export class Bubble {
+    /**
+     * Create a new bubble instance
+     * @param {number} worldWidth - World width in pixels
+     * @param {number} worldHeight - World height in pixels
+     */
     constructor(worldWidth, worldHeight) {
         this.worldWidth = worldWidth;
         this.worldHeight = worldHeight;
         
         // Movement properties
-        this.speed = 0.2 + Math.random() * 0.3; // 0.2-0.5
-        this.wobble = Math.random() * 0.5; // Horizontal wobble
-        this.wobbleSpeed = 0.02 + Math.random() * 0.02; // 0.02-0.04
+        this.speed = randomRange(BUBBLE_CONFIG.SPEED_MIN, BUBBLE_CONFIG.SPEED_MAX);
+        this.wobble = Math.random() * BUBBLE_CONFIG.WOBBLE_MAX;
+        this.wobbleSpeed = randomRange(BUBBLE_CONFIG.WOBBLE_SPEED_MIN, BUBBLE_CONFIG.WOBBLE_SPEED_MAX);
         this.wobbleOffset = Math.random() * Math.PI * 2;
         
-        // Sprite properties
-        this.size = 3 + Math.random() * 4; // 3-7 pixels
-        this.opacity = 0.3 + Math.random() * 0.4; // 0.3-0.7
+        // Visual properties
+        this.size = randomRange(BUBBLE_CONFIG.SIZE_MIN, BUBBLE_CONFIG.SIZE_MAX);
+        this.opacity = randomRange(BUBBLE_CONFIG.OPACITY_MIN, BUBBLE_CONFIG.OPACITY_MAX);
         
         this.createSprite();
         this.respawn();
     }
     
+    /**
+     * Create the bubble sprite with graphics
+     */
     createSprite() {
         this.sprite = new PIXI.Graphics();
         
@@ -30,33 +43,43 @@ export class Bubble {
         this.updateGraphics();
     }
     
+    /**
+     * Update bubble graphics with current properties
+     */
     updateGraphics() {
         this.sprite.clear();
         
         // Draw bubble with gradient effect
-        this.sprite.beginFill(0x87CEEB, this.opacity);
+        this.sprite.beginFill(COLORS.BUBBLE_BASE, this.opacity);
         this.sprite.drawCircle(0, 0, this.size);
         
-        // Add highlight
-        this.sprite.beginFill(0xFFFFFF, this.opacity * 0.6);
+        // Add highlight for 3D effect
+        this.sprite.beginFill(COLORS.BUBBLE_HIGHLIGHT, this.opacity * 0.6);
         this.sprite.drawCircle(-this.size * 0.3, -this.size * 0.3, this.size * 0.3);
         
         this.sprite.endFill();
     }
     
+    /**
+     * Respawn the bubble at the bottom of the screen
+     */
     respawn() {
         this.sprite.x = Math.random() * this.worldWidth;
         this.sprite.y = this.worldHeight + this.size;
         this.initialX = this.sprite.x;
     }
     
+    /**
+     * Update bubble position and animation
+     * @param {number} deltaTime - Time since last update in milliseconds
+     */
     update(deltaTime) {
         // Move upward
         this.sprite.y -= this.speed * deltaTime * 0.1;
         
         // Add horizontal wobble
         this.wobbleOffset += this.wobbleSpeed * deltaTime * 0.01;
-        this.sprite.x = this.initialX + Math.sin(this.wobbleOffset) * this.wobble * 20;
+        this.sprite.x = this.initialX + Math.sin(this.wobbleOffset) * this.wobble * BUBBLE_CONFIG.WOBBLE_AMPLITUDE;
         
         // Respawn when reaching top
         if (this.sprite.y < -this.size) {
@@ -65,7 +88,16 @@ export class Bubble {
     }
 }
 
+/**
+ * Manages all bubble entities in the aquarium
+ */
 export class BubbleManager {
+    /**
+     * Create a new bubble manager
+     * @param {PIXI.Container} container - PIXI container for bubble sprites
+     * @param {number} worldWidth - World width in pixels
+     * @param {number} worldHeight - World height in pixels
+     */
     constructor(container, worldWidth, worldHeight) {
         this.container = container;
         this.worldWidth = worldWidth;
@@ -82,13 +114,24 @@ export class BubbleManager {
         
         this.container.addChild(this.bubbleContainer);
         
-        // Determine bubble count based on world size
-        this.maxBubbles = Math.floor((worldWidth * worldHeight) / 50000); // Roughly 1 bubble per 50k pixels
-        this.maxBubbles = Math.max(10, Math.min(this.maxBubbles, 50)); // Clamp between 10-50
+        // Determine bubble count based on world size and performance
+        this.maxBubbles = this.getOptimalBubbleCount();
         
         this.spawnBubbles();
     }
     
+    /**
+     * Calculate optimal bubble count based on world size
+     * @returns {number} Optimal number of bubbles
+     */
+    getOptimalBubbleCount() {
+        const bubbleCount = Math.floor((this.worldWidth * this.worldHeight) / PERFORMANCE.BUBBLE_DENSITY_RATIO);
+        return Math.max(PERFORMANCE.MIN_BUBBLES, Math.min(PERFORMANCE.MAX_BUBBLES, bubbleCount));
+    }
+    
+    /**
+     * Spawn all bubbles in the aquarium
+     */
     spawnBubbles() {
         for (let i = 0; i < this.maxBubbles; i++) {
             const bubble = new Bubble(this.worldWidth, this.worldHeight);
@@ -101,12 +144,21 @@ export class BubbleManager {
         }
     }
     
+    /**
+     * Update all bubble positions and animations
+     * @param {number} deltaTime - Time since last update in milliseconds
+     */
     update(deltaTime) {
         this.bubbles.forEach(bubble => {
             bubble.update(deltaTime);
         });
     }
     
+    /**
+     * Handle aquarium resize by updating bubble boundaries and count
+     * @param {number} newWorldWidth - New world width in pixels
+     * @param {number} newWorldHeight - New world height in pixels
+     */
     resize(newWorldWidth, newWorldHeight) {
         this.worldWidth = newWorldWidth;
         this.worldHeight = newWorldHeight;
@@ -118,30 +170,49 @@ export class BubbleManager {
         });
         
         // Adjust bubble count based on new world size
-        const newOptimalCount = Math.floor((newWorldWidth * newWorldHeight) / 50000);
-        const clampedCount = Math.max(10, Math.min(newOptimalCount, 50));
+        const newOptimalCount = this.getOptimalBubbleCount();
         
-        if (clampedCount > this.bubbles.length) {
+        if (newOptimalCount > this.bubbles.length) {
             // Add more bubbles
-            const bubblesToAdd = clampedCount - this.bubbles.length;
+            const bubblesToAdd = newOptimalCount - this.bubbles.length;
             for (let i = 0; i < bubblesToAdd; i++) {
                 const bubble = new Bubble(this.worldWidth, this.worldHeight);
                 this.bubbles.push(bubble);
                 this.bubbleContainer.addChild(bubble.sprite);
             }
-        } else if (clampedCount < this.bubbles.length) {
+        } else if (newOptimalCount < this.bubbles.length) {
             // Remove excess bubbles
-            const bubblesToRemove = this.bubbles.length - clampedCount;
+            const bubblesToRemove = this.bubbles.length - newOptimalCount;
             for (let i = 0; i < bubblesToRemove; i++) {
                 const bubble = this.bubbles.pop();
                 this.bubbleContainer.removeChild(bubble.sprite);
             }
         }
         
-        this.maxBubbles = clampedCount;
+        this.maxBubbles = newOptimalCount;
     }
     
+    /**
+     * Toggle bubble visibility
+     * @param {boolean} enabled - Whether bubbles should be visible
+     */
     setEnabled(enabled) {
         this.bubbleContainer.visible = enabled;
+    }
+    
+    /**
+     * Clean up bubble manager resources
+     */
+    destroy() {
+        this.bubbles.forEach(bubble => {
+            if (bubble.sprite && bubble.sprite.parent) {
+                bubble.sprite.parent.removeChild(bubble.sprite);
+            }
+        });
+        this.bubbles = [];
+        
+        if (this.bubbleContainer && this.bubbleContainer.parent) {
+            this.bubbleContainer.parent.removeChild(this.bubbleContainer);
+        }
     }
 }

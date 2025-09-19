@@ -1,51 +1,64 @@
 import * as PIXI from 'pixi.js';
+import { FISH_CONFIG, COLORS, MOODS } from '../constants/index.js';
+import { randomRange, randomChoice, clamp, calculateOptimalEntityCounts, isMobileDevice } from '../utils/performance.js';
 
+/**
+ * Individual fish entity with swimming behavior and animation
+ */
 export class Fish {
+    /**
+     * Create a new fish instance
+     * @param {number} worldWidth - World width in pixels
+     * @param {number} worldHeight - World height in pixels
+     * @param {Object} safeZone - Safe zone boundaries {x, y, width, height}
+     */
     constructor(worldWidth, worldHeight, safeZone) {
         this.worldWidth = worldWidth;
         this.worldHeight = worldHeight;
         this.safeZone = safeZone;
         
         // Movement properties
-        this.baseSpeed = 0.5 + Math.random() * 1.5; // 0.5-2.0
+        this.baseSpeed = randomRange(FISH_CONFIG.BASE_SPEED_MIN, FISH_CONFIG.BASE_SPEED_MAX);
         this.currentSpeed = this.baseSpeed;
         this.direction = Math.random() > 0.5 ? 1 : -1;
         
         // Vertical drift properties
         this.targetY = this.getRandomTargetY();
-        this.verticalSpeed = 0.1 + Math.random() * 0.2; // 0.1-0.3
+        this.verticalSpeed = randomRange(FISH_CONFIG.VERTICAL_SPEED_MIN, FISH_CONFIG.VERTICAL_SPEED_MAX);
         this.driftTimer = 0;
-        this.driftInterval = 3000 + Math.random() * 4000; // 3-7 seconds
+        this.driftInterval = randomRange(FISH_CONFIG.DRIFT_INTERVAL_MIN, FISH_CONFIG.DRIFT_INTERVAL_MAX);
         
-        // Sprite properties
-        this.frameCount = 4; // Number of animation frames
+        // Animation properties
+        this.frameCount = FISH_CONFIG.ANIMATION_FRAMES;
         this.currentFrame = 0;
-        this.animationSpeed = 100 + Math.random() * 100; // 100-200ms per frame
+        this.animationSpeed = randomRange(FISH_CONFIG.ANIMATION_SPEED_MIN, FISH_CONFIG.ANIMATION_SPEED_MAX);
         this.lastFrameTime = 0;
+        
+        // Visual properties
+        this.color = randomChoice(COLORS.FISH_COLORS);
         
         // Create sprite
         this.createSprite();
         this.respawn();
     }
     
+    /**
+     * Create the fish sprite with graphics
+     */
     createSprite() {
-        // Create a simple colored rectangle for now (will be replaced with actual fish sprites)
         this.sprite = new PIXI.Graphics();
         this.updateFrame();
-        
-        // Set random color
-        const colors = [0x4CAF50, 0x2196F3, 0xFF9800, 0xE91E63, 0x9C27B0, 0x00BCD4];
-        this.color = colors[Math.floor(Math.random() * colors.length)];
     }
     
+    /**
+     * Update the fish sprite animation frame
+     */
     updateFrame() {
         this.sprite.clear();
         
         // Draw fish body
         this.sprite.beginFill(this.color, 0.8);
-        
-        // Body (ellipse)
-        this.sprite.drawEllipse(0, 0, 20, 8);
+        this.sprite.drawEllipse(0, 0, FISH_CONFIG.SPRITE_SIZE.width, FISH_CONFIG.SPRITE_SIZE.height);
         
         // Tail animation (oscillates based on frame)
         const tailOffset = Math.sin(this.currentFrame / this.frameCount * Math.PI * 2) * 3;
@@ -58,19 +71,26 @@ export class Fish {
         ]);
         
         // Eye
-        this.sprite.beginFill(0xFFFFFF);
-        this.sprite.drawCircle(8, -2, 3);
-        this.sprite.beginFill(0x000000);
-        this.sprite.drawCircle(9, -2, 1.5);
+        this.sprite.beginFill(COLORS.EYE_WHITE);
+        this.sprite.drawCircle(8, -2, FISH_CONFIG.EYE_SIZE);
+        this.sprite.beginFill(COLORS.EYE_BLACK);
+        this.sprite.drawCircle(9, -2, FISH_CONFIG.EYE_SIZE / 2);
         
         this.sprite.endFill();
     }
     
+    /**
+     * Get a random Y position within safe swimming area
+     * @returns {number} Random Y coordinate
+     */
     getRandomTargetY() {
-        const margin = 50;
-        return margin + Math.random() * (this.worldHeight - margin * 2);
+        return randomRange(FISH_CONFIG.VERTICAL_MARGIN, this.worldHeight - FISH_CONFIG.VERTICAL_MARGIN);
     }
     
+    /**
+     * Get a random spawn position outside the safe zone
+     * @returns {Object} Position object {x, y}
+     */
     getRandomSpawnPosition() {
         let x, y;
         let attempts = 0;
@@ -84,13 +104,19 @@ export class Fish {
         
         // If we couldn't find a spot outside safe zone, spawn at edges
         if (attempts >= maxAttempts) {
-            x = Math.random() > 0.5 ? -50 : this.worldWidth + 50;
+            x = Math.random() > 0.5 ? -FISH_CONFIG.BOUNDARY_MARGIN : this.worldWidth + FISH_CONFIG.BOUNDARY_MARGIN;
             y = this.getRandomTargetY();
         }
         
         return { x, y };
     }
     
+    /**
+     * Check if a position is within the safe zone (UI overlay area)
+     * @param {number} x - X coordinate
+     * @param {number} y - Y coordinate
+     * @returns {boolean} Whether position is in safe zone
+     */
     isInSafeZone(x, y) {
         return x >= this.safeZone.x && 
                x <= this.safeZone.x + this.safeZone.width &&
@@ -98,6 +124,9 @@ export class Fish {
                y <= this.safeZone.y + this.safeZone.height;
     }
     
+    /**
+     * Respawn the fish at a new random position
+     */
     respawn() {
         const pos = this.getRandomSpawnPosition();
         this.sprite.x = pos.x;
@@ -105,10 +134,18 @@ export class Fish {
         this.targetY = this.getRandomTargetY();
     }
     
+    /**
+     * Set the fish speed based on mood multiplier
+     * @param {number} multiplier - Speed multiplier (0.3 for pause, 1.0 for work, 2.0 for lunch)
+     */
     setMoodSpeed(multiplier) {
-        this.currentSpeed = this.baseSpeed * multiplier;
+        this.currentSpeed = clamp(this.baseSpeed * multiplier, 0.1, 5.0);
     }
     
+    /**
+     * Update fish position, animation, and behavior
+     * @param {number} deltaTime - Time since last update in milliseconds
+     */
     update(deltaTime) {
         // Update animation frame
         this.lastFrameTime += deltaTime;
@@ -122,10 +159,10 @@ export class Fish {
         this.sprite.x += this.direction * this.currentSpeed * deltaTime * 0.1;
         
         // Check world boundaries and flip direction
-        if (this.sprite.x < -30) {
+        if (this.sprite.x < -FISH_CONFIG.BOUNDARY_MARGIN) {
             this.direction = 1;
             this.sprite.scale.x = 1;
-        } else if (this.sprite.x > this.worldWidth + 30) {
+        } else if (this.sprite.x > this.worldWidth + FISH_CONFIG.BOUNDARY_MARGIN) {
             this.direction = -1;
             this.sprite.scale.x = -1;
         }
@@ -135,7 +172,7 @@ export class Fish {
         if (this.driftTimer >= this.driftInterval) {
             this.targetY = this.getRandomTargetY();
             this.driftTimer = 0;
-            this.driftInterval = 3000 + Math.random() * 4000;
+            this.driftInterval = randomRange(FISH_CONFIG.DRIFT_INTERVAL_MIN, FISH_CONFIG.DRIFT_INTERVAL_MAX);
         }
         
         // Move toward target Y
@@ -153,7 +190,17 @@ export class Fish {
     }
 }
 
+/**
+ * Manages all fish entities in the aquarium
+ */
 export class FishManager {
+    /**
+     * Create a new fish manager
+     * @param {PIXI.Container} container - PIXI container for fish sprites
+     * @param {number} worldWidth - World width in pixels
+     * @param {number} worldHeight - World height in pixels
+     * @param {Object} safeZone - Safe zone boundaries {x, y, width, height}
+     */
     constructor(container, worldWidth, worldHeight, safeZone) {
         this.container = container;
         this.worldWidth = worldWidth;
@@ -161,18 +208,29 @@ export class FishManager {
         this.safeZone = safeZone;
         this.fish = [];
         
-        // Determine fish count based on screen size
+        // Determine fish count based on screen size and performance
         this.maxFish = this.getOptimalFishCount();
         this.moodMultiplier = 1.0;
         
         this.spawnFish();
     }
     
+    /**
+     * Calculate optimal fish count based on screen size and device capabilities
+     * @returns {number} Optimal number of fish
+     */
     getOptimalFishCount() {
-        const isMobile = window.innerWidth <= 768;
-        return isMobile ? Math.floor(20 + Math.random() * 10) : Math.floor(30 + Math.random() * 30);
+        const entityCounts = calculateOptimalEntityCounts(
+            window.innerWidth, 
+            window.innerHeight, 
+            isMobileDevice()
+        );
+        return entityCounts.fish;
     }
     
+    /**
+     * Spawn all fish in the aquarium
+     */
     spawnFish() {
         for (let i = 0; i < this.maxFish; i++) {
             const fish = new Fish(this.worldWidth, this.worldHeight, this.safeZone);
@@ -181,27 +239,35 @@ export class FishManager {
         }
     }
     
+    /**
+     * Set the mood for all fish, affecting their swimming speed
+     * @param {string} mood - Mood identifier ('work', 'pause', 'lunch')
+     */
     setMood(mood) {
-        // Different speed multipliers for different moods
-        const moodSpeeds = {
-            work: 1.0,      // Normal speed
-            pause: 0.3,     // Slow and relaxed
-            lunch: 2.0      // Fast and energetic
-        };
-        
-        this.moodMultiplier = moodSpeeds[mood] || 1.0;
+        const moodConfig = Object.values(MOODS).find(m => m.id === mood);
+        this.moodMultiplier = moodConfig ? moodConfig.speedMultiplier : MOODS.WORK.speedMultiplier;
         
         this.fish.forEach(fish => {
             fish.setMoodSpeed(this.moodMultiplier);
         });
     }
     
+    /**
+     * Update all fish positions and animations
+     * @param {number} deltaTime - Time since last update in milliseconds
+     */
     update(deltaTime) {
         this.fish.forEach(fish => {
             fish.update(deltaTime);
         });
     }
     
+    /**
+     * Handle aquarium resize by updating fish boundaries and count
+     * @param {number} newWorldWidth - New world width in pixels
+     * @param {number} newWorldHeight - New world height in pixels
+     * @param {Object} newSafeZone - New safe zone boundaries
+     */
     resize(newWorldWidth, newWorldHeight, newSafeZone) {
         this.worldWidth = newWorldWidth;
         this.worldHeight = newWorldHeight;
@@ -214,8 +280,8 @@ export class FishManager {
             fish.safeZone = newSafeZone;
             
             // Ensure fish are within new bounds
-            if (fish.sprite.y > newWorldHeight - 50) {
-                fish.sprite.y = newWorldHeight - 50;
+            if (fish.sprite.y > newWorldHeight - FISH_CONFIG.VERTICAL_MARGIN) {
+                fish.sprite.y = newWorldHeight - FISH_CONFIG.VERTICAL_MARGIN;
             }
             fish.targetY = fish.getRandomTargetY();
         });
@@ -241,5 +307,17 @@ export class FishManager {
         }
         
         this.maxFish = newOptimalCount;
+    }
+    
+    /**
+     * Clean up fish manager resources
+     */
+    destroy() {
+        this.fish.forEach(fish => {
+            if (fish.sprite && fish.sprite.parent) {
+                fish.sprite.parent.removeChild(fish.sprite);
+            }
+        });
+        this.fish = [];
     }
 }
