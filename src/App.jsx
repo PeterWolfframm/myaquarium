@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'preact/hooks';
 import AquariumContainer from './components/AquariumContainer';
 import TimerOverlay from './components/TimerOverlay';
+import AquariumSettings from './components/AquariumSettings';
 
 function App() {
   const [mood, setMood] = useState('work');
@@ -11,7 +12,11 @@ function App() {
     currentX: 0, currentY: 0, maxX: 0, maxY: 0, 
     percentageX: 0, percentageY: 0, tileX: 0, tileY: 0 
   });
+  const [tileDimensions, setTileDimensions] = useState({ 
+    horizontalTiles: 0, verticalTiles: 0, totalTiles: 0 
+  });
   const [aquariumRef, setAquariumRef] = useState(null);
+  const [showSettings, setShowSettings] = useState(false);
 
   // Timer logic (optional - could be enhanced later)
   useEffect(() => {
@@ -40,6 +45,9 @@ function App() {
         if (aquariumRef.getViewportPosition) {
           setViewportPosition(aquariumRef.getViewportPosition());
         }
+        if (aquariumRef.getVisibleTileDimensions) {
+          setTileDimensions(aquariumRef.getVisibleTileDimensions());
+        }
       }
     };
     
@@ -56,6 +64,14 @@ function App() {
   const handleAquariumReady = (aquarium) => {
     setAquariumRef(aquarium);
   };
+  
+  const toggleSettings = () => {
+    setShowSettings(!showSettings);
+  };
+  
+  const closeSettings = () => {
+    setShowSettings(false);
+  };
 
   return (
     <div className="aquarium-container">
@@ -66,10 +82,18 @@ function App() {
         visibleCubes={visibleCubes}
         fishInfo={fishInfo}
         viewportPosition={viewportPosition}
+        tileDimensions={tileDimensions}
       />
+      <button className="settings-button" onClick={toggleSettings}>
+        ⚙️ Settings
+      </button>
       <AquariumContainer 
         mood={mood} 
         onAquariumReady={handleAquariumReady}
+      />
+      <AquariumSettings 
+        isVisible={showSettings}
+        onClose={closeSettings}
       />
     </div>
   );

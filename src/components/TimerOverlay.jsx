@@ -1,4 +1,4 @@
-function TimerOverlay({ time, mood, onMoodChange, visibleCubes, fishInfo, viewportPosition }) {
+function TimerOverlay({ time, mood, onMoodChange, visibleCubes, fishInfo, viewportPosition, tileDimensions }) {
   const moods = [
     { id: 'work', label: 'Work' },
     { id: 'pause', label: 'Pause' },
@@ -22,6 +22,11 @@ function TimerOverlay({ time, mood, onMoodChange, visibleCubes, fishInfo, viewpo
       <div className="info-panel">
         <div className="cube-counter">
           Visible Cubes: {visibleCubes || 0}
+        </div>
+        <div className="tile-dimensions">
+          <div className="tile-counts">
+            Tiles - H: {tileDimensions?.horizontalTiles || 0} | V: {tileDimensions?.verticalTiles || 0} | Total: {tileDimensions?.totalTiles || 0}
+          </div>
         </div>
         <div className="fish-info">
           <div className="fish-counts">

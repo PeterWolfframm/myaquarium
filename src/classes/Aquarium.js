@@ -2,6 +2,7 @@ import * as PIXI from 'pixi.js';
 import { Viewport } from 'pixi-viewport';
 import { FishManager } from './Fish.js';
 import { BubbleManager } from './Bubble.js';
+import { useAquariumStore } from '../stores/aquariumStore.js';
 
 export class Aquarium {
     constructor(canvasElement) {
@@ -11,14 +12,16 @@ export class Aquarium {
         this.bubbleManager = null;
         this.canvasElement = canvasElement;
         
-        // Tile grid properties
-        this.tileSize = 64; // 64 pixels per tile
-        this.tilesVertical = 64; // Fixed to 64 tiles vertically
-        this.tilesHorizontal = 300; // Fixed to 300 tiles horizontally
+        // Store reference
+        this.store = useAquariumStore.getState();
         
-        // World dimensions (calculated from fixed tile counts)
-        this.worldWidth = this.tilesHorizontal * this.tileSize; // 300 * 64 = 19200px
-        this.worldHeight = this.tilesVertical * this.tileSize; // 64 * 64 = 4096px
+        // Subscribe to store changes
+        this.unsubscribe = useAquariumStore.subscribe((state) => {
+            this.updateFromStore(state);
+        });
+        
+        // Initialize dimensions from store (with initial load flag)
+        this.updateDimensionsFromStore(true);
         
         // Safe zone for UI overlay (center area)
         this.safeZone = {
@@ -62,14 +65,41 @@ export class Aquarium {
         this.resize();
     }
     
-    calculateDimensions() {
-        // Dimensions are now fixed: 64 tiles vertically, 300 tiles horizontally
-        // World dimensions remain constant regardless of screen size
-        this.worldWidth = this.tilesHorizontal * this.tileSize; // 300 * 64 = 19200px
-        this.worldHeight = this.tilesVertical * this.tileSize; // 64 * 64 = 4096px
+    updateDimensionsFromStore(isInitialLoad = false) {
+        const state = this.store;
+        const viewportHeight = this.app ? this.app.screen.height : window.innerHeight;
         
-        console.log(`Aquarium dimensions: ${this.worldWidth}x${this.worldHeight} (${this.tilesHorizontal}x${this.tilesVertical} tiles)`);
+        if (isInitialLoad) {
+            // On initial load, always calculate tile size based on default visible tiles
+            this.tileSize = state.calculateDefaultTileSize(viewportHeight);
+        } else if (state.sizeMode === 'adaptive') {
+            this.tileSize = state.calculateAdaptiveTileSize(viewportHeight);
+        } else {
+            this.tileSize = state.tileSize;
+        }
+        
+        this.tilesHorizontal = state.tilesHorizontal;
+        this.tilesVertical = state.tilesVertical;
+        
+        this.worldWidth = this.tilesHorizontal * this.tileSize;
+        this.worldHeight = this.tilesVertical * this.tileSize;
+        
+        console.log(`Aquarium dimensions: ${this.worldWidth}x${this.worldHeight} (${this.tilesHorizontal}x${this.tilesVertical} tiles, ${this.tileSize}px tile size)`);
         console.log(`Screen dimensions: ${window.innerWidth}x${window.innerHeight}`);
+        console.log(`Visible vertical tiles: ~${Math.floor(viewportHeight / this.tileSize)}`);
+    }
+    
+    updateFromStore(newState) {
+        this.store = newState;
+        if (this.app && this.viewport) {
+            this.updateDimensionsFromStore(false);
+            this.resize();
+        }
+    }
+    
+    calculateDimensions() {
+        // Update dimensions based on current store state
+        this.updateDimensionsFromStore(false);
     }
     
     createPixiApp() {
@@ -621,7 +651,57 @@ export class Aquarium {
         }
     }
     
+    getVisibleTileDimensions() {
+        if (!this.viewport || !this.app) {
+            return {
+                horizontalTiles: 0,
+                verticalTiles: 0,
+                totalTiles: 0
+            };
+        }
+        
+        try {
+            // Get viewport bounds in world coordinates
+            const viewportBounds = this.viewport.getVisibleBounds();
+            
+            // Calculate which tiles are visible (same logic as getVisibleCubesCount)
+            const leftTile = Math.floor(viewportBounds.x / this.tileSize);
+            const rightTile = Math.ceil((viewportBounds.x + viewportBounds.width) / this.tileSize);
+            const topTile = Math.floor(viewportBounds.y / this.tileSize);
+            const bottomTile = Math.ceil((viewportBounds.y + viewportBounds.height) / this.tileSize);
+            
+            // Clamp to grid bounds
+            const startX = Math.max(0, leftTile);
+            const endX = Math.min(this.tilesHorizontal, rightTile);
+            const startY = Math.max(0, topTile);
+            const endY = Math.min(this.tilesVertical, bottomTile);
+            
+            // Calculate visible tile dimensions
+            const horizontalTiles = Math.max(0, endX - startX);
+            const verticalTiles = Math.max(0, endY - startY);
+            const totalTiles = horizontalTiles * verticalTiles;
+            
+            return {
+                horizontalTiles,
+                verticalTiles,
+                totalTiles
+            };
+        } catch (error) {
+            console.warn('Error calculating visible tile dimensions:', error);
+            return {
+                horizontalTiles: 0,
+                verticalTiles: 0,
+                totalTiles: 0
+            };
+        }
+    }
+    
     destroy() {
+        // Unsubscribe from store updates
+        if (this.unsubscribe) {
+            this.unsubscribe();
+        }
+        
         if (this.app) {
             this.app.destroy(true, true);
         }

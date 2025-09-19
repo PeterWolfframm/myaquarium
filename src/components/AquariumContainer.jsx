@@ -1,9 +1,11 @@
 import { useEffect, useRef } from 'preact/hooks';
 import { Aquarium } from '../classes/Aquarium.js';
+import { useAquariumStore } from '../stores/aquariumStore.js';
 
 function AquariumContainer({ mood, onAquariumReady }) {
   const canvasRef = useRef(null);
   const aquariumRef = useRef(null);
+  const store = useAquariumStore();
 
   useEffect(() => {
     // Initialize aquarium when component mounts
@@ -24,6 +26,14 @@ function AquariumContainer({ mood, onAquariumReady }) {
       }
     };
   }, []);
+  
+  // Watch for store changes that require aquarium recreation
+  useEffect(() => {
+    if (aquariumRef.current) {
+      // The store subscription in Aquarium class will handle updates
+      // No need to recreate the aquarium here as it handles live updates
+    }
+  }, [store.tilesHorizontal, store.tilesVertical, store.tileSize, store.sizeMode, store.targetVerticalTiles]);
 
   useEffect(() => {
     // Update mood when it changes
