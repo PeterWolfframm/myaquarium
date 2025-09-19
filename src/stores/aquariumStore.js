@@ -1,6 +1,9 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
-export const useAquariumStore = create((set, get) => ({
+export const useAquariumStore = create(
+  persist(
+    (set, get) => ({
   // Aquarium configuration
   tilesHorizontal: 300,
   tilesVertical: 64,
@@ -92,4 +95,18 @@ export const useAquariumStore = create((set, get) => ({
       tileSize: currentTileSize
     };
   }
-}));
+}),
+    {
+      name: 'aquarium-settings', // unique name for localStorage key
+      // Only persist the configuration values, not computed methods
+      partialize: (state) => ({
+        tilesHorizontal: state.tilesHorizontal,
+        tilesVertical: state.tilesVertical,
+        tileSize: state.tileSize,
+        sizeMode: state.sizeMode,
+        defaultVisibleVerticalTiles: state.defaultVisibleVerticalTiles,
+        targetVerticalTiles: state.targetVerticalTiles,
+      }),
+    }
+  )
+);

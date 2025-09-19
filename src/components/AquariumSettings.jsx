@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks';
+import { useState, useEffect } from 'preact/hooks';
 import { useAquariumStore } from '../stores/aquariumStore.js';
 
 function AquariumSettings({ isVisible, onClose }) {
@@ -24,6 +24,19 @@ function AquariumSettings({ isVisible, onClose }) {
     targetVerticalTiles,
     defaultVisibleVerticalTiles
   });
+
+  // Sync local state when store values change or modal opens
+  useEffect(() => {
+    if (isVisible) {
+      setLocalValues({
+        tilesHorizontal,
+        tilesVertical,
+        tileSize,
+        targetVerticalTiles,
+        defaultVisibleVerticalTiles
+      });
+    }
+  }, [isVisible, tilesHorizontal, tilesVertical, tileSize, targetVerticalTiles, defaultVisibleVerticalTiles]);
 
   if (!isVisible) return null;
 

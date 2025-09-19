@@ -135,13 +135,8 @@ export class Aquarium {
         // Add viewport to stage
         this.app.stage.addChild(this.viewport);
         
-        // Configure viewport plugins
+        // Configure viewport plugins - only clamping, no mouse interactions
         this.viewport
-            .drag({
-                mouseButtons: 'left'
-            })
-            .pinch()
-            .wheel()
             .clampZoom({
                 minScale: 0.1,
                 maxScale: 3.0
@@ -385,14 +380,14 @@ export class Aquarium {
     }
     
     setupEventListeners() {
-        // Horizontal navigation with arrow keys
+        // Keyboard-only navigation and zoom controls
         window.addEventListener('keydown', (e) => {
             if (e.key.toLowerCase() === 'b') {
                 this.bubbleContainer.visible = !this.bubbleContainer.visible;
             }
             
-            // Horizontal navigation
-            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+            // Arrow key navigation (horizontal and vertical)
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'ArrowUp' || e.key === 'ArrowDown') {
                 e.preventDefault();
                 
                 if (!this.viewport) return;
@@ -407,6 +402,32 @@ export class Aquarium {
                 } else if (e.key === 'ArrowRight') {
                     const newX = Math.min(this.worldWidth - this.app.screen.width / 2, currentX + moveDistance);
                     this.viewport.moveCenter(newX, currentY);
+                } else if (e.key === 'ArrowUp') {
+                    const newY = Math.max(this.app.screen.height / 2, currentY - moveDistance);
+                    this.viewport.moveCenter(currentX, newY);
+                } else if (e.key === 'ArrowDown') {
+                    const newY = Math.min(this.worldHeight - this.app.screen.height / 2, currentY + moveDistance);
+                    this.viewport.moveCenter(currentX, newY);
+                }
+            }
+            
+            // Zoom controls with + and - keys
+            if (e.key === '+' || e.key === '=' || e.key === '-') {
+                e.preventDefault();
+                
+                if (!this.viewport) return;
+                
+                const currentScale = this.viewport.scale.x;
+                const zoomFactor = 1.2; // 20% zoom change
+                
+                if (e.key === '+' || e.key === '=') {
+                    // Zoom in
+                    const newScale = Math.min(3.0, currentScale * zoomFactor);
+                    this.viewport.setZoom(newScale, true);
+                } else if (e.key === '-') {
+                    // Zoom out
+                    const newScale = Math.max(0.1, currentScale / zoomFactor);
+                    this.viewport.setZoom(newScale, true);
                 }
             }
         });
