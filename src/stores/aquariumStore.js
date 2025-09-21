@@ -1,14 +1,12 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { AQUARIUM_CONFIG, STORAGE_KEYS } from '../constants/index.js';
+import { AQUARIUM_CONFIG } from '../constants/index.js';
 import { validateAquariumConfig, sanitizeNumericInput } from '../utils/validation.js';
+import { databaseService } from '../services/database.js';
 
 /**
  * Zustand store for aquarium configuration and state management
  */
-export const useAquariumStore = create(
-  persist(
-    (set, get) => ({
+export const useAquariumStore = create((set, get) => ({
       // Aquarium configuration with defaults from constants
       tilesHorizontal: AQUARIUM_CONFIG.DEFAULT_TILES_HORIZONTAL,
       tilesVertical: AQUARIUM_CONFIG.DEFAULT_TILES_VERTICAL,
@@ -29,9 +27,15 @@ export const useAquariumStore = create(
       // Calculated properties (will be computed in components)
       worldWidth: AQUARIUM_CONFIG.DEFAULT_TILES_HORIZONTAL * AQUARIUM_CONFIG.DEFAULT_TILE_SIZE,
       worldHeight: AQUARIUM_CONFIG.DEFAULT_TILES_VERTICAL * AQUARIUM_CONFIG.DEFAULT_TILE_SIZE,
+
+      // Database synchronization state
+      isLoading: false,
+      isSyncing: false,
+      lastSyncTime: null,
+      syncError: null,
   
       // Actions to update configuration with validation
-      setTilesHorizontal: (value) => {
+      setTilesHorizontal: async (value) => {
         const sanitized = sanitizeNumericInput(
           value, 
           AQUARIUM_CONFIG.MIN_TILES_HORIZONTAL, 
@@ -43,9 +47,15 @@ export const useAquariumStore = create(
           tilesHorizontal: sanitized,
           worldWidth: sanitized * state.tileSize
         });
+        
+        // Auto-sync to database
+        get().syncToDatabase().catch(error => {
+          console.error('Failed to sync settings to database:', error);
+          set({ syncError: error.message });
+        });
       },
       
-      setTilesVertical: (value) => {
+      setTilesVertical: async (value) => {
         const sanitized = sanitizeNumericInput(
           value, 
           AQUARIUM_CONFIG.MIN_TILES_VERTICAL, 
@@ -57,9 +67,15 @@ export const useAquariumStore = create(
           tilesVertical: sanitized,
           worldHeight: sanitized * state.tileSize
         });
+        
+        // Auto-sync to database
+        get().syncToDatabase().catch(error => {
+          console.error('Failed to sync settings to database:', error);
+          set({ syncError: error.message });
+        });
       },
       
-      setTileSize: (value) => {
+      setTileSize: async (value) => {
         const sanitized = sanitizeNumericInput(
           value, 
           AQUARIUM_CONFIG.MIN_TILE_SIZE, 
@@ -72,16 +88,27 @@ export const useAquariumStore = create(
           worldWidth: state.tilesHorizontal * sanitized,
           worldHeight: state.tilesVertical * sanitized
         });
+        
+        // Auto-sync to database
+        get().syncToDatabase().catch(error => {
+          console.error('Failed to sync settings to database:', error);
+          set({ syncError: error.message });
+        });
       },
   
-      setSizeMode: (mode) => {
+      setSizeMode: async (mode) => {
         const validModes = ['fixed', 'adaptive'];
         if (validModes.includes(mode)) {
           set({ sizeMode: mode });
+          // Auto-sync to database
+          get().syncToDatabase().catch(error => {
+            console.error('Failed to sync settings to database:', error);
+            set({ syncError: error.message });
+          });
         }
       },
       
-      setTargetVerticalTiles: (value) => {
+      setTargetVerticalTiles: async (value) => {
         const sanitized = sanitizeNumericInput(
           value, 
           AQUARIUM_CONFIG.MIN_VISIBLE_TILES, 
@@ -89,9 +116,14 @@ export const useAquariumStore = create(
           AQUARIUM_CONFIG.TARGET_VERTICAL_TILES
         );
         set({ targetVerticalTiles: sanitized });
+        // Auto-sync to database
+        get().syncToDatabase().catch(error => {
+          console.error('Failed to sync settings to database:', error);
+          set({ syncError: error.message });
+        });
       },
       
-      setDefaultVisibleVerticalTiles: (value) => {
+      setDefaultVisibleVerticalTiles: async (value) => {
         const sanitized = sanitizeNumericInput(
           value, 
           AQUARIUM_CONFIG.MIN_VISIBLE_TILES, 
@@ -99,12 +131,22 @@ export const useAquariumStore = create(
           AQUARIUM_CONFIG.DEFAULT_VISIBLE_VERTICAL_TILES
         );
         set({ defaultVisibleVerticalTiles: sanitized });
+        // Auto-sync to database
+        get().syncToDatabase().catch(error => {
+          console.error('Failed to sync settings to database:', error);
+          set({ syncError: error.message });
+        });
       },
       
       // Toggle grid visibility
-      toggleGrid: () => {
+      toggleGrid: async () => {
         const state = get();
         set({ showGrid: !state.showGrid });
+        // Auto-sync to database
+        get().syncToDatabase().catch(error => {
+          console.error('Failed to sync settings to database:', error);
+          set({ syncError: error.message });
+        });
       },
   
       // Calculate tile size based on default visible tiles (for app initialization)
@@ -141,20 +183,106 @@ export const useAquariumStore = create(
       worldHeight: state.tilesVertical * currentTileSize,
       tileSize: currentTileSize
     };
-  }
-}),
-    {
-      name: STORAGE_KEYS.AQUARIUM_SETTINGS, // unique name for localStorage key
-      // Only persist the configuration values, not computed methods
-      partialize: (state) => ({
+  },
+
+  // ==================== DATABASE SYNC METHODS ====================
+
+  /**
+   * Initialize the store by loading settings from Supabase
+   */
+  initializeFromDatabase: async () => {
+    set({ isLoading: true, syncError: null });
+    
+    try {
+      // Ensure user is authenticated
+      let user = await databaseService.getCurrentUser();
+      if (!user) {
+        user = await databaseService.signInAnonymously();
+        if (!user) {
+          throw new Error('Failed to authenticate user');
+        }
+      }
+
+      // Load settings from database
+      const settings = await databaseService.getAquariumSettings();
+      
+      if (settings) {
+        // Update store with database settings
+        set({
+          tilesHorizontal: settings.tiles_horizontal,
+          tilesVertical: settings.tiles_vertical,
+          tileSize: settings.tile_size,
+          sizeMode: settings.size_mode,
+          defaultVisibleVerticalTiles: settings.default_visible_vertical_tiles,
+          targetVerticalTiles: settings.target_vertical_tiles,
+          showGrid: settings.show_grid,
+          worldWidth: settings.tiles_horizontal * settings.tile_size,
+          worldHeight: settings.tiles_vertical * settings.tile_size,
+          lastSyncTime: new Date(),
+          isLoading: false
+        });
+      } else {
+        // No settings in database, save current defaults
+        const state = get();
+        await databaseService.saveAquariumSettings({
+          tilesHorizontal: state.tilesHorizontal,
+          tilesVertical: state.tilesVertical,
+          tileSize: state.tileSize,
+          sizeMode: state.sizeMode,
+          defaultVisibleVerticalTiles: state.defaultVisibleVerticalTiles,
+          targetVerticalTiles: state.targetVerticalTiles,
+          showGrid: state.showGrid
+        });
+        
+        set({ 
+          isLoading: false,
+          lastSyncTime: new Date()
+        });
+      }
+    } catch (error) {
+      console.error('Error initializing from database:', error);
+      set({ 
+        isLoading: false, 
+        syncError: error.message 
+      });
+    }
+  },
+
+  /**
+   * Save current settings to Supabase
+   */
+  syncToDatabase: async () => {
+    const state = get();
+    set({ isSyncing: true, syncError: null });
+    
+    try {
+      await databaseService.saveAquariumSettings({
         tilesHorizontal: state.tilesHorizontal,
         tilesVertical: state.tilesVertical,
         tileSize: state.tileSize,
         sizeMode: state.sizeMode,
         defaultVisibleVerticalTiles: state.defaultVisibleVerticalTiles,
         targetVerticalTiles: state.targetVerticalTiles,
-        showGrid: state.showGrid,
-      }),
+        showGrid: state.showGrid
+      });
+      
+      set({ 
+        isSyncing: false,
+        lastSyncTime: new Date()
+      });
+    } catch (error) {
+      console.error('Error syncing to database:', error);
+      set({ 
+        isSyncing: false, 
+        syncError: error.message 
+      });
     }
-  )
-);
+  },
+
+  /**
+   * Clear sync error
+   */
+  clearSyncError: () => {
+    set({ syncError: null });
+  }
+}));

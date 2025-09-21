@@ -2,7 +2,10 @@ import { useState, useEffect } from 'preact/hooks';
 import AquariumContainer from './components/AquariumContainer';
 import TimerOverlay from './components/TimerOverlay';
 import AquariumSettings from './components/AquariumSettings';
+import FishEditor from './components/FishEditor';
 import DataPanel from './components/DataPanel';
+import { useAquariumStore } from './stores/aquariumStore.js';
+import { useFishStore } from './stores/fishStore.js';
 
 function App() {
   const [mood, setMood] = useState('work');
@@ -18,6 +21,31 @@ function App() {
   });
   const [aquariumRef, setAquariumRef] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [showFishEditor, setShowFishEditor] = useState(false);
+
+  // Get store initialization functions
+  const initializeAquariumStore = useAquariumStore(state => state.initializeFromDatabase);
+  const initializeFishStore = useFishStore(state => state.initializeFromDatabase);
+  const aquariumLoading = useAquariumStore(state => state.isLoading);
+  const fishLoading = useFishStore(state => state.isLoading);
+
+  // Initialize stores from Supabase on app start
+  useEffect(() => {
+    const initializeStores = async () => {
+      try {
+        console.log('Initializing aquarium and fish stores from Supabase...');
+        await Promise.all([
+          initializeAquariumStore(),
+          initializeFishStore()
+        ]);
+        console.log('Stores initialized successfully');
+      } catch (error) {
+        console.error('Error initializing stores:', error);
+      }
+    };
+
+    initializeStores();
+  }, [initializeAquariumStore, initializeFishStore]);
 
   // Timer logic (optional - could be enhanced later)
   useEffect(() => {
@@ -74,8 +102,24 @@ function App() {
     setShowSettings(false);
   };
 
+  const toggleFishEditor = () => {
+    setShowFishEditor(!showFishEditor);
+  };
+  
+  const closeFishEditor = () => {
+    setShowFishEditor(false);
+  };
+
   return (
     <div className="aquarium-container">
+      {/* Show loading indicator while stores are initializing */}
+      {(aquariumLoading || fishLoading) && (
+        <div className="loading-overlay">
+          <div className="loading-spinner">🐠</div>
+          <div className="loading-text">Loading aquarium from cloud...</div>
+        </div>
+      )}
+      
       <TimerOverlay 
         time={time} 
         mood={mood} 
@@ -84,6 +128,9 @@ function App() {
       <button className="settings-button" onClick={toggleSettings}>
         ⚙️ Settings
       </button>
+      <button className="fish-editor-button" onClick={toggleFishEditor}>
+        🐠 Edit Fish
+      </button>
       <AquariumContainer 
         mood={mood} 
         onAquariumReady={handleAquariumReady}
@@ -91,6 +138,10 @@ function App() {
       <AquariumSettings 
         isVisible={showSettings}
         onClose={closeSettings}
+      />
+      <FishEditor 
+        isVisible={showFishEditor}
+        onClose={closeFishEditor}
       />
       <DataPanel 
         visibleCubes={visibleCubes}

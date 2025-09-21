@@ -1,0 +1,379 @@
+import { supabase, TABLES } from '../config/supabase.js';
+
+/**
+ * Database service for handling all Supabase operations
+ */
+class DatabaseService {
+  
+  // ==================== AQUARIUM SETTINGS ====================
+  
+  /**
+   * Get aquarium settings for the current user
+   * @returns {Promise<Object|null>} Aquarium settings or null if not found
+   */
+  async getAquariumSettings() {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const { data, error } = await supabase
+        .from(TABLES.AQUARIUM_SETTINGS)
+        .select('*')
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
+        console.error('Error fetching aquarium settings:', error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error in getAquariumSettings:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Save aquarium settings for the current user
+   * @param {Object} settings - Aquarium settings object
+   * @returns {Promise<Object|null>} Saved settings or null if error
+   */
+  async saveAquariumSettings(settings) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      // First try to update existing settings
+      const existingSettings = await this.getAquariumSettings();
+      
+      const settingsData = {
+        user_id: user.id,
+        tiles_horizontal: settings.tilesHorizontal,
+        tiles_vertical: settings.tilesVertical,
+        tile_size: settings.tileSize,
+        size_mode: settings.sizeMode,
+        default_visible_vertical_tiles: settings.defaultVisibleVerticalTiles,
+        target_vertical_tiles: settings.targetVerticalTiles,
+        show_grid: settings.showGrid
+      };
+
+      let result;
+      if (existingSettings) {
+        // Update existing settings
+        result = await supabase
+          .from(TABLES.AQUARIUM_SETTINGS)
+          .update(settingsData)
+          .select()
+          .single();
+      } else {
+        // Insert new settings
+        result = await supabase
+          .from(TABLES.AQUARIUM_SETTINGS)
+          .insert(settingsData)
+          .select()
+          .single();
+      }
+
+      if (result.error) {
+        console.error('Error saving aquarium settings:', result.error);
+        return null;
+      }
+
+      return result.data;
+    } catch (error) {
+      console.error('Error in saveAquariumSettings:', error);
+      return null;
+    }
+  }
+
+  // ==================== FISH ====================
+
+  /**
+   * Get all fish for the current user
+   * @returns {Promise<Array>} Array of fish objects
+   */
+  async getAllFish() {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      const { data, error } = await supabase
+        .from(TABLES.FISH)
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching fish:', error);
+        return [];
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error('Error in getAllFish:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Save a single fish
+   * @param {Object} fishData - Fish data object
+   * @returns {Promise<Object|null>} Saved fish or null if error
+   */
+  async saveFish(fishData) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const fish = {
+        user_id: user.id,
+        name: fishData.name || null,
+        color: fishData.color,
+        base_speed: fishData.baseSpeed,
+        current_speed: fishData.currentSpeed,
+        direction: fishData.direction,
+        position_x: fishData.positionX,
+        position_y: fishData.positionY,
+        target_y: fishData.targetY,
+        vertical_speed: fishData.verticalSpeed,
+        drift_interval: fishData.driftInterval,
+        animation_speed: fishData.animationSpeed,
+        frame_count: fishData.frameCount,
+        current_frame: fishData.currentFrame,
+        is_active: true
+      };
+
+      const { data, error } = await supabase
+        .from(TABLES.FISH)
+        .insert(fish)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error saving fish:', error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error in saveFish:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Update fish data
+   * @param {string} fishId - Fish ID to update
+   * @param {Object} updates - Fish updates object
+   * @returns {Promise<Object|null>} Updated fish or null if error
+   */
+  async updateFish(fishId, updates) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const { data, error } = await supabase
+        .from(TABLES.FISH)
+        .update(updates)
+        .eq('id', fishId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating fish:', error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error in updateFish:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Update fish positions (bulk update for performance)
+   * @param {Array} fishUpdates - Array of {id, position_x, position_y, target_y, current_frame}
+   * @returns {Promise<boolean>} Success status
+   */
+  async updateFishPositions(fishUpdates) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return false;
+
+      // Batch update positions using a transaction-like approach
+      const promises = fishUpdates.map(update => 
+        supabase
+          .from(TABLES.FISH)
+          .update({
+            position_x: update.position_x,
+            position_y: update.position_y,
+            target_y: update.target_y,
+            current_frame: update.current_frame,
+            direction: update.direction
+          })
+          .eq('id', update.id)
+      );
+
+      await Promise.all(promises);
+      return true;
+    } catch (error) {
+      console.error('Error in updateFishPositions:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Delete a fish
+   * @param {string} fishId - Fish ID to delete
+   * @returns {Promise<boolean>} Success status
+   */
+  async deleteFish(fishId) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return false;
+
+      const { error } = await supabase
+        .from(TABLES.FISH)
+        .update({ is_active: false })
+        .eq('id', fishId);
+
+      if (error) {
+        console.error('Error deleting fish:', error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error in deleteFish:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Clear all fish for the current user
+   * @returns {Promise<boolean>} Success status
+   */
+  async clearAllFish() {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return false;
+
+      const { error } = await supabase
+        .from(TABLES.FISH)
+        .update({ is_active: false });
+
+      if (error) {
+        console.error('Error clearing fish:', error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error in clearAllFish:', error);
+      return false;
+    }
+  }
+
+  // ==================== AUTHENTICATION ====================
+
+  /**
+   * Sign in anonymously (for users who don't want to create accounts)
+   * @returns {Promise<Object|null>} User object or null if error
+   */
+  async signInAnonymously() {
+    try {
+      const { data, error } = await supabase.auth.signInAnonymously();
+      
+      if (error) {
+        console.error('Error signing in anonymously:', error);
+        return null;
+      }
+
+      return data.user;
+    } catch (error) {
+      console.error('Error in signInAnonymously:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get current user
+   * @returns {Promise<Object|null>} Current user or null
+   */
+  async getCurrentUser() {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      return user;
+    } catch (error) {
+      console.error('Error getting current user:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Sign out current user
+   * @returns {Promise<boolean>} Success status
+   */
+  async signOut() {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Error signing out:', error);
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error('Error in signOut:', error);
+      return false;
+    }
+  }
+
+  // ==================== REAL-TIME SUBSCRIPTIONS ====================
+
+  /**
+   * Subscribe to fish changes
+   * @param {Function} callback - Callback function for fish changes
+   * @returns {Object} Subscription object
+   */
+  subscribeFishChanges(callback) {
+    const subscription = supabase
+      .channel('fish_changes')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: TABLES.FISH 
+        },
+        callback
+      )
+      .subscribe();
+
+    return subscription;
+  }
+
+  /**
+   * Subscribe to settings changes
+   * @param {Function} callback - Callback function for settings changes
+   * @returns {Object} Subscription object
+   */
+  subscribeSettingsChanges(callback) {
+    const subscription = supabase
+      .channel('settings_changes')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: TABLES.AQUARIUM_SETTINGS 
+        },
+        callback
+      )
+      .subscribe();
+
+    return subscription;
+  }
+}
+
+// Export singleton instance
+export const databaseService = new DatabaseService();
+export default databaseService;

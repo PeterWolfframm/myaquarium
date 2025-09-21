@@ -1,6 +1,7 @@
 import * as PIXI from 'pixi.js';
 import { FISH_CONFIG, COLORS, MOODS } from '../constants/index.js';
 import { randomRange, randomChoice, clamp, calculateOptimalEntityCounts, isMobileDevice } from '../utils/performance.js';
+import { useFishStore } from '../stores/fishStore.js';
 
 /**
  * Individual fish entity with swimming behavior and animation
@@ -11,35 +12,58 @@ export class Fish {
      * @param {number} worldWidth - World width in pixels
      * @param {number} worldHeight - World height in pixels
      * @param {Object} safeZone - Safe zone boundaries {x, y, width, height}
+     * @param {Object} fishData - Optional data from database to restore fish state
      */
-    constructor(worldWidth, worldHeight, safeZone) {
+    constructor(worldWidth, worldHeight, safeZone, fishData = null) {
         this.worldWidth = worldWidth;
         this.worldHeight = worldHeight;
         this.safeZone = safeZone;
         
-        // Movement properties
-        this.baseSpeed = randomRange(FISH_CONFIG.BASE_SPEED_MIN, FISH_CONFIG.BASE_SPEED_MAX);
-        this.currentSpeed = this.baseSpeed;
-        this.direction = Math.random() > 0.5 ? 1 : -1;
-        
-        // Vertical drift properties
-        this.targetY = this.getRandomTargetY();
-        this.verticalSpeed = randomRange(FISH_CONFIG.VERTICAL_SPEED_MIN, FISH_CONFIG.VERTICAL_SPEED_MAX);
-        this.driftTimer = 0;
-        this.driftInterval = randomRange(FISH_CONFIG.DRIFT_INTERVAL_MIN, FISH_CONFIG.DRIFT_INTERVAL_MAX);
+        if (fishData) {
+            // Restore fish from database data
+            this.id = fishData.id;
+            this.name = fishData.name;
+            this.baseSpeed = fishData.baseSpeed || randomRange(FISH_CONFIG.BASE_SPEED_MIN, FISH_CONFIG.BASE_SPEED_MAX);
+            this.currentSpeed = fishData.currentSpeed || this.baseSpeed;
+            this.direction = fishData.direction || (Math.random() > 0.5 ? 1 : -1);
+            this.targetY = fishData.targetY || this.getRandomTargetY();
+            this.verticalSpeed = fishData.verticalSpeed || randomRange(FISH_CONFIG.VERTICAL_SPEED_MIN, FISH_CONFIG.VERTICAL_SPEED_MAX);
+            this.driftInterval = fishData.driftInterval || Math.round(randomRange(FISH_CONFIG.DRIFT_INTERVAL_MIN, FISH_CONFIG.DRIFT_INTERVAL_MAX));
+            this.animationSpeed = fishData.animationSpeed || Math.round(randomRange(FISH_CONFIG.ANIMATION_SPEED_MIN, FISH_CONFIG.ANIMATION_SPEED_MAX));
+            this.frameCount = fishData.frameCount || FISH_CONFIG.ANIMATION_FRAMES;
+            this.currentFrame = fishData.currentFrame || 0;
+            this.color = fishData.color || randomChoice(COLORS.FISH_COLORS);
+        } else {
+            // Create new random fish
+            this.id = null; // Will be assigned when saved to database
+            this.name = null;
+            this.baseSpeed = randomRange(FISH_CONFIG.BASE_SPEED_MIN, FISH_CONFIG.BASE_SPEED_MAX);
+            this.currentSpeed = this.baseSpeed;
+            this.direction = Math.random() > 0.5 ? 1 : -1;
+            this.targetY = this.getRandomTargetY();
+            this.verticalSpeed = randomRange(FISH_CONFIG.VERTICAL_SPEED_MIN, FISH_CONFIG.VERTICAL_SPEED_MAX);
+            this.driftInterval = Math.round(randomRange(FISH_CONFIG.DRIFT_INTERVAL_MIN, FISH_CONFIG.DRIFT_INTERVAL_MAX));
+            this.animationSpeed = Math.round(randomRange(FISH_CONFIG.ANIMATION_SPEED_MIN, FISH_CONFIG.ANIMATION_SPEED_MAX));
+            this.frameCount = FISH_CONFIG.ANIMATION_FRAMES;
+            this.currentFrame = 0;
+            this.color = randomChoice(COLORS.FISH_COLORS);
+        }
         
         // Animation properties
-        this.frameCount = FISH_CONFIG.ANIMATION_FRAMES;
-        this.currentFrame = 0;
-        this.animationSpeed = randomRange(FISH_CONFIG.ANIMATION_SPEED_MIN, FISH_CONFIG.ANIMATION_SPEED_MAX);
+        this.driftTimer = 0;
         this.lastFrameTime = 0;
-        
-        // Visual properties
-        this.color = randomChoice(COLORS.FISH_COLORS);
         
         // Create sprite
         this.createSprite();
-        this.respawn();
+        
+        if (fishData && fishData.positionX !== undefined && fishData.positionY !== undefined) {
+            // Restore position from database
+            this.sprite.x = fishData.positionX;
+            this.sprite.y = fishData.positionY;
+        } else {
+            // Random spawn position
+            this.respawn();
+        }
     }
     
     /**
@@ -212,7 +236,12 @@ export class FishManager {
         this.maxFish = this.getOptimalFishCount();
         this.moodMultiplier = 1.0;
         
-        this.spawnFish();
+        // Track database sync
+        this.lastSyncTime = Date.now();
+        this.syncInterval = 5000; // Sync fish positions every 5 seconds
+        
+        // Initialize fish from database
+        this.initializeFishFromDatabase();
     }
     
     /**
@@ -229,9 +258,46 @@ export class FishManager {
     }
     
     /**
-     * Spawn all fish in the aquarium
+     * Initialize fish from database or create default fish
      */
-    spawnFish() {
+    async initializeFishFromDatabase() {
+        try {
+            // Get fish store - need to access it outside of React component
+            const { populateDefaultFish, convertDbFishToRuntime } = useFishStore.getState();
+            
+            // Import database service
+            const { databaseService } = await import('../services/database.js');
+            
+            // Load fish from database
+            let dbFish = await databaseService.getAllFish();
+            
+            // If no fish in database, populate with default fish
+            if (!dbFish || dbFish.length === 0) {
+                console.log('No fish found in database, populating with defaults...');
+                await populateDefaultFish(this.maxFish, this.worldWidth, this.worldHeight);
+                dbFish = await databaseService.getAllFish();
+            }
+            
+            // Create fish instances from database data
+            for (const dbFishData of dbFish) {
+                const fishData = convertDbFishToRuntime(dbFishData);
+                const fish = new Fish(this.worldWidth, this.worldHeight, this.safeZone, fishData);
+                this.fish.push(fish);
+                this.container.addChild(fish.sprite);
+            }
+            
+            console.log(`Loaded ${this.fish.length} fish from database`);
+            
+        } catch (error) {
+            console.error('Error loading fish from database, falling back to random fish:', error);
+            this.spawnRandomFish();
+        }
+    }
+    
+    /**
+     * Spawn random fish (fallback method)
+     */
+    spawnRandomFish() {
         for (let i = 0; i < this.maxFish; i++) {
             const fish = new Fish(this.worldWidth, this.worldHeight, this.safeZone);
             this.fish.push(fish);
@@ -260,6 +326,40 @@ export class FishManager {
         this.fish.forEach(fish => {
             fish.update(deltaTime);
         });
+        
+        // Periodically sync fish positions to database
+        const now = Date.now();
+        if (now - this.lastSyncTime > this.syncInterval) {
+            this.syncFishPositionsToDatabase();
+            this.lastSyncTime = now;
+        }
+    }
+    
+    /**
+     * Sync fish positions to the database
+     */
+    async syncFishPositionsToDatabase() {
+        try {
+            // Import database service for updating positions
+            const { databaseService } = await import('../services/database.js');
+            
+            const positionUpdates = this.fish
+                .filter(fish => fish.id) // Only sync fish that have database IDs
+                .map(fish => ({
+                    id: fish.id,
+                    position_x: fish.sprite.x,
+                    position_y: fish.sprite.y,
+                    target_y: fish.targetY,
+                    current_frame: Math.round(fish.currentFrame),
+                    direction: fish.direction
+                }));
+                
+            if (positionUpdates.length > 0) {
+                await databaseService.updateFishPositions(positionUpdates);
+            }
+        } catch (error) {
+            console.error('Error syncing fish positions:', error);
+        }
     }
     
     /**
