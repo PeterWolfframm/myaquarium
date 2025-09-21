@@ -70,37 +70,58 @@ export class Fish {
      * Create the fish sprite with graphics
      */
     createSprite() {
-        this.sprite = new PIXI.Graphics();
-        this.updateFrame();
+        try {
+            this.sprite = new PIXI.Graphics();
+            
+            // Ensure proper settings for PIXI v7+
+            this.sprite.interactive = false;
+            this.sprite.interactiveChildren = false;
+            this.sprite.eventMode = 'none';
+            
+            this.updateFrame();
+            
+            console.log(`Fish sprite created successfully with color 0x${this.color.toString(16)}`);
+        } catch (error) {
+            console.error('Error creating fish sprite:', error);
+            throw error;
+        }
     }
     
     /**
      * Update the fish sprite animation frame
      */
     updateFrame() {
-        this.sprite.clear();
-        
-        // Draw fish body
-        this.sprite.beginFill(this.color, 0.8);
-        this.sprite.drawEllipse(0, 0, FISH_CONFIG.SPRITE_SIZE.width, FISH_CONFIG.SPRITE_SIZE.height);
-        
-        // Tail animation (oscillates based on frame)
-        const tailOffset = Math.sin(this.currentFrame / this.frameCount * Math.PI * 2) * 3;
-        this.sprite.beginFill(this.color, 0.6);
-        this.sprite.drawPolygon([
-            -15, tailOffset - 4,
-            -25, tailOffset - 8,
-            -25, tailOffset + 8,
-            -15, tailOffset + 4
-        ]);
-        
-        // Eye
-        this.sprite.beginFill(COLORS.EYE_WHITE);
-        this.sprite.drawCircle(8, -2, FISH_CONFIG.EYE_SIZE);
-        this.sprite.beginFill(COLORS.EYE_BLACK);
-        this.sprite.drawCircle(9, -2, FISH_CONFIG.EYE_SIZE / 2);
-        
-        this.sprite.endFill();
+        try {
+            this.sprite.clear();
+            
+            // Draw fish body
+            this.sprite.beginFill(this.color, 0.8);
+            this.sprite.drawEllipse(0, 0, FISH_CONFIG.SPRITE_SIZE.width, FISH_CONFIG.SPRITE_SIZE.height);
+            this.sprite.endFill();
+            
+            // Tail animation (oscillates based on frame)
+            const tailOffset = Math.sin(this.currentFrame / this.frameCount * Math.PI * 2) * 3;
+            this.sprite.beginFill(this.color, 0.6);
+            this.sprite.drawPolygon([
+                -15, tailOffset - 4,
+                -25, tailOffset - 8,
+                -25, tailOffset + 8,
+                -15, tailOffset + 4
+            ]);
+            this.sprite.endFill();
+            
+            // Eye
+            this.sprite.beginFill(COLORS.EYE_WHITE);
+            this.sprite.drawCircle(8, -2, FISH_CONFIG.EYE_SIZE);
+            this.sprite.endFill();
+            
+            this.sprite.beginFill(COLORS.EYE_BLACK);
+            this.sprite.drawCircle(9, -2, FISH_CONFIG.EYE_SIZE / 2);
+            this.sprite.endFill();
+            
+        } catch (error) {
+            console.error('Error updating fish frame:', error);
+        }
     }
     
     /**
@@ -288,6 +309,12 @@ export class FishManager {
             
             console.log(`Loaded ${this.fish.length} fish from database`);
             
+            // If still no fish after all attempts, force create random fish
+            if (this.fish.length === 0) {
+                console.log('No fish loaded from database, creating random fish as fallback');
+                this.spawnRandomFish();
+            }
+            
         } catch (error) {
             console.error('Error loading fish from database, falling back to random fish:', error);
             this.spawnRandomFish();
@@ -298,11 +325,24 @@ export class FishManager {
      * Spawn random fish (fallback method)
      */
     spawnRandomFish() {
+        console.log(`Creating ${this.maxFish} random fish as fallback`);
+        
         for (let i = 0; i < this.maxFish; i++) {
-            const fish = new Fish(this.worldWidth, this.worldHeight, this.safeZone);
-            this.fish.push(fish);
-            this.container.addChild(fish.sprite);
+            try {
+                const fish = new Fish(this.worldWidth, this.worldHeight, this.safeZone);
+                this.fish.push(fish);
+                this.container.addChild(fish.sprite);
+                
+                // Apply current mood speed
+                fish.setMoodSpeed(this.moodMultiplier);
+                
+                console.log(`Created fish ${i + 1}/${this.maxFish} at position (${fish.sprite.x.toFixed(1)}, ${fish.sprite.y.toFixed(1)})`);
+            } catch (error) {
+                console.error(`Error creating fish ${i + 1}:`, error);
+            }
         }
+        
+        console.log(`Successfully created ${this.fish.length} fish sprites and added to container`);
     }
     
     /**

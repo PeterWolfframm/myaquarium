@@ -50,12 +50,14 @@ export class Aquarium {
         // Grid visibility state
         this.showGrid = this.store.showGrid;
         
-        this.init();
+        this.init().catch(error => {
+            console.error('Error initializing aquarium:', error);
+        });
     }
     
-    init() {
+    async init() {
         this.calculateDimensions();
-        this.createPixiApp();
+        await this.createPixiApp();
         this.setupViewport();
         this.createLayers();
         this.createGrid();
@@ -67,6 +69,11 @@ export class Aquarium {
         
         // Initial resize to fit container
         this.resize();
+        
+        console.log('Aquarium initialization completed successfully');
+        console.log(`Fish container children: ${this.fishContainer.children.length}`);
+        console.log(`Bubble container children: ${this.bubbleContainer.children.length}`);
+        console.log(`Background container children: ${this.backgroundContainer.children.length}`);
     }
     
     updateDimensionsFromStore(isInitialLoad = false) {
@@ -115,24 +122,34 @@ export class Aquarium {
         this.updateDimensionsFromStore(false);
     }
     
-    createPixiApp() {
-        // Set global PIXI settings before creating application
-        PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
-        PIXI.settings.ROUND_PIXELS = true;
+    async createPixiApp() {
+        // Configure PIXI for v8+ compatibility
+        // Set default texture scale mode to nearest (for pixel art)
+        if (PIXI.BaseTexture && PIXI.BaseTexture.defaultOptions) {
+            PIXI.BaseTexture.defaultOptions.scaleMode = 'nearest';
+        }
         
-        // Create Pixi application with safer settings
-        this.app = new PIXI.Application({
-            view: this.canvasElement,
+        // Alternative for v8+ - set on Texture defaults
+        if (PIXI.Texture && PIXI.Texture.defaultOptions) {
+            PIXI.Texture.defaultOptions.scaleMode = 'nearest';
+        }
+        
+        // Create Pixi application using v8+ API
+        this.app = new PIXI.Application();
+        
+        // Initialize the application with v8+ init method
+        await this.app.init({
+            canvas: this.canvasElement,
             resizeTo: this.canvasElement.parentElement,
             backgroundColor: 0x001133,
             antialias: false, // Keep pixel art sharp
             powerPreference: 'default', // Use safer power preference
             resolution: 1, // Fixed resolution to avoid scaling issues
-            eventMode: 'static' // Ensure proper event handling in PIXI v7+
+            eventMode: 'static' // Ensure proper event handling
         });
         
-        // Disable context menu on right click
-        this.app.view.addEventListener('contextmenu', e => e.preventDefault());
+        // Disable context menu on right click - use canvas instead of view for v8+
+        this.app.canvas.addEventListener('contextmenu', e => e.preventDefault());
     }
     
     calculateMinZoomScale() {
@@ -156,7 +173,7 @@ export class Aquarium {
             screenHeight: this.app.screen.height,
             worldWidth: this.worldWidth,
             worldHeight: this.worldHeight,
-            events: this.app.renderer.events
+            events: this.app.renderer.events || this.app.stage // v8+ compatibility
         });
         
         // Add viewport to stage
@@ -337,6 +354,8 @@ export class Aquarium {
     }
     
     createBackground() {
+        console.log('Creating aquarium background...');
+        
         // Create ocean floor
         const floor = new PIXI.Graphics();
         floor.beginFill(0x8B4513, 0.8); // Brown sand
@@ -367,6 +386,9 @@ export class Aquarium {
         waterGradient.endFill();
         
         this.backgroundContainer.addChild(waterGradient);
+        
+        console.log(`Background created: floor, seaweed, rocks, and water gradient added to container`);
+        console.log(`Background container children count: ${this.backgroundContainer.children.length}`);
     }
     
     createSeaweed() {
@@ -436,7 +458,10 @@ export class Aquarium {
     }
     
     spawnEntities() {
+        console.log('Spawning entities...');
+        
         // Create fish manager
+        console.log(`Creating fish manager with world size: ${this.worldWidth}x${this.worldHeight}`);
         this.fishManager = new FishManager(
             this.fishContainer,
             this.worldWidth,
@@ -445,11 +470,14 @@ export class Aquarium {
         );
         
         // Create bubble manager
+        console.log(`Creating bubble manager with world size: ${this.worldWidth}x${this.worldHeight}`);
         this.bubbleManager = new BubbleManager(
             this.bubbleContainer,
             this.worldWidth,
             this.worldHeight
         );
+        
+        console.log('Entity spawning completed');
     }
     
     setupEventListeners() {
