@@ -223,7 +223,12 @@ export class Aquarium {
         const currentScale = this.viewport ? this.viewport.scale.x : 1;
         const lineWidth = Math.max(0.5, 1 / currentScale); // Inverse scale to maintain consistent visual width
         
-        grid.stroke({ width: lineWidth, color: 0xFFFFFF, alpha: 0.3 }); // White lines with low opacity
+        // PIXI.js v8: Set stroke style
+        grid.setStrokeStyle({
+            width: lineWidth,
+            color: 0xFFFFFF,
+            alpha: 0.3
+        });
         
         // Vertical lines
         for (let x = 0; x <= this.tilesHorizontal; x++) {
@@ -238,6 +243,9 @@ export class Aquarium {
             grid.moveTo(0, yPos);
             grid.lineTo(this.worldWidth, yPos);
         }
+        
+        // PIXI.js v8: Apply the stroke
+        grid.stroke();
         
         this.gridContainer.addChild(grid);
         
@@ -257,7 +265,13 @@ export class Aquarium {
         
         // Clear and redraw the grid with new line width
         this.grid.clear();
-        this.grid.stroke({ width: lineWidth, color: 0xFFFFFF, alpha: 0.3 });
+        
+        // PIXI.js v8: Set stroke style
+        this.grid.setStrokeStyle({
+            width: lineWidth,
+            color: 0xFFFFFF,
+            alpha: 0.3
+        });
         
         // Vertical lines
         for (let x = 0; x <= this.tilesHorizontal; x++) {
@@ -272,6 +286,9 @@ export class Aquarium {
             this.grid.moveTo(0, yPos);
             this.grid.lineTo(this.worldWidth, yPos);
         }
+        
+        // PIXI.js v8: Apply the stroke
+        this.grid.stroke();
     }
     
     updateGridVisibility() {
@@ -294,7 +311,8 @@ export class Aquarium {
         
         // Draw a filled rectangle (cube) - positioned at 0,0
         const cubeSize = this.tileSize * 0.8;
-        this.orangeCube.rect(0, 0, cubeSize, cubeSize).fill(0xFF6600); // Orange color
+        this.orangeCube.rect(0, 0, cubeSize, cubeSize);
+        this.orangeCube.fill(0xFF6600); // Orange color
         
         // Center the anchor point
         this.orangeCube.pivot.set(cubeSize / 2, cubeSize / 2);
@@ -347,7 +365,8 @@ export class Aquarium {
         
         // Create ocean floor
         const floor = new PIXI.Graphics();
-        floor.rect(0, this.worldHeight - 80, this.worldWidth, 80).fill({ color: 0x8B4513, alpha: 0.8 }); // Brown sand
+        floor.rect(0, this.worldHeight - 80, this.worldWidth, 80);
+        floor.fill({ color: 0x8B4513, alpha: 0.8 }); // Brown sand
         
         // Add some texture to the floor
         for (let i = 0; i < 50; i++) {
@@ -356,7 +375,8 @@ export class Aquarium {
             const size = 2 + Math.random() * 4;
             const color = Math.random() > 0.5 ? 0x654321 : 0xD2691E;
             
-            floor.circle(x, y, size).fill({ color: color, alpha: 0.6 });
+            floor.circle(x, y, size);
+            floor.fill({ color: color, alpha: 0.6 });
         }
         
         this.backgroundContainer.addChild(floor);
@@ -367,7 +387,8 @@ export class Aquarium {
         
         // Create water effect gradient
         const waterGradient = new PIXI.Graphics();
-        waterGradient.rect(0, 0, this.worldWidth, this.worldHeight).fill({ color: 0x004466, alpha: 0.1 });
+        waterGradient.rect(0, 0, this.worldWidth, this.worldHeight);
+        waterGradient.fill({ color: 0x004466, alpha: 0.1 });
         
         this.backgroundContainer.addChild(waterGradient);
         
@@ -405,7 +426,8 @@ export class Aquarium {
                     currentX + width/2, currentY,
                     nextX + width/2, nextY,
                     nextX - width/2, nextY
-                ]).fill({ color: 0x228B22, alpha: 0.7 });
+                ]);
+                seaweed.fill({ color: 0x228B22, alpha: 0.7 });
                 
                 currentX = nextX;
                 currentY = nextY;
@@ -430,7 +452,8 @@ export class Aquarium {
             const rockSize = 20 + Math.random() * 30;
             const rockColor = Math.random() > 0.5 ? 0x696969 : 0x808080;
             
-            rock.ellipse(x, y, rockSize, rockSize * 0.6).fill({ color: rockColor, alpha: 0.9 });
+            rock.ellipse(x, y, rockSize, rockSize * 0.6);
+            rock.fill({ color: rockColor, alpha: 0.9 });
             
             this.backgroundContainer.addChild(rock);
         }

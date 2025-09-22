@@ -94,7 +94,8 @@ export class Fish {
             this.sprite.clear();
             
             // Draw fish body
-            this.sprite.ellipse(0, 0, FISH_CONFIG.SPRITE_SIZE.width, FISH_CONFIG.SPRITE_SIZE.height).fill({ color: this.color, alpha: 0.8 });
+            this.sprite.ellipse(0, 0, FISH_CONFIG.SPRITE_SIZE.width, FISH_CONFIG.SPRITE_SIZE.height);
+            this.sprite.fill({ color: this.color, alpha: 0.8 });
             
             // Tail animation (oscillates based on frame)
             const tailOffset = Math.sin(this.currentFrame / this.frameCount * Math.PI * 2) * 3;
@@ -103,11 +104,14 @@ export class Fish {
                 -25, tailOffset - 8,
                 -25, tailOffset + 8,
                 -15, tailOffset + 4
-            ]).fill({ color: this.color, alpha: 0.6 });
+            ]);
+            this.sprite.fill({ color: this.color, alpha: 0.6 });
             
             // Eye
-            this.sprite.circle(8, -2, FISH_CONFIG.EYE_SIZE).fill(COLORS.EYE_WHITE);
-            this.sprite.circle(9, -2, FISH_CONFIG.EYE_SIZE / 2).fill(COLORS.EYE_BLACK);
+            this.sprite.circle(8, -2, FISH_CONFIG.EYE_SIZE);
+            this.sprite.fill(COLORS.EYE_WHITE);
+            this.sprite.circle(9, -2, FISH_CONFIG.EYE_SIZE / 2);
+            this.sprite.fill(COLORS.EYE_BLACK);
             
         } catch (error) {
             console.error('Error updating fish frame:', error);
