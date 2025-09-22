@@ -543,6 +543,17 @@ body {
     .data-section {
         gap: 6px;
     }
+    
+    .control-buttons {
+        top: 15px;
+        right: 15px;
+        gap: 8px;
+    }
+    
+    .control-button {
+        padding: 6px 10px;
+        font-size: 0.8em;
+    }
 }
 
 @media (max-width: 480px) {
@@ -569,6 +580,19 @@ body {
         min-width: 180px;
         top: 50px;
         right: 10px;
+    }
+    
+    .control-buttons {
+        top: 10px;
+        right: 10px;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+    
+    .control-button {
+        padding: 5px 8px;
+        font-size: 0.75em;
+        min-width: 60px;
     }
 }
 
@@ -766,19 +790,50 @@ body {
     background: rgba(0, 204, 255, 0.3);
 }
 
-.settings-button {
+/* Control Buttons Container */
+.control-buttons {
     position: absolute;
     top: 20px;
     right: 20px;
+    z-index: 15;
+    display: flex;
+    gap: 10px;
+    flex-direction: row;
+}
+
+/* Base Control Button Styles */
+.control-button {
     background: rgba(0, 0, 0, 0.7);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 6px;
-    color: #00ccff;
     padding: 8px 12px;
     cursor: pointer;
     font-size: 0.9em;
-    transition: all 0.2s;
     backdrop-filter: blur(5px);
+    transition: all 0.2s ease;
+}
+
+/* Individual Button Colors */
+.timer-button {
+    color: #ffa500;
+}
+
+.timer-button:hover {
+    background: rgba(255, 165, 0, 0.2);
+    border-color: #ffa500;
+}
+
+.stats-button {
+    color: #9370db;
+}
+
+.stats-button:hover {
+    background: rgba(147, 112, 219, 0.2);
+    border-color: #9370db;
+}
+
+.settings-button {
+    color: #00ccff;
 }
 
 .settings-button:hover {
@@ -787,18 +842,7 @@ body {
 }
 
 .fish-editor-button {
-    position: absolute;
-    top: 20px;
-    right: 140px;
-    background: rgba(0, 0, 0, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 6px;
     color: #ff9900;
-    padding: 8px 12px;
-    cursor: pointer;
-    font-size: 0.9em;
-    transition: all 0.2s;
-    backdrop-filter: blur(5px);
 }
 
 .fish-editor-button:hover {

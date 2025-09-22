@@ -25,6 +25,8 @@ function App() {
   const [aquariumRef, setAquariumRef] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showFishEditor, setShowFishEditor] = useState(false);
+  const [showTimer, setShowTimer] = useState(true);
+  const [showStats, setShowStats] = useState(true);
 
   // Get store initialization functions
   const initializeAquariumStore = useAquariumStore(state => state.initializeFromDatabase);
@@ -188,6 +190,14 @@ function App() {
     setShowFishEditor(false);
   };
 
+  const toggleTimer = () => {
+    setShowTimer(!showTimer);
+  };
+
+  const toggleStats = () => {
+    setShowStats(!showStats);
+  };
+
   return (
     <div className="aquarium-container">
       {/* Show loading indicator while stores are initializing */}
@@ -198,18 +208,30 @@ function App() {
         </div>
       )}
       
-      <TimerOverlay 
-        time={time} 
-        mood={mood} 
-        onMoodChange={handleMoodChange}
-        currentSession={currentSession}
-      />
-      <button className="settings-button" onClick={toggleSettings}>
-        ⚙️ Settings
-      </button>
-      <button className="fish-editor-button" onClick={toggleFishEditor}>
-        🐠 Edit Fish
-      </button>
+      {/* Control Buttons */}
+      <div className="control-buttons">
+        <button className="control-button timer-button" onClick={toggleTimer}>
+          ⏱️ Timer
+        </button>
+        <button className="control-button stats-button" onClick={toggleStats}>
+          📊 Stats
+        </button>
+        <button className="control-button settings-button" onClick={toggleSettings}>
+          ⚙️ Settings
+        </button>
+        <button className="control-button fish-editor-button" onClick={toggleFishEditor}>
+          🐠 Edit Fish
+        </button>
+      </div>
+
+      {showTimer && (
+        <TimerOverlay 
+          time={time} 
+          mood={mood} 
+          onMoodChange={handleMoodChange}
+          currentSession={currentSession}
+        />
+      )}
       <AquariumContainer 
         mood={mood} 
         onAquariumReady={handleAquariumReady}
@@ -222,12 +244,14 @@ function App() {
         isVisible={showFishEditor}
         onClose={closeFishEditor}
       />
-      <DataPanel 
-        visibleCubes={visibleCubes}
-        fishInfo={fishInfo}
-        viewportPosition={viewportPosition}
-        tileDimensions={tileDimensions}
-      />
+      {showStats && (
+        <DataPanel 
+          visibleCubes={visibleCubes}
+          fishInfo={fishInfo}
+          viewportPosition={viewportPosition}
+          tileDimensions={tileDimensions}
+        />
+      )}
     </div>
   );
 }
