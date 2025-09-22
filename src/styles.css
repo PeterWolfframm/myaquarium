@@ -384,6 +384,77 @@ body {
     box-shadow: 0 0 15px rgba(0, 204, 255, 0.6);
 }
 
+.mood-controls button.switching {
+    background: rgba(0, 153, 204, 0.6);
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.mood-controls button:disabled {
+    cursor: not-allowed;
+}
+
+/* Recent Sessions Styles */
+.recent-sessions {
+    margin-top: 20px;
+    min-width: 250px;
+}
+
+.recent-sessions h4 {
+    color: #00ccff;
+    font-size: 0.9em;
+    margin-bottom: 10px;
+    text-align: center;
+    font-weight: 500;
+}
+
+.sessions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.session-item {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 10px;
+    padding: 6px 10px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    font-size: 0.8em;
+    align-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.session-mood {
+    color: #ffffff;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.session-time {
+    color: #99ccff;
+    font-size: 0.85em;
+    text-align: center;
+}
+
+.session-duration {
+    color: #00ccff;
+    font-weight: 500;
+    text-align: right;
+    min-width: 35px;
+}
+
+.session-loading, .no-sessions {
+    text-align: center;
+    color: #666;
+    font-style: italic;
+    font-size: 0.8em;
+    padding: 10px;
+}
+
 .info-panel {
     margin-top: 10px;
     display: flex;

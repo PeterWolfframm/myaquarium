@@ -6,10 +6,13 @@ import FishEditor from './components/FishEditor';
 import DataPanel from './components/DataPanel';
 import { useAquariumStore } from './stores/aquariumStore.js';
 import { useFishStore } from './stores/fishStore.js';
+import { databaseService } from './services/database.js';
 
 function App() {
   const [mood, setMood] = useState('work');
-  const [time, setTime] = useState('25:00');
+  const [time, setTime] = useState('00:00');
+  const [currentSession, setCurrentSession] = useState(null);
+  const [sessionStartTime, setSessionStartTime] = useState(null);
   const [visibleCubes, setVisibleCubes] = useState(0);
   const [fishInfo, setFishInfo] = useState({ horizontalCount: 0, verticalCount: 0, total: 0 });
   const [viewportPosition, setViewportPosition] = useState({ 
@@ -39,6 +42,9 @@ function App() {
           initializeFishStore()
         ]);
         console.log('Stores initialized successfully');
+        
+        // Initialize time tracking
+        await initializeTimeTracking();
       } catch (error) {
         console.error('Error initializing stores:', error);
       }
@@ -47,17 +53,57 @@ function App() {
     initializeStores();
   }, [initializeAquariumStore, initializeFishStore]);
 
-  // Timer logic (optional - could be enhanced later)
+  // Initialize time tracking
+  const initializeTimeTracking = async () => {
+    try {
+      // Check if there's an active session
+      const activeSession = await databaseService.getCurrentTimeTrackingSession();
+      if (activeSession) {
+        setCurrentSession(activeSession);
+        setSessionStartTime(new Date(activeSession.start_time));
+        setMood(activeSession.mood);
+      } else {
+        // Start a new session with default mood
+        await startNewSession('work');
+      }
+    } catch (error) {
+      console.error('Error initializing time tracking:', error);
+      // Fallback to starting a new session
+      await startNewSession('work');
+    }
+  };
+
+  // Start a new time tracking session
+  const startNewSession = async (newMood) => {
+    try {
+      const session = await databaseService.startTimeTrackingSession(newMood);
+      if (session) {
+        setCurrentSession(session);
+        setSessionStartTime(new Date(session.start_time));
+        setMood(newMood);
+      }
+    } catch (error) {
+      console.error('Error starting new session:', error);
+    }
+  };
+
+  // Timer logic - shows elapsed time for current session
   useEffect(() => {
     const interval = setInterval(() => {
-      const now = new Date();
-      const minutes = now.getMinutes().toString().padStart(2, '0');
-      const seconds = now.getSeconds().toString().padStart(2, '0');
-      setTime(`${minutes}:${seconds}`);
+      if (sessionStartTime) {
+        const now = new Date();
+        const elapsedMs = now - sessionStartTime;
+        const elapsedSeconds = Math.floor(elapsedMs / 1000);
+        const minutes = Math.floor(elapsedSeconds / 60);
+        const seconds = elapsedSeconds % 60;
+        setTime(`${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+      } else {
+        setTime('00:00');
+      }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [sessionStartTime]);
 
   // Update visible cubes count, fish info, and viewport position periodically
   useEffect(() => {
@@ -86,8 +132,40 @@ function App() {
     return () => clearInterval(interval);
   }, [aquariumRef]);
 
-  const handleMoodChange = (newMood) => {
+  const handleMoodChange = async (newMood) => {
+    if (newMood === mood) return; // No change needed
+    
+    // Update UI immediately for responsiveness
+    const previousMood = mood;
+    const previousSession = currentSession;
+    const previousStartTime = sessionStartTime;
+    
     setMood(newMood);
+    setSessionStartTime(new Date());
+    
+    try {
+      // Save current session and start new one in background
+      const newSession = await databaseService.switchMoodAndSaveSession(newMood);
+      if (newSession) {
+        setCurrentSession(newSession);
+        setSessionStartTime(new Date(newSession.start_time));
+      } else {
+        // If database operation failed, revert to previous state
+        setMood(previousMood);
+        setCurrentSession(previousSession);
+        setSessionStartTime(previousStartTime);
+      }
+    } catch (error) {
+      console.error('Error switching mood:', error);
+      // Try to recover by creating a local session state
+      const localSession = {
+        id: `temp-${Date.now()}`,
+        mood: newMood,
+        start_time: new Date().toISOString(),
+        is_active: true
+      };
+      setCurrentSession(localSession);
+    }
   };
 
   const handleAquariumReady = (aquarium) => {
@@ -124,6 +202,7 @@ function App() {
         time={time} 
         mood={mood} 
         onMoodChange={handleMoodChange}
+        currentSession={currentSession}
       />
       <button className="settings-button" onClick={toggleSettings}>
         ⚙️ Settings

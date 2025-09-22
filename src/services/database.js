@@ -63,6 +63,7 @@ class DatabaseService {
         result = await supabase
           .from(TABLES.AQUARIUM_SETTINGS)
           .update(settingsData)
+          .eq('user_id', user.id)
           .select()
           .single();
       } else {
@@ -261,7 +262,8 @@ class DatabaseService {
 
       const { error } = await supabase
         .from(TABLES.FISH)
-        .update({ is_active: false });
+        .update({ is_active: false })
+        .eq('user_id', user.id);
 
       if (error) {
         console.error('Error clearing fish:', error);
@@ -326,6 +328,160 @@ class DatabaseService {
     } catch (error) {
       console.error('Error in signOut:', error);
       return false;
+    }
+  }
+
+  // ==================== TIME TRACKING ====================
+
+  /**
+   * Start a new time tracking session
+   * @param {string} mood - The mood/activity type (work, pause, lunch)
+   * @returns {Promise<Object|null>} Created session or null if error
+   */
+  async startTimeTrackingSession(mood) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const sessionData = {
+        user_id: user.id,
+        mood: mood,
+        start_time: new Date().toISOString(),
+        is_active: true
+      };
+
+      const { data, error } = await supabase
+        .from(TABLES.TIME_TRACKING_SESSIONS)
+        .insert(sessionData)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error starting time tracking session:', error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error in startTimeTrackingSession:', error);
+      return null;
+    }
+  }
+
+  /**
+   * End the current active time tracking session
+   * @returns {Promise<Object|null>} Updated session or null if error
+   */
+  async endCurrentTimeTrackingSession() {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      // Find the current active session
+      const { data: activeSession } = await supabase
+        .from(TABLES.TIME_TRACKING_SESSIONS)
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .single();
+
+      if (!activeSession) return null;
+
+      // End the session
+      const { data, error } = await supabase
+        .from(TABLES.TIME_TRACKING_SESSIONS)
+        .update({
+          end_time: new Date().toISOString(),
+          is_active: false
+        })
+        .eq('id', activeSession.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error ending time tracking session:', error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error in endCurrentTimeTrackingSession:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get the current active time tracking session
+   * @returns {Promise<Object|null>} Active session or null if none
+   */
+  async getCurrentTimeTrackingSession() {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const { data, error } = await supabase
+        .from(TABLES.TIME_TRACKING_SESSIONS)
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
+        console.error('Error fetching current time tracking session:', error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error in getCurrentTimeTrackingSession:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get recent time tracking sessions (last 5)
+   * @returns {Promise<Array>} Array of recent sessions
+   */
+  async getRecentTimeTrackingSessions() {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      const { data, error } = await supabase
+        .from(TABLES.TIME_TRACKING_SESSIONS)
+        .select('*')
+        .eq('user_id', user.id)
+        .not('end_time', 'is', null) // Only completed sessions
+        .order('start_time', { ascending: false })
+        .limit(5);
+
+      if (error) {
+        console.error('Error fetching recent time tracking sessions:', error);
+        return [];
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error('Error in getRecentTimeTrackingSessions:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Switch to a new mood, ending current session and starting a new one
+   * @param {string} newMood - The new mood to switch to
+   * @returns {Promise<Object|null>} New session or null if error
+   */
+  async switchMoodAndSaveSession(newMood) {
+    try {
+      // End current session if exists
+      await this.endCurrentTimeTrackingSession();
+      
+      // Start new session
+      return await this.startTimeTrackingSession(newMood);
+    } catch (error) {
+      console.error('Error in switchMoodAndSaveSession:', error);
+      return null;
     }
   }
 
