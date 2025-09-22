@@ -223,7 +223,7 @@ export class Aquarium {
         const currentScale = this.viewport ? this.viewport.scale.x : 1;
         const lineWidth = Math.max(0.5, 1 / currentScale); // Inverse scale to maintain consistent visual width
         
-        grid.lineStyle(lineWidth, 0xFFFFFF, 0.3); // White lines with low opacity
+        grid.stroke({ width: lineWidth, color: 0xFFFFFF, alpha: 0.3 }); // White lines with low opacity
         
         // Vertical lines
         for (let x = 0; x <= this.tilesHorizontal; x++) {
@@ -257,7 +257,7 @@ export class Aquarium {
         
         // Clear and redraw the grid with new line width
         this.grid.clear();
-        this.grid.lineStyle(lineWidth, 0xFFFFFF, 0.3);
+        this.grid.stroke({ width: lineWidth, color: 0xFFFFFF, alpha: 0.3 });
         
         // Vertical lines
         for (let x = 0; x <= this.tilesHorizontal; x++) {
@@ -294,9 +294,7 @@ export class Aquarium {
         
         // Draw a filled rectangle (cube) - positioned at 0,0
         const cubeSize = this.tileSize * 0.8;
-        this.orangeCube.beginFill(0xFF6600); // Orange color
-        this.orangeCube.drawRect(0, 0, cubeSize, cubeSize);
-        this.orangeCube.endFill();
+        this.orangeCube.rect(0, 0, cubeSize, cubeSize).fill(0xFF6600); // Orange color
         
         // Center the anchor point
         this.orangeCube.pivot.set(cubeSize / 2, cubeSize / 2);
@@ -349,9 +347,7 @@ export class Aquarium {
         
         // Create ocean floor
         const floor = new PIXI.Graphics();
-        floor.beginFill(0x8B4513, 0.8); // Brown sand
-        floor.drawRect(0, this.worldHeight - 80, this.worldWidth, 80);
-        floor.endFill();
+        floor.rect(0, this.worldHeight - 80, this.worldWidth, 80).fill({ color: 0x8B4513, alpha: 0.8 }); // Brown sand
         
         // Add some texture to the floor
         for (let i = 0; i < 50; i++) {
@@ -360,11 +356,8 @@ export class Aquarium {
             const size = 2 + Math.random() * 4;
             const color = Math.random() > 0.5 ? 0x654321 : 0xD2691E;
             
-            floor.beginFill(color, 0.6);
-            floor.drawCircle(x, y, size);
-            floor.endFill();
+            floor.circle(x, y, size).fill({ color: color, alpha: 0.6 });
         }
-        // floor.endFill(); // No longer needed in PixiJS v8
         
         this.backgroundContainer.addChild(floor);
         
@@ -374,9 +367,7 @@ export class Aquarium {
         
         // Create water effect gradient
         const waterGradient = new PIXI.Graphics();
-        waterGradient.beginFill(0x004466, 0.1);
-        waterGradient.drawRect(0, 0, this.worldWidth, this.worldHeight);
-        waterGradient.endFill();
+        waterGradient.rect(0, 0, this.worldWidth, this.worldHeight).fill({ color: 0x004466, alpha: 0.1 });
         
         this.backgroundContainer.addChild(waterGradient);
         
@@ -409,14 +400,12 @@ export class Aquarium {
                 const nextY = currentY - segmentHeight;
                 const width = 8 - (j * 0.8); // Taper toward top
                 
-                seaweed.beginFill(0x228B22, 0.7);
-                seaweed.drawPolygon([
+                seaweed.poly([
                     currentX - width/2, currentY,
                     currentX + width/2, currentY,
                     nextX + width/2, nextY,
                     nextX - width/2, nextY
-                ]);
-                seaweed.endFill();
+                ]).fill({ color: 0x228B22, alpha: 0.7 });
                 
                 currentX = nextX;
                 currentY = nextY;
@@ -441,9 +430,7 @@ export class Aquarium {
             const rockSize = 20 + Math.random() * 30;
             const rockColor = Math.random() > 0.5 ? 0x696969 : 0x808080;
             
-            rock.beginFill(rockColor, 0.9);
-            rock.drawEllipse(x, y, rockSize, rockSize * 0.6);
-            rock.endFill();
+            rock.ellipse(x, y, rockSize, rockSize * 0.6).fill({ color: rockColor, alpha: 0.9 });
             
             this.backgroundContainer.addChild(rock);
         }
