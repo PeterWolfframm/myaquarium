@@ -123,33 +123,26 @@ export class Aquarium {
     }
     
     async createPixiApp() {
-        // Configure PIXI for v8+ compatibility
-        // Set default texture scale mode to nearest (for pixel art)
-        if (PIXI.BaseTexture && PIXI.BaseTexture.defaultOptions) {
-            PIXI.BaseTexture.defaultOptions.scaleMode = 'nearest';
-        }
-        
-        // Alternative for v8+ - set on Texture defaults
+        // Configure PIXI for v8 - use Texture.defaultOptions instead of BaseTexture
         if (PIXI.Texture && PIXI.Texture.defaultOptions) {
-            PIXI.Texture.defaultOptions.scaleMode = 'nearest';
+            PIXI.Texture.defaultOptions.scaleMode = PIXI.SCALE_MODES.NEAREST;
         }
         
-        // Create Pixi application using v8+ API
+        // Create Pixi application using v8 API - initialization is now asynchronous
         this.app = new PIXI.Application();
         
-        // Initialize the application with v8+ init method
+        // Initialize the application with v8 async pattern
         await this.app.init({
-            canvas: this.canvasElement,
+            canvas: this.canvasElement, // 'view' is deprecated, use 'canvas'
             resizeTo: this.canvasElement.parentElement,
             backgroundColor: 0x001133,
             antialias: false, // Keep pixel art sharp
             powerPreference: 'default', // Use safer power preference
-            resolution: 1, // Fixed resolution to avoid scaling issues
-            eventMode: 'static' // Ensure proper event handling
+            resolution: 1 // Fixed resolution to avoid scaling issues
         });
         
-        // Disable context menu on right click - use canvas instead of view for v8+
-        this.app.canvas.addEventListener('contextmenu', e => e.preventDefault());
+        // Disable context menu on right click - use the original canvas element
+        this.canvasElement.addEventListener('contextmenu', e => e.preventDefault());
     }
     
     calculateMinZoomScale() {
@@ -173,7 +166,7 @@ export class Aquarium {
             screenHeight: this.app.screen.height,
             worldWidth: this.worldWidth,
             worldHeight: this.worldHeight,
-            events: this.app.renderer.events || this.app.stage // v8+ compatibility
+            events: this.app.renderer.events // v8 uses events instead of interaction
         });
         
         // Add viewport to stage
@@ -224,14 +217,13 @@ export class Aquarium {
         // Properly disable interactivity to prevent PIXI event errors
         grid.interactive = false;
         grid.interactiveChildren = false;
-        grid.eventMode = 'none';
         grid.cursor = 'default';
         
         // Calculate line width based on current viewport scale for consistent appearance
         const currentScale = this.viewport ? this.viewport.scale.x : 1;
         const lineWidth = Math.max(0.5, 1 / currentScale); // Inverse scale to maintain consistent visual width
         
-        grid.setStrokeStyle({ width: lineWidth, color: 0xFFFFFF, alpha: 0.3 }); // White lines with low opacity
+        grid.lineStyle(lineWidth, 0xFFFFFF, 0.3); // White lines with low opacity
         
         // Vertical lines
         for (let x = 0; x <= this.tilesHorizontal; x++) {
@@ -265,7 +257,7 @@ export class Aquarium {
         
         // Clear and redraw the grid with new line width
         this.grid.clear();
-        this.grid.setStrokeStyle({ width: lineWidth, color: 0xFFFFFF, alpha: 0.3 });
+        this.grid.lineStyle(lineWidth, 0xFFFFFF, 0.3);
         
         // Vertical lines
         for (let x = 0; x <= this.tilesHorizontal; x++) {
@@ -296,14 +288,15 @@ export class Aquarium {
         // Properly disable interactivity to prevent PIXI event errors
         this.orangeCube.interactive = false;
         this.orangeCube.interactiveChildren = false;
-        this.orangeCube.eventMode = 'none';
         this.orangeCube.cursor = 'default';
         
         this.orangeCube.clear();
         
         // Draw a filled rectangle (cube) - positioned at 0,0
         const cubeSize = this.tileSize * 0.8;
-        this.orangeCube.rect(0, 0, cubeSize, cubeSize).fill(0xFF6600); // Orange color
+        this.orangeCube.beginFill(0xFF6600); // Orange color
+        this.orangeCube.drawRect(0, 0, cubeSize, cubeSize);
+        this.orangeCube.endFill();
         
         // Center the anchor point
         this.orangeCube.pivot.set(cubeSize / 2, cubeSize / 2);
@@ -356,7 +349,9 @@ export class Aquarium {
         
         // Create ocean floor
         const floor = new PIXI.Graphics();
-        floor.rect(0, this.worldHeight - 80, this.worldWidth, 80).fill({ color: 0x8B4513, alpha: 0.8 }); // Brown sand
+        floor.beginFill(0x8B4513, 0.8); // Brown sand
+        floor.drawRect(0, this.worldHeight - 80, this.worldWidth, 80);
+        floor.endFill();
         
         // Add some texture to the floor
         for (let i = 0; i < 50; i++) {
@@ -365,7 +360,9 @@ export class Aquarium {
             const size = 2 + Math.random() * 4;
             const color = Math.random() > 0.5 ? 0x654321 : 0xD2691E;
             
-            floor.circle(x, y, size).fill({ color: color, alpha: 0.6 });
+            floor.beginFill(color, 0.6);
+            floor.drawCircle(x, y, size);
+            floor.endFill();
         }
         // floor.endFill(); // No longer needed in PixiJS v8
         
@@ -377,7 +374,9 @@ export class Aquarium {
         
         // Create water effect gradient
         const waterGradient = new PIXI.Graphics();
-        waterGradient.rect(0, 0, this.worldWidth, this.worldHeight).fill({ color: 0x004466, alpha: 0.1 });
+        waterGradient.beginFill(0x004466, 0.1);
+        waterGradient.drawRect(0, 0, this.worldWidth, this.worldHeight);
+        waterGradient.endFill();
         
         this.backgroundContainer.addChild(waterGradient);
         
@@ -410,12 +409,14 @@ export class Aquarium {
                 const nextY = currentY - segmentHeight;
                 const width = 8 - (j * 0.8); // Taper toward top
                 
-                seaweed.poly([
+                seaweed.beginFill(0x228B22, 0.7);
+                seaweed.drawPolygon([
                     currentX - width/2, currentY,
                     currentX + width/2, currentY,
                     nextX + width/2, nextY,
                     nextX - width/2, nextY
-                ]).fill({ color: 0x228B22, alpha: 0.7 });
+                ]);
+                seaweed.endFill();
                 
                 currentX = nextX;
                 currentY = nextY;
@@ -440,7 +441,9 @@ export class Aquarium {
             const rockSize = 20 + Math.random() * 30;
             const rockColor = Math.random() > 0.5 ? 0x696969 : 0x808080;
             
-            rock.ellipse(x, y, rockSize, rockSize * 0.6).fill({ color: rockColor, alpha: 0.9 });
+            rock.beginFill(rockColor, 0.9);
+            rock.drawEllipse(x, y, rockSize, rockSize * 0.6);
+            rock.endFill();
             
             this.backgroundContainer.addChild(rock);
         }

@@ -73,10 +73,9 @@ export class Fish {
         try {
             this.sprite = new PIXI.Graphics();
             
-            // Ensure proper settings for PIXI v7+
+            // Ensure proper settings for PIXI v7
             this.sprite.interactive = false;
             this.sprite.interactiveChildren = false;
-            this.sprite.eventMode = 'none';
             
             this.updateFrame();
             
@@ -95,21 +94,29 @@ export class Fish {
             this.sprite.clear();
             
             // Draw fish body
-            this.sprite.ellipse(0, 0, FISH_CONFIG.SPRITE_SIZE.width, FISH_CONFIG.SPRITE_SIZE.height).fill({ color: this.color, alpha: 0.8 });
+            this.sprite.beginFill(this.color, 0.8);
+            this.sprite.drawEllipse(0, 0, FISH_CONFIG.SPRITE_SIZE.width, FISH_CONFIG.SPRITE_SIZE.height);
+            this.sprite.endFill();
             
             // Tail animation (oscillates based on frame)
             const tailOffset = Math.sin(this.currentFrame / this.frameCount * Math.PI * 2) * 3;
-            this.sprite.poly([
+            this.sprite.beginFill(this.color, 0.6);
+            this.sprite.drawPolygon([
                 -15, tailOffset - 4,
                 -25, tailOffset - 8,
                 -25, tailOffset + 8,
                 -15, tailOffset + 4
-            ]).fill({ color: this.color, alpha: 0.6 });
+            ]);
+            this.sprite.endFill();
             
             // Eye
-            this.sprite.circle(8, -2, FISH_CONFIG.EYE_SIZE).fill(COLORS.EYE_WHITE);
+            this.sprite.beginFill(COLORS.EYE_WHITE);
+            this.sprite.drawCircle(8, -2, FISH_CONFIG.EYE_SIZE);
+            this.sprite.endFill();
             
-            this.sprite.circle(9, -2, FISH_CONFIG.EYE_SIZE / 2).fill(COLORS.EYE_BLACK);
+            this.sprite.beginFill(COLORS.EYE_BLACK);
+            this.sprite.drawCircle(9, -2, FISH_CONFIG.EYE_SIZE / 2);
+            this.sprite.endFill();
             
         } catch (error) {
             console.error('Error updating fish frame:', error);

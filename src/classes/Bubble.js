@@ -38,7 +38,6 @@ export class Bubble {
         // Disable interactivity to prevent PIXI event errors
         this.sprite.interactive = false;
         this.sprite.interactiveChildren = false;
-        this.sprite.eventMode = 'none';
         
         this.updateGraphics();
     }
@@ -50,10 +49,14 @@ export class Bubble {
         this.sprite.clear();
         
         // Draw bubble with gradient effect
-        this.sprite.circle(0, 0, this.size).fill({ color: COLORS.BUBBLE_BASE, alpha: this.opacity });
+        this.sprite.beginFill(COLORS.BUBBLE_BASE, this.opacity);
+        this.sprite.drawCircle(0, 0, this.size);
+        this.sprite.endFill();
         
         // Add highlight for 3D effect
-        this.sprite.circle(-this.size * 0.3, -this.size * 0.3, this.size * 0.3).fill({ color: COLORS.BUBBLE_HIGHLIGHT, alpha: this.opacity * 0.6 });
+        this.sprite.beginFill(COLORS.BUBBLE_HIGHLIGHT, this.opacity * 0.6);
+        this.sprite.drawCircle(-this.size * 0.3, -this.size * 0.3, this.size * 0.3);
+        this.sprite.endFill();
     }
     
     /**
@@ -106,7 +109,6 @@ export class BubbleManager {
         // Disable interactivity to prevent PIXI event errors
         this.bubbleContainer.interactive = false;
         this.bubbleContainer.interactiveChildren = false;
-        this.bubbleContainer.eventMode = 'none';
         
         this.container.addChild(this.bubbleContainer);
         
