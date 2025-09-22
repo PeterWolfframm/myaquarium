@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'preact/hooks';
 import { useAquariumStore } from '../stores/aquariumStore.js';
+import Modal from './Modal.jsx';
 
 function AquariumSettings({ isVisible, onClose }) {
   const {
@@ -64,14 +65,14 @@ function AquariumSettings({ isVisible, onClose }) {
   };
 
   return (
-    <div className="settings-overlay">
-      <div className="settings-panel">
-        <div className="settings-header">
-          <h2>Aquarium Settings</h2>
-          <button className="close-button" onClick={onClose}>×</button>
-        </div>
-        
-        <div className="settings-content">
+    <Modal 
+      isVisible={isVisible} 
+      onClose={onClose} 
+      title="Aquarium Settings"
+      size="medium"
+      className="settings-modal"
+    >
+      <div className="settings-content">
           <div className="setting-group">
             <h3>Default View</h3>
             <div className="input-group">
@@ -217,12 +218,11 @@ function AquariumSettings({ isVisible, onClose }) {
           </div>
         </div>
 
-        <div className="settings-actions">
-          <button className="reset-button" onClick={handleReset}>Reset</button>
-          <button className="apply-button" onClick={handleApply}>Apply</button>
-        </div>
+      <div className="settings-actions">
+        <button className="reset-button" onClick={handleReset}>Reset</button>
+        <button className="apply-button" onClick={handleApply}>Apply</button>
       </div>
-    </div>
+    </Modal>
   );
 }
 

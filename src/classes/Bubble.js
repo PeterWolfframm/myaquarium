@@ -50,14 +50,10 @@ export class Bubble {
         this.sprite.clear();
         
         // Draw bubble with gradient effect
-        this.sprite.beginFill(COLORS.BUBBLE_BASE, this.opacity);
-        this.sprite.drawCircle(0, 0, this.size);
+        this.sprite.circle(0, 0, this.size).fill({ color: COLORS.BUBBLE_BASE, alpha: this.opacity });
         
         // Add highlight for 3D effect
-        this.sprite.beginFill(COLORS.BUBBLE_HIGHLIGHT, this.opacity * 0.6);
-        this.sprite.drawCircle(-this.size * 0.3, -this.size * 0.3, this.size * 0.3);
-        
-        this.sprite.endFill();
+        this.sprite.circle(-this.size * 0.3, -this.size * 0.3, this.size * 0.3).fill({ color: COLORS.BUBBLE_HIGHLIGHT, alpha: this.opacity * 0.6 });
     }
     
     /**

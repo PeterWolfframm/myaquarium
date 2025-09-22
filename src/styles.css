@@ -54,18 +54,89 @@ body {
     50% { transform: translateY(-10px); }
 }
 
-/* Fish Editor Styles */
-.fish-editor-overlay {
+/* Modal Component Styles */
+.modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    width: 100vw;
+    height: 100vh;
     background: rgba(0, 0, 0, 0.8);
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1001;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+}
+
+.modal-panel {
+    background: rgba(0, 17, 34, 0.95);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    padding: 0;
+    max-height: 90vh;
+    overflow: hidden;
+    position: relative;
+}
+
+.modal-small {
+    min-width: 300px;
+    max-width: 500px;
+    width: 90%;
+}
+
+.modal-medium {
+    min-width: 400px;
+    max-width: 600px;
+    width: 90%;
+}
+
+.modal-large {
+    min-width: 600px;
+    max-width: 900px;
+    width: 90%;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 25px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 34, 68, 0.7);
+}
+
+.modal-title {
+    margin: 0;
+    color: #ffffff;
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.modal-close-button {
+    background: none;
+    border: none;
+    color: #ffffff;
+    font-size: 1.5em;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s ease;
+}
+
+.modal-close-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.modal-content {
+    padding: 20px 25px;
+    max-height: calc(90vh - 80px);
+    overflow-y: auto;
 }
 
 .fish-editor-panel {
@@ -331,18 +402,104 @@ body {
     image-rendering: crisp-edges;
 }
 
-.timer-overlay {
+/* Collapsible Component Styles */
+.collapsible {
     position: absolute;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
     z-index: 10;
-    text-align: center;
     background: rgba(0, 0, 0, 0.7);
-    padding: 15px 25px;
     border-radius: 10px;
     backdrop-filter: blur(5px);
     border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+}
+
+.collapsible-top-left {
+    top: 20px;
+    left: 20px;
+}
+
+.collapsible-top-right {
+    top: 70px;
+    right: 20px;
+}
+
+.collapsible-center {
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.collapsible-small {
+    min-width: 200px;
+}
+
+.collapsible-medium {
+    min-width: 250px;
+}
+
+.collapsible-large {
+    min-width: 350px;
+}
+
+.collapsible-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.2s ease;
+}
+
+.collapsible-header:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.collapsible-title {
+    margin: 0;
+    color: #ffffff;
+    font-size: 1em;
+    font-weight: bold;
+}
+
+.collapsible-toggle {
+    background: none;
+    border: none;
+    color: #ffffff;
+    font-size: 1.2em;
+    cursor: pointer;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    transition: background-color 0.2s ease;
+}
+
+.collapsible-toggle:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.collapsible-content {
+    padding: 0 20px 15px 20px;
+    animation: slideDown 0.3s ease;
+}
+
+.collapsible.closed {
+    opacity: 0.8;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .timer {
@@ -517,7 +674,7 @@ body {
         font-size: 0.8em;
     }
     
-    .timer-overlay {
+    .collapsible-center {
         padding: 10px 15px;
     }
     
@@ -533,11 +690,13 @@ body {
         font-size: 0.8em;
     }
     
-    .data-panel {
-        padding: 10px 15px;
-        min-width: 200px;
+    .collapsible-top-right {
         top: 60px;
         right: 15px;
+    }
+    
+    .collapsible-medium {
+        min-width: 200px;
     }
     
     .data-section {
@@ -575,11 +734,13 @@ body {
         font-size: 0.75em;
     }
     
-    .data-panel {
-        padding: 8px 12px;
-        min-width: 180px;
+    .collapsible-top-right {
         top: 50px;
         right: 10px;
+    }
+    
+    .collapsible-medium {
+        min-width: 180px;
     }
     
     .control-buttons {
@@ -596,31 +757,13 @@ body {
     }
 }
 
-/* Settings Overlay Styles */
-.settings-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.8);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    backdrop-filter: blur(5px);
+/* Component-specific styles */
+.timer-content {
+    text-align: center;
 }
 
-.settings-panel {
-    background: rgba(0, 17, 34, 0.95);
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    border-radius: 15px;
-    padding: 20px;
-    min-width: 400px;
-    max-width: 600px;
-    max-height: 80vh;
-    overflow-y: auto;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+.timer-content .mood-controls {
+    margin-bottom: 15px;
 }
 
 .settings-header {
@@ -850,19 +993,7 @@ body {
     border-color: #ff9900;
 }
 
-/* Data Panel Styles */
-.data-panel {
-    position: absolute;
-    top: 70px;
-    right: 20px;
-    z-index: 10;
-    background: rgba(0, 0, 0, 0.7);
-    padding: 15px 20px;
-    border-radius: 10px;
-    backdrop-filter: blur(5px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    min-width: 250px;
-}
+/* Legacy data panel styles for content */
 
 .data-section {
     display: flex;

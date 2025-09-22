@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'preact/hooks';
 import { databaseService } from '../services/database.js';
+import Collapsible from './Collapsible.jsx';
 
-function TimerOverlay({ time, mood, onMoodChange, currentSession, onSessionsLoaded }) {
+function TimerOverlay({ time, mood, onMoodChange, currentSession, onSessionsLoaded, isOpen, onToggle }) {
   const [recentSessions, setRecentSessions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [switchingMood, setSwitchingMood] = useState(null);
@@ -75,52 +76,61 @@ function TimerOverlay({ time, mood, onMoodChange, currentSession, onSessionsLoad
   };
 
   return (
-    <div className="timer-overlay">
-      <div className="timer">{time}</div>
-      <div className="mood-controls">
-        {moods.map(({ id, label }) => (
-          <button
-            key={id}
-            className={`${mood === id ? 'active' : ''} ${switchingMood === id ? 'switching' : ''}`}
-            onClick={() => {
-              setSwitchingMood(id);
-              onMoodChange(id);
-              // Clear switching state after a delay
-              setTimeout(() => setSwitchingMood(null), 500);
-            }}
-            disabled={switchingMood === id}
-          >
-            {switchingMood === id ? '...' : label}
-          </button>
-        ))}
+    <Collapsible 
+      title={`⏱️ Timer - ${time}`}
+      position="center"
+      size="medium"
+      isOpen={isOpen}
+      onToggle={onToggle}
+      className="timer-collapsible"
+      hideWhenClosed={true}
+    >
+      <div className="timer-content">
+        <div className="mood-controls">
+          {moods.map(({ id, label }) => (
+            <button
+              key={id}
+              className={`${mood === id ? 'active' : ''} ${switchingMood === id ? 'switching' : ''}`}
+              onClick={() => {
+                setSwitchingMood(id);
+                onMoodChange(id);
+                // Clear switching state after a delay
+                setTimeout(() => setSwitchingMood(null), 500);
+              }}
+              disabled={switchingMood === id}
+            >
+              {switchingMood === id ? '...' : label}
+            </button>
+          ))}
+        </div>
+        
+        {/* Recent Sessions */}
+        <div className="recent-sessions">
+          <h4>Recent Sessions</h4>
+          {loading ? (
+            <div className="session-loading">Loading...</div>
+          ) : recentSessions.length > 0 ? (
+            <div className="sessions-list">
+              {recentSessions.map((session, index) => (
+                <div key={session.id} className="session-item">
+                  <span className="session-mood">
+                    {getMoodIcon(session.mood)} {session.mood}
+                  </span>
+                  <span className="session-time">
+                    {formatSessionTime(session.start_time)}
+                  </span>
+                  <span className="session-duration">
+                    {formatDuration(session.duration_seconds)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="no-sessions">No recent sessions</div>
+          )}
+        </div>
       </div>
-      
-      {/* Recent Sessions */}
-      <div className="recent-sessions">
-        <h4>Recent Sessions</h4>
-        {loading ? (
-          <div className="session-loading">Loading...</div>
-        ) : recentSessions.length > 0 ? (
-          <div className="sessions-list">
-            {recentSessions.map((session, index) => (
-              <div key={session.id} className="session-item">
-                <span className="session-mood">
-                  {getMoodIcon(session.mood)} {session.mood}
-                </span>
-                <span className="session-time">
-                  {formatSessionTime(session.start_time)}
-                </span>
-                <span className="session-duration">
-                  {formatDuration(session.duration_seconds)}
-                </span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="no-sessions">No recent sessions</div>
-        )}
-      </div>
-    </div>
+    </Collapsible>
   );
 }
 

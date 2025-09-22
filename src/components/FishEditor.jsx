@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'preact/hooks';
 import { useFishStore } from '../stores/fishStore.js';
+import Modal from './Modal.jsx';
 
 function FishEditor({ isVisible, onClose }) {
   const { 
@@ -69,21 +70,21 @@ function FishEditor({ isVisible, onClose }) {
   ];
 
   return (
-    <div className="fish-editor-overlay">
-      <div className="fish-editor-panel">
-        <div className="fish-editor-header">
-          <h2>Fish Editor</h2>
-          <button className="close-button" onClick={onClose}>×</button>
+    <Modal 
+      isVisible={isVisible} 
+      onClose={onClose} 
+      title="Fish Editor"
+      size="large"
+      className="fish-editor-modal"
+    >
+      {syncError && (
+        <div className="error-message">
+          Error: {syncError}
+          <button onClick={clearSyncError}>×</button>
         </div>
-        
-        {syncError && (
-          <div className="error-message">
-            Error: {syncError}
-            <button onClick={clearSyncError}>×</button>
-          </div>
-        )}
-        
-        <div className="fish-editor-content">
+      )}
+      
+      <div className="fish-editor-content">
           <div className="fish-list">
             <h3>Your Fish ({fish.length})</h3>
             {isLoading ? (
@@ -188,8 +189,7 @@ function FishEditor({ isVisible, onClose }) {
             </div>
           )}
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 }
 

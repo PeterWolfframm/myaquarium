@@ -224,14 +224,14 @@ function App() {
         </button>
       </div>
 
-      {showTimer && (
-        <TimerOverlay 
-          time={time} 
-          mood={mood} 
-          onMoodChange={handleMoodChange}
-          currentSession={currentSession}
-        />
-      )}
+      <TimerOverlay 
+        time={time} 
+        mood={mood} 
+        onMoodChange={handleMoodChange}
+        currentSession={currentSession}
+        isOpen={showTimer}
+        onToggle={toggleTimer}
+      />
       <AquariumContainer 
         mood={mood} 
         onAquariumReady={handleAquariumReady}
@@ -244,14 +244,14 @@ function App() {
         isVisible={showFishEditor}
         onClose={closeFishEditor}
       />
-      {showStats && (
-        <DataPanel 
-          visibleCubes={visibleCubes}
-          fishInfo={fishInfo}
-          viewportPosition={viewportPosition}
-          tileDimensions={tileDimensions}
-        />
-      )}
+      <DataPanel 
+        visibleCubes={visibleCubes}
+        fishInfo={fishInfo}
+        viewportPosition={viewportPosition}
+        tileDimensions={tileDimensions}
+        isOpen={showStats}
+        onToggle={toggleStats}
+      />
     </div>
   );
 }

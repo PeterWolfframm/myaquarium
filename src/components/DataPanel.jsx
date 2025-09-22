@@ -1,10 +1,19 @@
 import { useAquariumStore } from '../stores/aquariumStore.js';
+import Collapsible from './Collapsible.jsx';
 
-function DataPanel({ visibleCubes, fishInfo, viewportPosition, tileDimensions }) {
+function DataPanel({ visibleCubes, fishInfo, viewportPosition, tileDimensions, isOpen, onToggle }) {
   const { showGrid, toggleGrid } = useAquariumStore();
 
   return (
-    <div className="data-panel">
+    <Collapsible 
+      title="📊 Stats"
+      position="top-right"
+      size="medium"
+      isOpen={isOpen}
+      onToggle={onToggle}
+      className="stats-collapsible"
+      hideWhenClosed={true}
+    >
       <div className="data-section">
         <div className="cube-counter">
           Visible Cubes: {visibleCubes || 0}
@@ -37,7 +46,7 @@ function DataPanel({ visibleCubes, fishInfo, viewportPosition, tileDimensions })
           </label>
         </div>
       </div>
-    </div>
+    </Collapsible>
   );
 }
 
