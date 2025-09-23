@@ -3,6 +3,7 @@ import { Viewport } from 'pixi-viewport';
 import { FishManager } from './Fish.js';
 import { BubbleManager } from './Bubble.js';
 import { useAquariumStore } from '../stores/aquariumStore.js';
+import { AQUARIUM_CONFIG, NAVIGATION, UI_CONFIG, COLORS } from '../constants/index.js';
 
 export class Aquarium {
     constructor(canvasElement) {
@@ -20,15 +21,21 @@ export class Aquarium {
             this.updateFromStore(state);
         });
         
-        // Initialize dimensions from store (with initial load flag)
-        this.updateDimensionsFromStore(true);
+        // Fixed tile system - always 64px tiles
+        this.tileSize = AQUARIUM_CONFIG.TILE_SIZE;
+        this.tilesHorizontal = this.store.tilesHorizontal;
+        this.tilesVertical = this.store.tilesVertical;
+        this.worldWidth = this.tilesHorizontal * this.tileSize;
+        this.worldHeight = this.tilesVertical * this.tileSize;
+        
+        console.log(`Aquarium initialized: ${this.tilesHorizontal}x${this.tilesVertical} tiles (${this.worldWidth}x${this.worldHeight}px) with fixed ${this.tileSize}px tiles`);
         
         // Safe zone for UI overlay (center area)
         this.safeZone = {
-            x: this.worldWidth / 2 - 200,
-            y: 50,
-            width: 400,
-            height: 150
+            x: this.worldWidth / 2 - UI_CONFIG.SAFE_ZONE.WIDTH / 2,
+            y: UI_CONFIG.SAFE_ZONE.TOP_MARGIN,
+            width: UI_CONFIG.SAFE_ZONE.WIDTH,
+            height: UI_CONFIG.SAFE_ZONE.HEIGHT
         };
         
         // Layer containers
@@ -42,7 +49,7 @@ export class Aquarium {
         this.orangeCube = null;
         this.cubePosition = { x: 0, y: 0 }; // Grid position
         this.lastMoveTime = 0;
-        this.moveInterval = 1000; // 1 second
+        this.moveInterval = UI_CONFIG.CUBE_MOVE_INTERVAL;
         
         // Current mood
         this.currentMood = 'work';
@@ -50,13 +57,16 @@ export class Aquarium {
         // Grid visibility state
         this.showGrid = this.store.showGrid;
         
+        // Zoom level tracking
+        this.currentZoomLevel = 1.0;
+        this.defaultVisibleVerticalTiles = this.store.defaultVisibleVerticalTiles || 20;
+        
         this.init().catch(error => {
             console.error('Error initializing aquarium:', error);
         });
     }
     
     async init() {
-        this.calculateDimensions();
         await this.createPixiApp();
         this.setupViewport();
         this.createLayers();
@@ -76,38 +86,42 @@ export class Aquarium {
         console.log(`Background container children: ${this.backgroundContainer.children.length}`);
     }
     
-    updateDimensionsFromStore(isInitialLoad = false) {
-        const state = this.store;
-        const viewportHeight = this.app ? this.app.screen.height : window.innerHeight;
-        
-        if (isInitialLoad) {
-            // On initial load, always calculate tile size based on default visible tiles
-            this.tileSize = state.calculateDefaultTileSize(viewportHeight);
-        } else if (state.sizeMode === 'adaptive') {
-            this.tileSize = state.calculateAdaptiveTileSize(viewportHeight);
-        } else {
-            this.tileSize = state.tileSize;
-        }
-        
-        this.tilesHorizontal = state.tilesHorizontal;
-        this.tilesVertical = state.tilesVertical;
-        
-        this.worldWidth = this.tilesHorizontal * this.tileSize;
-        this.worldHeight = this.tilesVertical * this.tileSize;
-        
-        console.log(`Aquarium dimensions: ${this.worldWidth}x${this.worldHeight} (${this.tilesHorizontal}x${this.tilesVertical} tiles, ${this.tileSize}px tile size)`);
-        console.log(`Screen dimensions: ${window.innerWidth}x${window.innerHeight}`);
-        console.log(`Visible vertical tiles: ~${Math.floor(viewportHeight / this.tileSize)}`);
-    }
-    
     updateFromStore(newState) {
         // Check if grid visibility has changed
         const gridVisibilityChanged = newState.showGrid !== this.showGrid;
         
+        // Check if dimensions have changed
+        const dimensionsChanged = 
+            newState.tilesHorizontal !== this.store.tilesHorizontal ||
+            newState.tilesVertical !== this.store.tilesVertical;
+            
+        // Check if default zoom changed
+        const defaultZoomChanged = newState.defaultVisibleVerticalTiles !== this.store.defaultVisibleVerticalTiles;
+        
         this.store = newState;
-        if (this.app && this.viewport) {
-            this.updateDimensionsFromStore(false);
-            this.resize();
+        
+        // Update default visible tiles
+        if (defaultZoomChanged) {
+            this.defaultVisibleVerticalTiles = newState.defaultVisibleVerticalTiles;
+            if (this.app && this.viewport) {
+                this.setDefaultZoom();
+            }
+        }
+        
+        if (dimensionsChanged) {
+            // Update tile counts and recalculate world dimensions
+            this.tilesHorizontal = newState.tilesHorizontal;
+            this.tilesVertical = newState.tilesVertical;
+            this.worldWidth = this.tilesHorizontal * this.tileSize;
+            this.worldHeight = this.tilesVertical * this.tileSize;
+            
+            console.log(`Dimensions changed: ${this.tilesHorizontal}x${this.tilesVertical} tiles (${this.worldWidth}x${this.worldHeight}px)`);
+            
+            if (this.app && this.viewport) {
+                // Force update of zoom constraints when dimensions change
+                this.updateZoomConstraints();
+                this.resize();
+            }
         }
         
         // Update grid visibility if changed
@@ -117,9 +131,29 @@ export class Aquarium {
         }
     }
     
-    calculateDimensions() {
-        // Update dimensions based on current store state
-        this.updateDimensionsFromStore(false);
+    /**
+     * Force update zoom constraints - useful when world dimensions change
+     */
+    updateZoomConstraints() {
+        if (!this.viewport || !this.app) return;
+        
+        const minScale = this.calculateMinZoomScale();
+        
+        // Remove and re-add clamp-zoom plugin to ensure constraints are updated
+        this.viewport.plugins.remove('clamp-zoom');
+        this.viewport.clampZoom({
+            minScale: minScale,
+            maxScale: NAVIGATION.MAX_ZOOM_SCALE
+        });
+        
+        console.log(`Force updated zoom constraints: minScale = ${minScale.toFixed(4)}`);
+        
+        // If current zoom is less than the new minimum, adjust it
+        const currentScale = this.viewport.scale.x;
+        if (currentScale < minScale) {
+            this.viewport.setZoom(minScale, true);
+            console.log(`Adjusted zoom from ${currentScale.toFixed(4)} to ${minScale.toFixed(4)}`);
+        }
     }
     
     async createPixiApp() {
@@ -135,7 +169,7 @@ export class Aquarium {
         await this.app.init({
             canvas: this.canvasElement, // 'view' is deprecated, use 'canvas'
             resizeTo: this.canvasElement.parentElement,
-            backgroundColor: 0x001133,
+            backgroundColor: COLORS.BACKGROUND,
             antialias: false, // Keep pixel art sharp
             powerPreference: 'default', // Use safer power preference
             resolution: 1 // Fixed resolution to avoid scaling issues
@@ -145,18 +179,35 @@ export class Aquarium {
         this.canvasElement.addEventListener('contextmenu', e => e.preventDefault());
     }
     
+    /**
+     * Calculate minimum zoom scale to ensure you cannot zoom out more than showing all vertical tiles
+     * This is the key constraint requested by the user
+     */
     calculateMinZoomScale() {
-        // Calculate minimum scale needed to show all vertical tiles
-        // This ensures we can't zoom out further than showing the entire world height
         if (!this.app || this.worldHeight <= 0) {
-            return 0.1; // Fallback to original minimum
+            console.warn('Cannot calculate zoom: app or worldHeight invalid', {
+                app: !!this.app,
+                worldHeight: this.worldHeight
+            });
+            // Return a reasonable fallback when we can't calculate properly
+            return 0.5;
         }
         
+        // Calculate the scale needed to show all vertical tiles in the viewport
         const viewportHeight = this.app.screen.height;
-        const minScale = viewportHeight / this.worldHeight;
+        const scaleToFit = viewportHeight / this.worldHeight;
+
+        // Always use the scale that fits all vertical tiles - never allow zooming out beyond this
+        const minScaleTarget = scaleToFit;
         
-        // Ensure we have a reasonable minimum (not too small)
-        return Math.max(0.05, minScale);
+        // Use the calculated scale that shows all tiles - ignore the hardcoded minimum
+        // because it's too permissive (0.1) and allows zooming out beyond the aquarium bounds
+        const minScale = minScaleTarget;
+        
+        console.log(`Zoom constraint: minScale = ${minScale.toFixed(4)} (viewport: ${viewportHeight}px, world: ${this.worldHeight}px, ${this.tilesVertical} vertical tiles)`);
+        console.log(`At min scale, visible tiles: ${Math.round(viewportHeight / (this.tileSize * minScale))}`);
+        
+        return minScale;
     }
 
     setupViewport() {
@@ -179,21 +230,42 @@ export class Aquarium {
         this.viewport
             .clampZoom({
                 minScale: minScale,
-                maxScale: 3.0
+                maxScale: NAVIGATION.MAX_ZOOM_SCALE
             })
             .clamp({
                 left: 0,
                 right: this.worldWidth,
                 top: 0,
                 bottom: this.worldHeight,
-                underflow: 'center'
+                underflow: NAVIGATION.CLAMP_UNDERFLOW
             });
         
-        // Start centered horizontally but show ground at bottom
-        // Position viewport to show the ground (bottom of world) and center horizontally
+        // Explicitly disable mouse wheel zooming - keyboard only
+        this.viewport.options.disableOnContextMenu = true;
+        
+        // Remove any wheel plugin if it exists
+        if (this.viewport.plugins.get('wheel')) {
+            this.viewport.plugins.remove('wheel');
+        }
+        
+        // Set up zoom level tracking
+        this.viewport.on('zoomed', () => {
+            this.updateCurrentZoomLevel();
+            this.updateGridForScale();
+        });
+        
+        // Start centered horizontally and show the bottom (ground) of the aquarium
         const viewportCenterX = this.worldWidth / 2;
-        const viewportCenterY = this.worldHeight - (this.app.screen.height / 2);
-        this.viewport.moveCenter(viewportCenterX, Math.max(this.app.screen.height / 2, viewportCenterY));
+        const viewportCenterY = Math.max(
+            this.app.screen.height / 2, 
+            this.worldHeight - (this.app.screen.height / 2)
+        );
+        this.viewport.moveCenter(viewportCenterX, viewportCenterY);
+        
+        // Set default zoom level based on default visible vertical tiles
+        this.setDefaultZoom();
+        
+        console.log(`Viewport setup complete: ${this.worldWidth}x${this.worldHeight}px world, min zoom: ${minScale.toFixed(4)}`);
     }
     
     createLayers() {
@@ -210,8 +282,11 @@ export class Aquarium {
         this.viewport.addChild(this.fishContainer);
     }
     
+    /**
+     * Create grid that draws EVERY tile as requested by the user
+     * No performance optimizations that skip tiles - always draw the complete grid
+     */
     createGrid() {
-        // Create visible tile grid
         const grid = new PIXI.Graphics();
         
         // Properly disable interactivity to prevent PIXI event errors
@@ -219,25 +294,21 @@ export class Aquarium {
         grid.interactiveChildren = false;
         grid.cursor = 'default';
         
-        // Calculate line width based on current viewport scale for consistent appearance
-        const currentScale = this.viewport ? this.viewport.scale.x : 1;
-        const lineWidth = Math.max(0.5, 1 / currentScale); // Inverse scale to maintain consistent visual width
-        
-        // PIXI.js v8: Set stroke style
+        // PIXI.js v8: Set stroke style with fixed line width
         grid.setStrokeStyle({
-            width: lineWidth,
-            color: 0xFFFFFF,
-            alpha: 0.3
+            width: UI_CONFIG.GRID_LINE_WIDTH,
+            color: COLORS.GRID_LINES,
+            alpha: UI_CONFIG.GRID_LINE_OPACITY
         });
         
-        // Vertical lines
+        // Draw EVERY vertical line (one for each tile column + boundary)
         for (let x = 0; x <= this.tilesHorizontal; x++) {
             const xPos = x * this.tileSize;
             grid.moveTo(xPos, 0);
             grid.lineTo(xPos, this.worldHeight);
         }
         
-        // Horizontal lines
+        // Draw EVERY horizontal line (one for each tile row + boundary)
         for (let y = 0; y <= this.tilesVertical; y++) {
             const yPos = y * this.tileSize;
             grid.moveTo(0, yPos);
@@ -254,41 +325,10 @@ export class Aquarium {
         
         // Set initial visibility based on store state
         this.updateGridVisibility();
-    }
-    
-    updateGridForScale() {
-        // Update grid line width based on current scale to maintain consistent appearance
-        if (!this.grid || !this.viewport) return;
         
-        const currentScale = this.viewport.scale.x;
-        const lineWidth = Math.max(0.5, 1 / currentScale); // Inverse scale to maintain consistent visual width
-        
-        // Clear and redraw the grid with new line width
-        this.grid.clear();
-        
-        // PIXI.js v8: Set stroke style
-        this.grid.setStrokeStyle({
-            width: lineWidth,
-            color: 0xFFFFFF,
-            alpha: 0.3
-        });
-        
-        // Vertical lines
-        for (let x = 0; x <= this.tilesHorizontal; x++) {
-            const xPos = x * this.tileSize;
-            this.grid.moveTo(xPos, 0);
-            this.grid.lineTo(xPos, this.worldHeight);
-        }
-        
-        // Horizontal lines
-        for (let y = 0; y <= this.tilesVertical; y++) {
-            const yPos = y * this.tileSize;
-            this.grid.moveTo(0, yPos);
-            this.grid.lineTo(this.worldWidth, yPos);
-        }
-        
-        // PIXI.js v8: Apply the stroke
-        this.grid.stroke();
+        const totalLines = this.tilesHorizontal + this.tilesVertical + 2;
+        console.log(`Grid created: ${totalLines} lines total (${this.tilesHorizontal + 1} vertical + ${this.tilesVertical + 1} horizontal)`);
+        console.log(`Grid covers ${this.tilesHorizontal}x${this.tilesVertical} tiles at ${this.tileSize}px each`);
     }
     
     updateGridVisibility() {
@@ -296,6 +336,75 @@ export class Aquarium {
         if (this.gridContainer) {
             this.gridContainer.visible = this.showGrid;
         }
+    }
+    
+    /**
+     * Set default zoom level based on default visible vertical tiles
+     */
+    setDefaultZoom() {
+        if (!this.viewport || !this.app || this.defaultVisibleVerticalTiles <= 0) return;
+        
+        // Calculate scale needed to show the specified number of vertical tiles
+        const viewportHeight = this.app.screen.height;
+        const targetTileHeight = this.defaultVisibleVerticalTiles * this.tileSize;
+        const defaultScale = viewportHeight / targetTileHeight;
+        
+        // Ensure the scale is within valid bounds
+        const minScale = this.calculateMinZoomScale();
+        const maxScale = NAVIGATION.MAX_ZOOM_SCALE;
+        const clampedScale = Math.max(minScale, Math.min(maxScale, defaultScale));
+        
+        this.viewport.setZoom(clampedScale, true);
+        this.updateCurrentZoomLevel();
+        
+        console.log(`Set default zoom: ${clampedScale.toFixed(4)}x to show ${this.defaultVisibleVerticalTiles} vertical tiles`);
+    }
+    
+    /**
+     * Update current zoom level tracking
+     */
+    updateCurrentZoomLevel() {
+        if (this.viewport) {
+            this.currentZoomLevel = this.viewport.scale.x;
+        }
+    }
+    
+    /**
+     * Update grid line width based on current zoom level for consistent appearance
+     */
+    updateGridForScale() {
+        if (!this.grid || !this.viewport) return;
+        
+        const currentScale = this.viewport.scale.x;
+        // Calculate line width that maintains visual consistency
+        const lineWidth = Math.max(0.5, UI_CONFIG.GRID_LINE_WIDTH / currentScale);
+        
+        // Clear and redraw the grid with new line width
+        this.grid.clear();
+        
+        // PIXI.js v8: Set stroke style with scaled line width
+        this.grid.setStrokeStyle({
+            width: lineWidth,
+            color: COLORS.GRID_LINES,
+            alpha: UI_CONFIG.GRID_LINE_OPACITY
+        });
+        
+        // Draw EVERY vertical line
+        for (let x = 0; x <= this.tilesHorizontal; x++) {
+            const xPos = x * this.tileSize;
+            this.grid.moveTo(xPos, 0);
+            this.grid.lineTo(xPos, this.worldHeight);
+        }
+        
+        // Draw EVERY horizontal line
+        for (let y = 0; y <= this.tilesVertical; y++) {
+            const yPos = y * this.tileSize;
+            this.grid.moveTo(0, yPos);
+            this.grid.lineTo(this.worldWidth, yPos);
+        }
+        
+        // Apply the stroke
+        this.grid.stroke();
     }
     
     createOrangeCube() {
@@ -310,9 +419,9 @@ export class Aquarium {
         this.orangeCube.clear();
         
         // Draw a filled rectangle (cube) - positioned at 0,0
-        const cubeSize = this.tileSize * 0.8;
+        const cubeSize = this.tileSize * UI_CONFIG.CUBE_SIZE_RATIO;
         this.orangeCube.rect(0, 0, cubeSize, cubeSize);
-        this.orangeCube.fill(0xFF6600); // Orange color
+        this.orangeCube.fill(COLORS.ORANGE_CUBE);
         
         // Center the anchor point
         this.orangeCube.pivot.set(cubeSize / 2, cubeSize / 2);
@@ -365,15 +474,15 @@ export class Aquarium {
         
         // Create ocean floor
         const floor = new PIXI.Graphics();
-        floor.rect(0, this.worldHeight - 80, this.worldWidth, 80);
-        floor.fill({ color: 0x8B4513, alpha: 0.8 }); // Brown sand
+        floor.rect(0, this.worldHeight - UI_CONFIG.FLOOR_HEIGHT, this.worldWidth, UI_CONFIG.FLOOR_HEIGHT);
+        floor.fill({ color: COLORS.SAND_BASE, alpha: 0.8 });
         
         // Add some texture to the floor
         for (let i = 0; i < 50; i++) {
             const x = Math.random() * this.worldWidth;
-            const y = this.worldHeight - 80 + Math.random() * 80;
+            const y = this.worldHeight - UI_CONFIG.FLOOR_HEIGHT + Math.random() * UI_CONFIG.FLOOR_HEIGHT;
             const size = 2 + Math.random() * 4;
-            const color = Math.random() > 0.5 ? 0x654321 : 0xD2691E;
+            const color = COLORS.SAND_TEXTURES[Math.floor(Math.random() * COLORS.SAND_TEXTURES.length)];
             
             floor.circle(x, y, size);
             floor.fill({ color: color, alpha: 0.6 });
@@ -388,7 +497,7 @@ export class Aquarium {
         // Create water effect gradient
         const waterGradient = new PIXI.Graphics();
         waterGradient.rect(0, 0, this.worldWidth, this.worldHeight);
-        waterGradient.fill({ color: 0x004466, alpha: 0.1 });
+        waterGradient.fill({ color: COLORS.WATER_OVERLAY, alpha: 0.1 });
         
         this.backgroundContainer.addChild(waterGradient);
         
@@ -397,11 +506,11 @@ export class Aquarium {
     }
     
     createSeaweed() {
-        const seaweedCount = Math.floor(this.worldWidth / 300); // One every 300 pixels
+        const seaweedCount = Math.floor(this.worldWidth / UI_CONFIG.SEAWEED_SPACING);
         
         for (let i = 0; i < seaweedCount; i++) {
-            const x = (i + 0.5) * 300 + (Math.random() - 0.5) * 100;
-            const height = 100 + Math.random() * 150;
+            const x = (i + 0.5) * UI_CONFIG.SEAWEED_SPACING + (Math.random() - 0.5) * 100;
+            const height = UI_CONFIG.SEAWEED_HEIGHT_MIN + Math.random() * (UI_CONFIG.SEAWEED_HEIGHT_MAX - UI_CONFIG.SEAWEED_HEIGHT_MIN);
             
             // Skip if in safe zone
             if (x >= this.safeZone.x && x <= this.safeZone.x + this.safeZone.width) {
@@ -411,10 +520,10 @@ export class Aquarium {
             const seaweed = new PIXI.Graphics();
             
             // Draw swaying seaweed
-            const segments = 8;
+            const segments = UI_CONFIG.SEAWEED_SEGMENTS;
             const segmentHeight = height / segments;
             let currentX = x;
-            let currentY = this.worldHeight - 80;
+            let currentY = this.worldHeight - UI_CONFIG.FLOOR_HEIGHT;
             
             for (let j = 0; j < segments; j++) {
                 const nextX = currentX + (Math.random() - 0.5) * 20;
@@ -427,7 +536,7 @@ export class Aquarium {
                     nextX + width/2, nextY,
                     nextX - width/2, nextY
                 ]);
-                seaweed.fill({ color: 0x228B22, alpha: 0.7 });
+                seaweed.fill({ color: COLORS.SEAWEED, alpha: 0.7 });
                 
                 currentX = nextX;
                 currentY = nextY;
@@ -437,7 +546,7 @@ export class Aquarium {
     }
     
     createRocks() {
-        const rockCount = Math.floor(this.worldWidth / 500); // One every 500 pixels
+        const rockCount = Math.floor(this.worldWidth / UI_CONFIG.ROCK_SPACING);
         
         for (let i = 0; i < rockCount; i++) {
             const x = Math.random() * this.worldWidth;
@@ -449,8 +558,8 @@ export class Aquarium {
             }
             
             const rock = new PIXI.Graphics();
-            const rockSize = 20 + Math.random() * 30;
-            const rockColor = Math.random() > 0.5 ? 0x696969 : 0x808080;
+            const rockSize = UI_CONFIG.ROCK_SIZE_MIN + Math.random() * (UI_CONFIG.ROCK_SIZE_MAX - UI_CONFIG.ROCK_SIZE_MIN);
+            const rockColor = COLORS.ROCKS[Math.floor(Math.random() * COLORS.ROCKS.length)];
             
             rock.ellipse(x, y, rockSize, rockSize * 0.6);
             rock.fill({ color: rockColor, alpha: 0.9 });
@@ -482,20 +591,25 @@ export class Aquarium {
         console.log('Entity spawning completed');
     }
     
+    /**
+     * Setup keyboard event listeners for tile-based navigation and zoom
+     * Arrow keys move the viewport by tile increments
+     * +/- keys zoom in/out with proper constraints
+     */
     setupEventListeners() {
-        // Keyboard-only navigation and zoom controls
         window.addEventListener('keydown', (e) => {
             if (e.key.toLowerCase() === 'b') {
                 this.bubbleContainer.visible = !this.bubbleContainer.visible;
             }
             
-            // Arrow key navigation (horizontal and vertical)
+            // Arrow key navigation - move by tile increments
             if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'ArrowUp' || e.key === 'ArrowDown') {
                 e.preventDefault();
                 
                 if (!this.viewport) return;
                 
-                const moveDistance = this.tileSize * 5; // Move 5 tiles at a time
+                // Move by the specified number of tiles
+                const moveDistance = this.tileSize * NAVIGATION.MOVE_DISTANCE_TILES;
                 const currentX = this.viewport.center.x;
                 const currentY = this.viewport.center.y;
                 
@@ -512,29 +626,50 @@ export class Aquarium {
                     const newY = Math.min(this.worldHeight - this.app.screen.height / 2, currentY + moveDistance);
                     this.viewport.moveCenter(currentX, newY);
                 }
+                
+                // Log movement for debugging
+                const tileX = Math.floor(this.viewport.center.x / this.tileSize);
+                const tileY = Math.floor(this.viewport.center.y / this.tileSize);
+                console.log(`Moved to tile position: (${tileX}, ${tileY})`);
             }
             
-            // Zoom controls with + and - keys
+            // Zoom controls with + and - keys - manual interception
             if (e.key === '+' || e.key === '=' || e.key === '-') {
                 e.preventDefault();
                 
                 if (!this.viewport) return;
                 
                 const currentScale = this.viewport.scale.x;
-                const zoomFactor = 1.2; // 20% zoom change
-                const minScale = this.calculateMinZoomScale();
+                const zoomFactor = NAVIGATION.ZOOM_FACTOR;
+                const viewportHeight = this.app.screen.height;
+                const maxZoomScale = NAVIGATION.MAX_ZOOM_SCALE;
                 
                 if (e.key === '+' || e.key === '=') {
-                    // Zoom in
-                    const newScale = Math.min(3.0, currentScale * zoomFactor);
+                    // Zoom in - respect max zoom constraint
+                    const newScale = Math.min(maxZoomScale, currentScale * zoomFactor);
                     this.viewport.setZoom(newScale, true);
-                    // Update grid to maintain consistent line width
+                    this.updateCurrentZoomLevel();
                     this.updateGridForScale();
+                    console.log(`Zoomed in to ${newScale.toFixed(4)}x`);
                 } else if (e.key === '-') {
-                    // Zoom out - respect minimum scale to show all vertical tiles
-                    const newScale = Math.max(minScale, currentScale / zoomFactor);
-                    this.viewport.setZoom(newScale, true);
-                    // Update grid to maintain consistent line width
+                    // Zoom out - prevent going beyond the minimum zoom scale
+                    const proposedScale = currentScale / zoomFactor;
+                    
+                    // Get the actual minimum zoom scale (shows all vertical tiles)
+                    const minZoomScale = this.calculateMinZoomScale();
+                    
+                    // Check if the proposed zoom would be less than minimum
+                    if (proposedScale <= minZoomScale) {
+                        // If we would go below minimum, set zoom to exactly the minimum level
+                        this.viewport.setZoom(minZoomScale, true);
+                        console.log(`Zoom intercepted: Set to minimum zoom scale ${minZoomScale.toFixed(4)}x (shows all ${this.tilesVertical} vertical tiles)`);
+                    } else {
+                        // Normal zoom out
+                        this.viewport.setZoom(proposedScale, true);
+                        console.log(`Zoomed out to ${proposedScale.toFixed(4)}x`);
+                    }
+                    
+                    this.updateCurrentZoomLevel();
                     this.updateGridForScale();
                 }
             }
@@ -580,42 +715,57 @@ export class Aquarium {
     resize() {
         if (!this.app || !this.viewport) return;
         
-        // Recalculate dimensions based on new screen size
-        this.calculateDimensions();
+        console.log(`Resizing aquarium: viewport ${this.app.screen.width}x${this.app.screen.height}, world ${this.worldWidth}x${this.worldHeight}`);
         
         // Update viewport screen size and world size
         this.viewport.resize(this.app.screen.width, this.app.screen.height, this.worldWidth, this.worldHeight);
         
-        // Recalculate and update minimum zoom scale after resize
+        // Recalculate and update zoom constraints by removing and re-adding the plugin
         const minScale = this.calculateMinZoomScale();
-        this.viewport.plugins.get('clamp-zoom').options.minScale = minScale;
         
-        // Recalculate safe zone based on screen size
+        // Remove existing clamp-zoom plugin and re-add with new constraints
+        this.viewport.plugins.remove('clamp-zoom');
+        this.viewport.clampZoom({
+            minScale: minScale,
+            maxScale: NAVIGATION.MAX_ZOOM_SCALE
+        });
+        
+        console.log(`Updated zoom constraints: minScale = ${minScale.toFixed(4)}`);
+        
+        // If current zoom is less than the new minimum, adjust it
+        const currentScale = this.viewport.scale.x;
+        if (currentScale < minScale) {
+            this.viewport.setZoom(minScale, true);
+            console.log(`Adjusted zoom from ${currentScale.toFixed(4)} to ${minScale.toFixed(4)}`);
+        }
+        
+        // Update safe zone position
         const screenCenterX = this.app.screen.width / 2;
         const screenCenterY = this.app.screen.height / 2;
-        
-        // Convert screen coordinates to world coordinates
         const worldCenter = this.viewport.toWorld(screenCenterX, screenCenterY);
         
         this.safeZone = {
-            x: worldCenter.x - 200,
-            y: Math.max(50, worldCenter.y - 75),
-            width: 400,
-            height: 150
+            x: worldCenter.x - UI_CONFIG.SAFE_ZONE.WIDTH / 2,
+            y: Math.max(UI_CONFIG.SAFE_ZONE.TOP_MARGIN, worldCenter.y - UI_CONFIG.SAFE_ZONE.HEIGHT / 2),
+            width: UI_CONFIG.SAFE_ZONE.WIDTH,
+            height: UI_CONFIG.SAFE_ZONE.HEIGHT
         };
         
-        // Recreate grid with new dimensions
+        // Recreate grid with new dimensions if they changed
         if (this.gridContainer) {
             this.gridContainer.removeChildren();
-            this.grid = null; // Clear the reference before recreating
+            this.grid = null;
             this.createGrid();
             
-            // Update orange cube size and position
+            // Update orange cube
             if (this.orangeCube) {
                 this.gridContainer.removeChild(this.orangeCube);
                 this.createOrangeCube();
             }
         }
+        
+        // Set default zoom after resize
+        this.setDefaultZoom();
         
         // Update managers with new dimensions
         if (this.fishManager) {
@@ -669,7 +819,7 @@ export class Aquarium {
             const startY = Math.max(0, topTile);
             const endY = Math.min(this.tilesVertical, bottomTile);
             
-            // Count visible grid tiles (our "self made cubes")
+            // Count visible grid tiles
             const visibleTiles = (endX - startX) * (endY - startY);
             
             return Math.max(0, visibleTiles);
@@ -798,7 +948,7 @@ export class Aquarium {
             // Get viewport bounds in world coordinates
             const viewportBounds = this.viewport.getVisibleBounds();
             
-            // Calculate which tiles are visible (same logic as getVisibleCubesCount)
+            // Calculate which tiles are visible
             const leftTile = Math.floor(viewportBounds.x / this.tileSize);
             const rightTile = Math.ceil((viewportBounds.x + viewportBounds.width) / this.tileSize);
             const topTile = Math.floor(viewportBounds.y / this.tileSize);
@@ -826,6 +976,55 @@ export class Aquarium {
                 horizontalTiles: 0,
                 verticalTiles: 0,
                 totalTiles: 0
+            };
+        }
+    }
+    
+    /**
+     * Get current zoom information for UI display
+     */
+    getZoomInfo() {
+        if (!this.viewport || !this.app) {
+            return {
+                currentZoom: 1.0,
+                minZoom: this.calculateMinZoomScale(),
+                maxZoom: NAVIGATION.MAX_ZOOM_SCALE,
+                defaultZoom: 1.0,
+                zoomPercentage: 100,
+                visibleVerticalTiles: 0
+            };
+        }
+        
+        try {
+            const currentZoom = this.viewport.scale.x;
+            const minZoom = this.calculateMinZoomScale();
+            const maxZoom = NAVIGATION.MAX_ZOOM_SCALE;
+            
+            // Calculate how many vertical tiles are currently visible
+            const viewportHeight = this.app.screen.height;
+            const visibleVerticalTiles = Math.round(viewportHeight / (this.tileSize * currentZoom));
+            
+            // Calculate default zoom scale
+            const defaultZoom = viewportHeight / (this.defaultVisibleVerticalTiles * this.tileSize);
+            
+            return {
+                currentZoom: Math.round(currentZoom * 100) / 100, // Round to 2 decimal places
+                minZoom: Math.round(minZoom * 100) / 100,
+                maxZoom: Math.round(maxZoom * 100) / 100,
+                defaultZoom: Math.round(defaultZoom * 100) / 100,
+                zoomPercentage: Math.round(currentZoom * 100),
+                visibleVerticalTiles: visibleVerticalTiles,
+                defaultVisibleVerticalTiles: this.defaultVisibleVerticalTiles
+            };
+        } catch (error) {
+            console.warn('Error calculating zoom info:', error);
+            return {
+                currentZoom: 1.0,
+                minZoom: this.calculateMinZoomScale(),
+                maxZoom: NAVIGATION.MAX_ZOOM_SCALE,
+                defaultZoom: 1.0,
+                zoomPercentage: 100,
+                visibleVerticalTiles: 0
             };
         }
     }

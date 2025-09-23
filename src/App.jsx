@@ -22,6 +22,13 @@ function App() {
   const [tileDimensions, setTileDimensions] = useState({ 
     horizontalTiles: 0, verticalTiles: 0, totalTiles: 0 
   });
+  const [zoomInfo, setZoomInfo] = useState({
+    currentZoom: 1.0,
+    zoomPercentage: 100,
+    visibleVerticalTiles: 0,
+    minZoom: 0.1,
+    maxZoom: 4.0
+  });
   const [aquariumRef, setAquariumRef] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showFishEditor, setShowFishEditor] = useState(false);
@@ -124,6 +131,9 @@ function App() {
         }
         if (aquariumRef.getVisibleTileDimensions) {
           setTileDimensions(aquariumRef.getVisibleTileDimensions());
+        }
+        if (aquariumRef.getZoomInfo) {
+          setZoomInfo(aquariumRef.getZoomInfo());
         }
       }
     };
@@ -239,6 +249,7 @@ function App() {
       <AquariumSettings 
         isVisible={showSettings}
         onClose={closeSettings}
+        aquarium={aquariumRef}
       />
       <FishEditor 
         isVisible={showFishEditor}
@@ -249,6 +260,8 @@ function App() {
         fishInfo={fishInfo}
         viewportPosition={viewportPosition}
         tileDimensions={tileDimensions}
+        zoomInfo={zoomInfo}
+        aquarium={aquariumRef}
         isOpen={showStats}
         onToggle={toggleStats}
       />

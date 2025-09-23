@@ -50,10 +50,8 @@ class DatabaseService {
         user_id: user.id,
         tiles_horizontal: settings.tilesHorizontal,
         tiles_vertical: settings.tilesVertical,
-        tile_size: settings.tileSize,
-        size_mode: settings.sizeMode,
+        tile_size: settings.tileSize, // Always 64 for fixed tile system
         default_visible_vertical_tiles: settings.defaultVisibleVerticalTiles,
-        target_vertical_tiles: settings.targetVerticalTiles,
         show_grid: settings.showGrid
       };
 

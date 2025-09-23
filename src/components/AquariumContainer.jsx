@@ -33,7 +33,7 @@ function AquariumContainer({ mood, onAquariumReady }) {
       // The store subscription in Aquarium class will handle updates
       // No need to recreate the aquarium here as it handles live updates
     }
-  }, [store.tilesHorizontal, store.tilesVertical, store.tileSize, store.sizeMode, store.targetVerticalTiles, store.defaultVisibleVerticalTiles]);
+  }, [store.tilesHorizontal, store.tilesVertical, store.showGrid]);
 
   useEffect(() => {
     // Update mood when it changes

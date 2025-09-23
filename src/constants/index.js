@@ -2,21 +2,15 @@
  * Application-wide constants for the Fish Aquarium project
  */
 
-// Aquarium Configuration
+// Aquarium Configuration - Fixed 64px Tile System
 export const AQUARIUM_CONFIG = {
-  DEFAULT_TILES_HORIZONTAL: 300,
-  DEFAULT_TILES_VERTICAL: 64,
-  DEFAULT_TILE_SIZE: 64,
-  DEFAULT_VISIBLE_VERTICAL_TILES: 17,
-  TARGET_VERTICAL_TILES: 20,
-  MIN_TILE_SIZE: 16,
-  MAX_TILE_SIZE: 128,
+  DEFAULT_TILES_HORIZONTAL: 100,
+  DEFAULT_TILES_VERTICAL: 50,
+  TILE_SIZE: 64, // Fixed 64px tiles as requested
   MIN_TILES_HORIZONTAL: 10,
   MAX_TILES_HORIZONTAL: 1000,
   MIN_TILES_VERTICAL: 10,
-  MAX_TILES_VERTICAL: 500,
-  MIN_VISIBLE_TILES: 5,
-  MAX_VISIBLE_TILES: 50
+  MAX_TILES_VERTICAL: 500
 };
 
 // Performance Constants
@@ -110,6 +104,7 @@ export const UI_CONFIG = {
     TOP_MARGIN: 50
   },
   GRID_LINE_OPACITY: 0.3,
+  GRID_LINE_WIDTH: 1,
   CUBE_MOVE_INTERVAL: 1000,
   CUBE_SIZE_RATIO: 0.8,
   FLOOR_HEIGHT: 80,
@@ -124,10 +119,10 @@ export const UI_CONFIG = {
 
 // Navigation Controls
 export const NAVIGATION = {
-  MOVE_DISTANCE_TILES: 5,
-  ZOOM_FACTOR: 1.2,
-  MIN_ZOOM_SCALE: 0.05,
-  MAX_ZOOM_SCALE: 3.0,
+  MOVE_DISTANCE_TILES: 5, // How many tiles to move per arrow key press
+  ZOOM_FACTOR: 1.2, // 20% zoom per key press
+  MIN_ZOOM_SCALE: 0.1, // Minimum zoom (will be calculated to show all vertical tiles)
+  MAX_ZOOM_SCALE: 4.0, // Maximum zoom
   CLAMP_UNDERFLOW: 'center'
 };
 

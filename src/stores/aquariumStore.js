@@ -5,28 +5,23 @@ import { databaseService } from '../services/database.js';
 
 /**
  * Zustand store for aquarium configuration and state management
+ * Uses fixed 64px tile system as requested
  */
 export const useAquariumStore = create((set, get) => ({
-      // Aquarium configuration with defaults from constants
+      // Aquarium configuration with fixed 64px tiles
       tilesHorizontal: AQUARIUM_CONFIG.DEFAULT_TILES_HORIZONTAL,
       tilesVertical: AQUARIUM_CONFIG.DEFAULT_TILES_VERTICAL,
-      tileSize: AQUARIUM_CONFIG.DEFAULT_TILE_SIZE,
+      tileSize: AQUARIUM_CONFIG.TILE_SIZE, // Always 64px
       
-      // Mode: 'fixed' for fixed tile size, 'adaptive' for adaptive tile size
-      sizeMode: 'fixed',
-      
-      // Default number of vertical tiles to show when app opens
-      defaultVisibleVerticalTiles: AQUARIUM_CONFIG.DEFAULT_VISIBLE_VERTICAL_TILES,
-      
-      // When in adaptive mode, target number of vertical tiles to show in viewport
-      targetVerticalTiles: AQUARIUM_CONFIG.TARGET_VERTICAL_TILES,
-      
+      // Default zoom level - how many vertical tiles to show when app opens
+      defaultVisibleVerticalTiles: 20,
+        
       // Grid visibility toggle
       showGrid: true,
       
-      // Calculated properties (will be computed in components)
-      worldWidth: AQUARIUM_CONFIG.DEFAULT_TILES_HORIZONTAL * AQUARIUM_CONFIG.DEFAULT_TILE_SIZE,
-      worldHeight: AQUARIUM_CONFIG.DEFAULT_TILES_VERTICAL * AQUARIUM_CONFIG.DEFAULT_TILE_SIZE,
+      // Calculated properties
+      worldWidth: AQUARIUM_CONFIG.DEFAULT_TILES_HORIZONTAL * AQUARIUM_CONFIG.TILE_SIZE,
+      worldHeight: AQUARIUM_CONFIG.DEFAULT_TILES_VERTICAL * AQUARIUM_CONFIG.TILE_SIZE,
 
       // Database synchronization state
       isLoading: false,
@@ -42,10 +37,9 @@ export const useAquariumStore = create((set, get) => ({
           AQUARIUM_CONFIG.MAX_TILES_HORIZONTAL, 
           AQUARIUM_CONFIG.DEFAULT_TILES_HORIZONTAL
         );
-        const state = get();
         set({ 
           tilesHorizontal: sanitized,
-          worldWidth: sanitized * state.tileSize
+          worldWidth: sanitized * AQUARIUM_CONFIG.TILE_SIZE
         });
         
         // Auto-sync to database
@@ -62,60 +56,11 @@ export const useAquariumStore = create((set, get) => ({
           AQUARIUM_CONFIG.MAX_TILES_VERTICAL, 
           AQUARIUM_CONFIG.DEFAULT_TILES_VERTICAL
         );
-        const state = get();
         set({ 
           tilesVertical: sanitized,
-          worldHeight: sanitized * state.tileSize
+          worldHeight: sanitized * AQUARIUM_CONFIG.TILE_SIZE
         });
         
-        // Auto-sync to database
-        get().syncToDatabase().catch(error => {
-          console.error('Failed to sync settings to database:', error);
-          set({ syncError: error.message });
-        });
-      },
-      
-      setTileSize: async (value) => {
-        const sanitized = sanitizeNumericInput(
-          value, 
-          AQUARIUM_CONFIG.MIN_TILE_SIZE, 
-          AQUARIUM_CONFIG.MAX_TILE_SIZE, 
-          AQUARIUM_CONFIG.DEFAULT_TILE_SIZE
-        );
-        const state = get();
-        set({ 
-          tileSize: sanitized,
-          worldWidth: state.tilesHorizontal * sanitized,
-          worldHeight: state.tilesVertical * sanitized
-        });
-        
-        // Auto-sync to database
-        get().syncToDatabase().catch(error => {
-          console.error('Failed to sync settings to database:', error);
-          set({ syncError: error.message });
-        });
-      },
-  
-      setSizeMode: async (mode) => {
-        const validModes = ['fixed', 'adaptive'];
-        if (validModes.includes(mode)) {
-          set({ sizeMode: mode });
-          // Auto-sync to database
-          get().syncToDatabase().catch(error => {
-            console.error('Failed to sync settings to database:', error);
-            set({ syncError: error.message });
-          });
-        }
-      },
-      
-      setTargetVerticalTiles: async (value) => {
-        const sanitized = sanitizeNumericInput(
-          value, 
-          AQUARIUM_CONFIG.MIN_VISIBLE_TILES, 
-          AQUARIUM_CONFIG.MAX_VISIBLE_TILES, 
-          AQUARIUM_CONFIG.TARGET_VERTICAL_TILES
-        );
-        set({ targetVerticalTiles: sanitized });
         // Auto-sync to database
         get().syncToDatabase().catch(error => {
           console.error('Failed to sync settings to database:', error);
@@ -126,9 +71,9 @@ export const useAquariumStore = create((set, get) => ({
       setDefaultVisibleVerticalTiles: async (value) => {
         const sanitized = sanitizeNumericInput(
           value, 
-          AQUARIUM_CONFIG.MIN_VISIBLE_TILES, 
-          AQUARIUM_CONFIG.MAX_VISIBLE_TILES, 
-          AQUARIUM_CONFIG.DEFAULT_VISIBLE_VERTICAL_TILES
+          5, 
+          50, 
+          20
         );
         set({ defaultVisibleVerticalTiles: sanitized });
         // Auto-sync to database
@@ -149,39 +94,13 @@ export const useAquariumStore = create((set, get) => ({
         });
       },
   
-      // Calculate tile size based on default visible tiles (for app initialization)
-      calculateDefaultTileSize: (viewportHeight) => {
-        const state = get();
-        const adaptiveTileSize = Math.floor(viewportHeight / state.defaultVisibleVerticalTiles);
-        return Math.max(AQUARIUM_CONFIG.MIN_TILE_SIZE, Math.min(AQUARIUM_CONFIG.MAX_TILE_SIZE, adaptiveTileSize));
-      },
-      
-      // Calculate adaptive tile size based on viewport height
-      calculateAdaptiveTileSize: (viewportHeight) => {
-        const state = get();
-        if (state.sizeMode === 'adaptive') {
-          const adaptiveTileSize = Math.floor(viewportHeight / state.targetVerticalTiles);
-          return Math.max(AQUARIUM_CONFIG.MIN_TILE_SIZE, Math.min(AQUARIUM_CONFIG.MAX_TILE_SIZE, adaptiveTileSize));
-        }
-        return state.tileSize;
-      },
-  
-  // Get current world dimensions (considering adaptive mode and default visible tiles)
-  getWorldDimensions: (viewportHeight = null, isInitialLoad = false) => {
+  // Get current world dimensions (always uses fixed 64px tiles)
+  getWorldDimensions: () => {
     const state = get();
-    let currentTileSize = state.tileSize;
-    
-    if (isInitialLoad && viewportHeight) {
-      // On initial load, always calculate tile size based on default visible tiles
-      currentTileSize = state.calculateDefaultTileSize(viewportHeight);
-    } else if (state.sizeMode === 'adaptive' && viewportHeight) {
-      currentTileSize = state.calculateAdaptiveTileSize(viewportHeight);
-    }
-    
     return {
-      worldWidth: state.tilesHorizontal * currentTileSize,
-      worldHeight: state.tilesVertical * currentTileSize,
-      tileSize: currentTileSize
+      worldWidth: state.tilesHorizontal * AQUARIUM_CONFIG.TILE_SIZE,
+      worldHeight: state.tilesVertical * AQUARIUM_CONFIG.TILE_SIZE,
+      tileSize: AQUARIUM_CONFIG.TILE_SIZE
     };
   },
 
@@ -211,13 +130,11 @@ export const useAquariumStore = create((set, get) => ({
         set({
           tilesHorizontal: settings.tiles_horizontal,
           tilesVertical: settings.tiles_vertical,
-          tileSize: settings.tile_size,
-          sizeMode: settings.size_mode,
-          defaultVisibleVerticalTiles: settings.default_visible_vertical_tiles,
-          targetVerticalTiles: settings.target_vertical_tiles,
+          tileSize: AQUARIUM_CONFIG.TILE_SIZE, // Always use fixed 64px
+          defaultVisibleVerticalTiles: settings.default_visible_vertical_tiles || 20,
           showGrid: settings.show_grid,
-          worldWidth: settings.tiles_horizontal * settings.tile_size,
-          worldHeight: settings.tiles_vertical * settings.tile_size,
+          worldWidth: settings.tiles_horizontal * AQUARIUM_CONFIG.TILE_SIZE,
+          worldHeight: settings.tiles_vertical * AQUARIUM_CONFIG.TILE_SIZE,
           lastSyncTime: new Date(),
           isLoading: false
         });
@@ -227,10 +144,8 @@ export const useAquariumStore = create((set, get) => ({
         await databaseService.saveAquariumSettings({
           tilesHorizontal: state.tilesHorizontal,
           tilesVertical: state.tilesVertical,
-          tileSize: state.tileSize,
-          sizeMode: state.sizeMode,
+          tileSize: AQUARIUM_CONFIG.TILE_SIZE,
           defaultVisibleVerticalTiles: state.defaultVisibleVerticalTiles,
-          targetVerticalTiles: state.targetVerticalTiles,
           showGrid: state.showGrid
         });
         
@@ -259,10 +174,8 @@ export const useAquariumStore = create((set, get) => ({
       await databaseService.saveAquariumSettings({
         tilesHorizontal: state.tilesHorizontal,
         tilesVertical: state.tilesVertical,
-        tileSize: state.tileSize,
-        sizeMode: state.sizeMode,
+        tileSize: AQUARIUM_CONFIG.TILE_SIZE,
         defaultVisibleVerticalTiles: state.defaultVisibleVerticalTiles,
-        targetVerticalTiles: state.targetVerticalTiles,
         showGrid: state.showGrid
       });
       
