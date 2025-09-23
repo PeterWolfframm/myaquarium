@@ -59,33 +59,33 @@ export class Fish {
         this.spriteTexture = null;
         this.isUsingCustomSprite = false;
         
-        // Create sprite
-        this.createSprite();
+        // Store position data for later use
+        this.initialPositionX = fishData?.positionX;
+        this.initialPositionY = fishData?.positionY;
+        this.spriteReady = false;
         
-        if (fishData && fishData.positionX !== undefined && fishData.positionY !== undefined) {
-            // Restore position from database
-            this.sprite.x = fishData.positionX;
-            this.sprite.y = fishData.positionY;
-        } else {
-            // Random spawn position
-            this.respawn();
-        }
+        // Create sprite (async for custom sprites)
+        this.createSprite();
     }
     
     /**
      * Create the fish sprite with graphics or custom sprite
      */
-    createSprite() {
+    async createSprite() {
         try {
             if (this.spriteUrl) {
-                this.loadCustomSprite();
+                await this.loadCustomSprite();
             } else {
                 this.createGraphicsSprite();
             }
+            
+            // Set initial position after sprite is created
+            this.setSpritePosition();
         } catch (error) {
             console.error('Error creating fish sprite:', error);
             // Fallback to graphics sprite
             this.createGraphicsSprite();
+            this.setSpritePosition();
         }
     }
     
@@ -119,6 +119,7 @@ export class Fish {
             this.sprite.interactiveChildren = false;
             
             this.isUsingCustomSprite = true;
+            this.spriteReady = true;
             
             console.log(`Custom sprite loaded successfully from ${this.spriteUrl}`);
         } catch (error) {
@@ -148,12 +149,29 @@ export class Fish {
             this.sprite.interactiveChildren = false;
             
             this.isUsingCustomSprite = false;
+            this.spriteReady = true;
             this.updateFrame();
             
             console.log(`Graphics fish sprite created successfully with color 0x${this.color.toString(16)}`);
         } catch (error) {
             console.error('Error creating graphics fish sprite:', error);
             throw error;
+        }
+    }
+    
+    /**
+     * Set sprite position based on initial data or random spawn
+     */
+    setSpritePosition() {
+        if (!this.sprite || !this.spriteReady) return;
+        
+        if (this.initialPositionX !== undefined && this.initialPositionY !== undefined) {
+            // Restore position from database
+            this.sprite.x = this.initialPositionX;
+            this.sprite.y = this.initialPositionY;
+        } else {
+            // Random spawn position
+            this.respawn();
         }
     }
     
@@ -196,9 +214,9 @@ export class Fish {
      */
     async updateSprite(newSpriteUrl) {
         this.spriteUrl = newSpriteUrl;
-        const oldX = this.sprite.x;
-        const oldY = this.sprite.y;
-        const oldScaleX = this.sprite.scale.x;
+        const oldX = this.sprite?.x;
+        const oldY = this.sprite?.y;
+        const oldScaleX = this.sprite?.scale?.x;
         
         if (newSpriteUrl) {
             await this.loadCustomSprite();
@@ -206,10 +224,46 @@ export class Fish {
             this.createGraphicsSprite();
         }
         
-        // Restore position and direction
-        this.sprite.x = oldX;
-        this.sprite.y = oldY;
-        this.sprite.scale.x = Math.abs(this.sprite.scale.x) * Math.sign(oldScaleX);
+        // Restore position and direction if sprite is ready
+        if (this.sprite && this.spriteReady) {
+            if (oldX !== undefined) this.sprite.x = oldX;
+            if (oldY !== undefined) this.sprite.y = oldY;
+            if (oldScaleX !== undefined) {
+                this.sprite.scale.x = Math.abs(this.sprite.scale.x) * Math.sign(oldScaleX);
+            }
+        }
+    }
+
+    /**
+     * Update fish color and redraw
+     */
+    updateColor(newColor) {
+        this.color = typeof newColor === 'string' ? parseInt(newColor, 16) : newColor;
+        if (!this.isUsingCustomSprite && this.sprite instanceof PIXI.Graphics) {
+            this.updateFrame(); // This will redraw with new color
+        }
+    }
+
+    /**
+     * Update fish name
+     */
+    updateName(newName) {
+        this.name = newName;
+    }
+
+    /**
+     * Update multiple fish properties at once
+     */
+    async updateProperties(updates) {
+        if (updates.color !== undefined) {
+            this.updateColor(updates.color);
+        }
+        if (updates.name !== undefined) {
+            this.updateName(updates.name);
+        }
+        if (updates.sprite_url !== undefined) {
+            await this.updateSprite(updates.sprite_url);
+        }
     }
     
     /**
@@ -261,6 +315,8 @@ export class Fish {
      * Respawn the fish at a new random position
      */
     respawn() {
+        if (!this.sprite || !this.spriteReady) return;
+        
         const pos = this.getRandomSpawnPosition();
         this.sprite.x = pos.x;
         this.sprite.y = pos.y;
@@ -280,6 +336,9 @@ export class Fish {
      * @param {number} deltaTime - Time since last update in milliseconds
      */
     update(deltaTime) {
+        // Don't update if sprite isn't ready
+        if (!this.sprite || !this.spriteReady) return;
+        
         // Update animation frame
         this.lastFrameTime += deltaTime;
         if (this.lastFrameTime >= this.animationSpeed) {
@@ -348,6 +407,7 @@ export class FishManager {
         // Track database sync
         this.lastSyncTime = Date.now();
         this.syncInterval = 5000; // Sync fish positions every 5 seconds
+        this.syncDebounceTimer = null;
         
         // Initialize fish from Fish Store instead of database directly
         this.initializeFishFromStore();
@@ -436,7 +496,9 @@ export class FishManager {
                 const fishData = convertDbFishToRuntime(storeFishData);
                 const fish = new Fish(this.worldWidth, this.worldHeight, this.safeZone, fishData);
                 this.fish.push(fish);
-                this.container.addChild(fish.sprite);
+                
+                // Wait for sprite to be ready before adding to container
+                this.waitForFishSprite(fish);
             }
             
             console.log(`Created ${this.fish.length} visual fish from store data`);
@@ -461,16 +523,115 @@ export class FishManager {
         this.storeUnsubscribe = useFishStore.subscribe((state, prevState) => {
             // Check if fish data has changed
             if (state.fish !== prevState.fish) {
-                console.log('Fish store updated, refreshing visual fish');
-                this.createVisualFishFromStore();
+                console.log('Fish store updated, handling changes intelligently');
+                this.handleFishStoreChanges(state.fish, prevState.fish);
             }
         });
+    }
+
+    /**
+     * Handle fish store changes by updating individual fish instead of recreating all
+     */
+    async handleFishStoreChanges(newFish, oldFish) {
+        try {
+            const { convertDbFishToRuntime } = useFishStore.getState();
+            
+            // Create maps for easier comparison
+            const oldFishMap = new Map(oldFish.map(f => [f.id, f]));
+            const newFishMap = new Map(newFish.map(f => [f.id, f]));
+            const visualFishMap = new Map(this.fish.map(f => [f.id, f]));
+
+            // Handle removed fish
+            for (const [fishId] of oldFishMap) {
+                if (!newFishMap.has(fishId)) {
+                    const visualFish = visualFishMap.get(fishId);
+                    if (visualFish) {
+                        this.container.removeChild(visualFish.sprite);
+                        this.fish = this.fish.filter(f => f.id !== fishId);
+                        console.log(`Removed fish ${fishId}`);
+                    }
+                }
+            }
+
+            // Handle new fish
+            for (const [fishId, fishData] of newFishMap) {
+                if (!oldFishMap.has(fishId)) {
+                    const runtimeData = convertDbFishToRuntime(fishData);
+                    const newFish = new Fish(this.worldWidth, this.worldHeight, this.safeZone, runtimeData);
+                    this.fish.push(newFish);
+                    
+                    // Wait for sprite to be ready before adding to container
+                    this.waitForFishSprite(newFish);
+                    newFish.setMoodSpeed(this.moodMultiplier);
+                    console.log(`Added new fish ${fishId}`);
+                }
+            }
+
+            // Handle updated fish
+            for (const [fishId, newFishData] of newFishMap) {
+                const oldFishData = oldFishMap.get(fishId);
+                if (oldFishData && this.hasFishChanged(oldFishData, newFishData)) {
+                    const visualFish = visualFishMap.get(fishId);
+                    if (visualFish) {
+                        // Convert database format to runtime format for updates
+                        const updates = {};
+                        if (oldFishData.color !== newFishData.color) {
+                            updates.color = newFishData.color;
+                        }
+                        if (oldFishData.name !== newFishData.name) {
+                            updates.name = newFishData.name;
+                        }
+                        if (oldFishData.sprite_url !== newFishData.sprite_url) {
+                            updates.sprite_url = newFishData.sprite_url;
+                        }
+
+                        await visualFish.updateProperties(updates);
+                        console.log(`Updated fish ${fishId} properties:`, Object.keys(updates));
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error handling fish store changes:', error);
+            // Fallback to full recreation on error
+            this.createVisualFishFromStore();
+        }
+    }
+
+    /**
+     * Wait for fish sprite to be ready and add to container
+     * @param {Fish} fish - Fish instance
+     */
+    waitForFishSprite(fish) {
+        const checkSprite = () => {
+            if (fish.spriteReady && fish.sprite) {
+                this.container.addChild(fish.sprite);
+                console.log(`Fish sprite ${fish.id || 'unnamed'} added to container`);
+            } else {
+                setTimeout(checkSprite, 10); // Check again in 10ms
+            }
+        };
+        checkSprite();
+    }
+
+    /**
+     * Check if fish data has changed in ways that affect visuals
+     */
+    hasFishChanged(oldFish, newFish) {
+        return oldFish.color !== newFish.color ||
+               oldFish.name !== newFish.name ||
+               oldFish.sprite_url !== newFish.sprite_url;
     }
     
     /**
      * Cleanup method to unsubscribe from store and clean up resources
      */
     destroy() {
+        // Clear debounce timer
+        if (this.syncDebounceTimer) {
+            clearTimeout(this.syncDebounceTimer);
+            this.syncDebounceTimer = null;
+        }
+        
         // Unsubscribe from store changes
         if (this.storeUnsubscribe) {
             this.storeUnsubscribe();
@@ -505,12 +666,14 @@ export class FishManager {
             try {
                 const fish = new Fish(this.worldWidth, this.worldHeight, this.safeZone);
                 this.fish.push(fish);
-                this.container.addChild(fish.sprite);
+                
+                // Wait for sprite to be ready before adding to container
+                this.waitForFishSprite(fish);
                 
                 // Apply current mood speed
                 fish.setMoodSpeed(this.moodMultiplier);
                 
-                console.log(`Created fish ${i + 1}/${this.maxFish} at position (${fish.sprite.x.toFixed(1)}, ${fish.sprite.y.toFixed(1)})`);
+                console.log(`Created fish ${i + 1}/${this.maxFish}`);
             } catch (error) {
                 console.error(`Error creating fish ${i + 1}:`, error);
             }
@@ -541,12 +704,18 @@ export class FishManager {
             fish.update(deltaTime);
         });
         
-        // Periodically sync fish positions to database
-        const now = Date.now();
-        if (now - this.lastSyncTime > this.syncInterval) {
-            this.syncFishPositionsToDatabase();
-            this.lastSyncTime = now;
+        // Debounced sync to database (only sync if no updates for a while)
+        if (this.syncDebounceTimer) {
+            clearTimeout(this.syncDebounceTimer);
         }
+        
+        this.syncDebounceTimer = setTimeout(() => {
+            const now = Date.now();
+            if (now - this.lastSyncTime > this.syncInterval) {
+                this.syncFishPositionsToDatabase();
+                this.lastSyncTime = now;
+            }
+        }, 1000); // Debounce by 1 second
     }
     
     /**
@@ -609,7 +778,9 @@ export class FishManager {
                 const fish = new Fish(this.worldWidth, this.worldHeight, this.safeZone);
                 fish.setMoodSpeed(this.moodMultiplier);
                 this.fish.push(fish);
-                this.container.addChild(fish.sprite);
+                
+                // Wait for sprite to be ready before adding to container
+                this.waitForFishSprite(fish);
             }
         } else if (newOptimalCount < this.fish.length) {
             // Remove excess fish

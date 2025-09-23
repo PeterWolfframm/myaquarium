@@ -30,13 +30,45 @@ function FishEditor({ isVisible, onClose }) {
     }
   }, [isVisible, clearSyncError]);
 
+  // Update selected fish when store data changes
+  useEffect(() => {
+    if (selectedFish && fish.length > 0) {
+      const updatedFish = fish.find(f => f.id === selectedFish.id);
+      if (updatedFish && (
+        updatedFish.color !== selectedFish.color ||
+        updatedFish.name !== selectedFish.name ||
+        updatedFish.sprite_url !== selectedFish.spriteUrl
+      )) {
+        setSelectedFish({
+          ...updatedFish,
+          spriteUrl: updatedFish.sprite_url // Convert snake_case to camelCase
+        });
+        // Only update editing fields if they haven't been modified by user
+        if (editingColor === selectedFish.color) {
+          setEditingColor(updatedFish.color || '4CAF50');
+        }
+        if (editingName === selectedFish.name) {
+          setEditingName(updatedFish.name || '');
+        }
+        if (editingSpriteUrl === selectedFish.spriteUrl) {
+          setEditingSpriteUrl(updatedFish.sprite_url || null);
+        }
+      }
+    }
+  }, [fish, selectedFish, editingColor, editingName, editingSpriteUrl]);
+
   if (!isVisible) return null;
 
   const handleFishSelect = (fishData) => {
-    setSelectedFish(fishData);
-    setEditingColor(fishData.color || '4CAF50');
-    setEditingName(fishData.name || '');
-    setEditingSpriteUrl(fishData.spriteUrl || null);
+    // Ensure consistent format (convert snake_case to camelCase if needed)
+    const normalizedFishData = {
+      ...fishData,
+      spriteUrl: fishData.spriteUrl || fishData.sprite_url
+    };
+    setSelectedFish(normalizedFishData);
+    setEditingColor(normalizedFishData.color || '4CAF50');
+    setEditingName(normalizedFishData.name || '');
+    setEditingSpriteUrl(normalizedFishData.spriteUrl || null);
   };
 
   const handleSaveChanges = async () => {
@@ -48,12 +80,23 @@ function FishEditor({ isVisible, onClose }) {
       sprite_url: editingSpriteUrl
     };
 
+    // Optimistic update: immediately update the selected fish display
+    const optimisticFish = {
+      ...selectedFish,
+      color: updates.color,
+      name: updates.name,
+      spriteUrl: updates.sprite_url
+    };
+    setSelectedFish(optimisticFish);
+
     const success = await updateFish(selectedFish.id, updates);
     if (success) {
-      setSelectedFish(null);
-      setEditingColor('');
-      setEditingName('');
-      setEditingSpriteUrl(null);
+      // Keep the fish selected but with updated data
+      // The useEffect above will update selectedFish with the real store data
+      console.log('Fish updated successfully');
+    } else {
+      // Revert optimistic update on failure
+      setSelectedFish(selectedFish);
     }
   };
 
@@ -101,7 +144,7 @@ function FishEditor({ isVisible, onClose }) {
                 {fish.map((fishData) => (
                   <div 
                     key={fishData.id} 
-                    className={`fish-item ${selectedFish?.id === fishData.id ? 'selected' : ''}`}
+                    className={`fish-item ${selectedFish?.id === fishData.id ? 'selected' : ''} ${isSyncing ? 'syncing' : ''}`}
                     onClick={() => handleFishSelect(fishData)}
                   >
                     <div 
@@ -111,7 +154,7 @@ function FishEditor({ isVisible, onClose }) {
                     <div className="fish-info">
                       <div className="fish-name">{fishData.name || 'Unnamed'}</div>
                       <div className="fish-color">#{fishData.color}</div>
-                      {fishData.spriteUrl && <div className="fish-sprite-indicator">🖼️ Custom Sprite</div>}
+                      {(fishData.spriteUrl || fishData.sprite_url) && <div className="fish-sprite-indicator">🖼️ Custom Sprite</div>}
                     </div>
                     <button 
                       className="delete-fish-btn"
@@ -119,6 +162,7 @@ function FishEditor({ isVisible, onClose }) {
                         e.stopPropagation();
                         handleDeleteFish(fishData.id);
                       }}
+                      disabled={isSyncing}
                     >
                       🗑️
                     </button>

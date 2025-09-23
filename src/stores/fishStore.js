@@ -141,18 +141,27 @@ export const useFishStore = create((set, get) => ({
    * @returns {Promise<boolean>} Success status
    */
   updateFish: async (fishId, updates) => {
+    set({ isSyncing: true, syncError: null });
+    
     try {
       const updatedFish = await databaseService.updateFish(fishId, updates);
       
       if (updatedFish) {
         // Fish will be updated via real-time subscription
+        set({ 
+          isSyncing: false,
+          lastSyncTime: new Date()
+        });
         return true;
       } else {
         throw new Error('Failed to update fish in database');
       }
     } catch (error) {
       console.error('Error updating fish:', error);
-      set({ syncError: error.message });
+      set({ 
+        isSyncing: false, 
+        syncError: error.message 
+      });
       return false;
     }
   },

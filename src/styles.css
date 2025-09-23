@@ -195,18 +195,31 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
     position: relative;
+    transform: translateY(0);
 }
 
 .fish-item:hover {
     background: rgba(255, 255, 255, 0.1);
     border-color: #00ccff;
+    transform: translateY(-2px);
 }
 
 .fish-item.selected {
     background: rgba(0, 204, 255, 0.2);
     border-color: #00ccff;
+    box-shadow: 0 4px 12px rgba(0, 204, 255, 0.3);
+}
+
+.fish-item.syncing {
+    opacity: 0.7;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
 }
 
 .fish-color-preview {
@@ -338,7 +351,9 @@ body {
     border-radius: 6px;
     font-weight: bold;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .save-button {
@@ -348,11 +363,16 @@ body {
 
 .save-button:hover:not(:disabled) {
     background: #0099cc;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 204, 255, 0.3);
 }
 
 .save-button:disabled {
     background: #666;
     cursor: not-allowed;
+    opacity: 0.6;
+    transform: none;
+    box-shadow: none;
 }
 
 .cancel-button {
@@ -363,6 +383,8 @@ body {
 
 .cancel-button:hover {
     background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(255, 255, 255, 0.1);
 }
 
 .error-message {
