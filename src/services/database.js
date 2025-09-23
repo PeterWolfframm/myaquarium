@@ -130,6 +130,7 @@ class DatabaseService {
         user_id: user.id,
         name: fishData.name || null,
         color: fishData.color,
+        sprite_url: fishData.spriteUrl || null,
         base_speed: fishData.baseSpeed,
         current_speed: fishData.currentSpeed,
         direction: fishData.direction,
@@ -482,6 +483,115 @@ class DatabaseService {
     } catch (error) {
       console.error('Error in switchMoodAndSaveSession:', error);
       return null;
+    }
+  }
+
+  // ==================== SPRITE STORAGE ====================
+
+  /**
+   * Upload a sprite file to Supabase storage
+   * @param {File} file - The sprite file to upload
+   * @param {string} fileName - Custom filename (optional)
+   * @returns {Promise<Object|null>} Upload result with URL or null if error
+   */
+  async uploadSprite(file, fileName = null) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const fileExt = file.name.split('.').pop();
+      const finalFileName = fileName || `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `sprites/${finalFileName}`;
+
+      const { data, error } = await supabase.storage
+        .from('fish-sprites')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) {
+        console.error('Error uploading sprite:', error);
+        return null;
+      }
+
+      // Get the public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('fish-sprites')
+        .getPublicUrl(filePath);
+
+      return {
+        path: data.path,
+        url: publicUrl,
+        fileName: finalFileName
+      };
+    } catch (error) {
+      console.error('Error in uploadSprite:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get all available sprites from storage
+   * @returns {Promise<Array>} Array of sprite objects with URLs
+   */
+  async getAvailableSprites() {
+    try {
+      const { data, error } = await supabase.storage
+        .from('fish-sprites')
+        .list('sprites', {
+          limit: 100,
+          offset: 0
+        });
+
+      if (error) {
+        console.error('Error fetching sprites:', error);
+        return [];
+      }
+
+      const sprites = data
+        .filter(file => file.name && !file.name.includes('.emptyFolderPlaceholder'))
+        .map(file => {
+          const { data: { publicUrl } } = supabase.storage
+            .from('fish-sprites')
+            .getPublicUrl(`sprites/${file.name}`);
+          
+          return {
+            name: file.name,
+            url: publicUrl,
+            path: `sprites/${file.name}`,
+            size: file.metadata?.size || 0,
+            lastModified: file.updated_at || file.created_at
+          };
+        });
+
+      return sprites;
+    } catch (error) {
+      console.error('Error in getAvailableSprites:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Delete a sprite from storage
+   * @param {string} filePath - Path to the file in storage
+   * @returns {Promise<boolean>} Success status
+   */
+  async deleteSprite(filePath) {
+    try {
+      const { error } = await supabase.storage
+        .from('fish-sprites')
+        .remove([filePath]);
+
+      if (error) {
+        console.error('Error deleting sprite:', error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error in deleteSprite:', error);
+      return false;
     }
   }
 

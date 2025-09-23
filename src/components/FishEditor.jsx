@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'preact/hooks';
 import { useFishStore } from '../stores/fishStore.js';
 import Modal from './Modal.jsx';
+import SpriteGallery from './SpriteGallery.jsx';
 
 function FishEditor({ isVisible, onClose }) {
   const { 
@@ -16,6 +17,7 @@ function FishEditor({ isVisible, onClose }) {
   const [selectedFish, setSelectedFish] = useState(null);
   const [editingColor, setEditingColor] = useState('');
   const [editingName, setEditingName] = useState('');
+  const [editingSpriteUrl, setEditingSpriteUrl] = useState(null);
 
   // Reset when modal opens/closes
   useEffect(() => {
@@ -23,6 +25,7 @@ function FishEditor({ isVisible, onClose }) {
       setSelectedFish(null);
       setEditingColor('');
       setEditingName('');
+      setEditingSpriteUrl(null);
       clearSyncError();
     }
   }, [isVisible, clearSyncError]);
@@ -33,6 +36,7 @@ function FishEditor({ isVisible, onClose }) {
     setSelectedFish(fishData);
     setEditingColor(fishData.color || '4CAF50');
     setEditingName(fishData.name || '');
+    setEditingSpriteUrl(fishData.spriteUrl || null);
   };
 
   const handleSaveChanges = async () => {
@@ -40,7 +44,8 @@ function FishEditor({ isVisible, onClose }) {
 
     const updates = {
       color: editingColor.replace('#', ''), // Remove # if present
-      name: editingName || selectedFish.name
+      name: editingName || selectedFish.name,
+      sprite_url: editingSpriteUrl
     };
 
     const success = await updateFish(selectedFish.id, updates);
@@ -48,6 +53,7 @@ function FishEditor({ isVisible, onClose }) {
       setSelectedFish(null);
       setEditingColor('');
       setEditingName('');
+      setEditingSpriteUrl(null);
     }
   };
 
@@ -58,6 +64,7 @@ function FishEditor({ isVisible, onClose }) {
         setSelectedFish(null);
         setEditingColor('');
         setEditingName('');
+        setEditingSpriteUrl(null);
       }
     }
   };
@@ -104,6 +111,7 @@ function FishEditor({ isVisible, onClose }) {
                     <div className="fish-info">
                       <div className="fish-name">{fishData.name || 'Unnamed'}</div>
                       <div className="fish-color">#{fishData.color}</div>
+                      {fishData.spriteUrl && <div className="fish-sprite-indicator">🖼️ Custom Sprite</div>}
                     </div>
                     <button 
                       className="delete-fish-btn"
@@ -167,6 +175,17 @@ function FishEditor({ isVisible, onClose }) {
                 </div>
               </div>
 
+              <div className="form-group">
+                <label>Sprite:</label>
+                <SpriteGallery
+                  selectedSpriteUrl={editingSpriteUrl}
+                  onSpriteSelect={setEditingSpriteUrl}
+                  onUploadComplete={(result) => {
+                    console.log('Sprite uploaded:', result);
+                  }}
+                />
+              </div>
+
               <div className="form-actions">
                 <button 
                   className="save-button" 
@@ -181,6 +200,7 @@ function FishEditor({ isVisible, onClose }) {
                     setSelectedFish(null);
                     setEditingColor('');
                     setEditingName('');
+                    setEditingSpriteUrl(null);
                   }}
                 >
                   Cancel

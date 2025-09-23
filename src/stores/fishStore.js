@@ -13,6 +13,7 @@ export const useFishStore = create((set, get) => ({
   lastSyncTime: null,
   syncError: null,
   subscription: null,
+  needsDefaultPopulation: false,
 
   // ==================== INITIALIZATION ====================
 
@@ -38,7 +39,8 @@ export const useFishStore = create((set, get) => ({
       set({ 
         fish: fishData || [],
         isLoading: false,
-        lastSyncTime: new Date()
+        lastSyncTime: new Date(),
+        needsDefaultPopulation: !fishData || fishData.length === 0 // Flag if defaults needed
       });
 
       // Set up real-time subscription
@@ -48,7 +50,8 @@ export const useFishStore = create((set, get) => ({
       console.error('Error initializing fish from database:', error);
       set({ 
         isLoading: false, 
-        syncError: error.message 
+        syncError: error.message,
+        needsDefaultPopulation: true // Assume we need defaults on error
       });
     }
   },
@@ -240,6 +243,7 @@ export const useFishStore = create((set, get) => ({
     return {
       name: `Fish_${Date.now()}`,
       color: fishInstance.color.toString(16).padStart(6, '0'), // Convert to hex string
+      spriteUrl: fishInstance.spriteUrl,
       baseSpeed: fishInstance.baseSpeed,
       currentSpeed: fishInstance.currentSpeed,
       direction: fishInstance.direction,
@@ -264,6 +268,7 @@ export const useFishStore = create((set, get) => ({
       id: dbFish.id,
       name: dbFish.name,
       color: parseInt(dbFish.color, 16), // Convert hex string to number
+      spriteUrl: dbFish.sprite_url,
       baseSpeed: parseFloat(dbFish.base_speed),
       currentSpeed: parseFloat(dbFish.current_speed),
       direction: dbFish.direction,
@@ -290,8 +295,9 @@ export const useFishStore = create((set, get) => ({
   populateDefaultFish: async (count, worldWidth, worldHeight) => {
     const state = get();
     
-    if (state.fish.length > 0) {
-      return true; // Already has fish
+    // Only populate if the flag indicates we need defaults and there are no fish
+    if (!state.needsDefaultPopulation || state.fish.length > 0) {
+      return true; // Already has fish or doesn't need population
     }
     
     set({ isSyncing: true, syncError: null });
@@ -323,6 +329,7 @@ export const useFishStore = create((set, get) => ({
       
       set({ 
         isSyncing: false,
+        needsDefaultPopulation: false, // Clear the flag after successful population
         lastSyncTime: new Date()
       });
       
