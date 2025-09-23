@@ -1,6 +1,7 @@
 import * as PIXI from 'pixi.js';
 import { Viewport } from 'pixi-viewport';
 import { FishManager } from './Fish.js';
+import { SharkManager } from './Shark.js';
 import { BubbleManager } from './Bubble.js';
 import { useAquariumStore } from '../stores/aquariumStore.js';
 import { AQUARIUM_CONFIG, NAVIGATION, UI_CONFIG, COLORS } from '../constants/index.js';
@@ -10,6 +11,7 @@ export class Aquarium {
         this.app = null;
         this.viewport = null;
         this.fishManager = null;
+        this.sharkManager = null;
         this.bubbleManager = null;
         this.canvasElement = canvasElement;
         
@@ -41,6 +43,7 @@ export class Aquarium {
         // Layer containers
         this.backgroundContainer = null;
         this.fishContainer = null;
+        this.sharkContainer = null;
         this.bubbleContainer = null;
         this.gridContainer = null;
         this.grid = null;
@@ -297,12 +300,14 @@ export class Aquarium {
         this.gridContainer = new PIXI.Container();
         this.bubbleContainer = new PIXI.Container();
         this.fishContainer = new PIXI.Container();
+        this.sharkContainer = new PIXI.Container();
         
         // Add containers to viewport in order (back to front)
         this.viewport.addChild(this.backgroundContainer);
         this.viewport.addChild(this.gridContainer);
         this.viewport.addChild(this.bubbleContainer);
         this.viewport.addChild(this.fishContainer);
+        this.viewport.addChild(this.sharkContainer); // Sharks on top of fish
     }
     
     /**
@@ -603,6 +608,15 @@ export class Aquarium {
             this.safeZone
         );
         
+        // Create shark manager
+        console.log(`Creating shark manager with world size: ${this.worldWidth}x${this.worldHeight}`);
+        this.sharkManager = new SharkManager(
+            this.sharkContainer,
+            this.worldWidth,
+            this.worldHeight,
+            this.safeZone
+        );
+        
         // Create bubble manager
         console.log(`Creating bubble manager with world size: ${this.worldWidth}x${this.worldHeight}`);
         this.bubbleManager = new BubbleManager(
@@ -718,6 +732,10 @@ export class Aquarium {
                 this.fishManager.update(dt);
             }
             
+            if (this.sharkManager) {
+                this.sharkManager.update(dt);
+            }
+            
             if (this.bubbleManager) {
                 this.bubbleManager.update(dt);
             }
@@ -730,6 +748,11 @@ export class Aquarium {
         // Update fish speed
         if (this.fishManager) {
             this.fishManager.setMood(mood);
+        }
+        
+        // Update shark speed
+        if (this.sharkManager) {
+            this.sharkManager.setMood(mood);
         }
         
         console.log(`Mood set to: ${mood}`);
@@ -795,6 +818,10 @@ export class Aquarium {
             this.fishManager.resize(this.worldWidth, this.worldHeight, this.safeZone);
         }
         
+        if (this.sharkManager) {
+            this.sharkManager.resize(this.worldWidth, this.worldHeight, this.safeZone);
+        }
+        
         if (this.bubbleManager) {
             this.bubbleManager.resize(this.worldWidth, this.worldHeight);
         }
@@ -819,6 +846,7 @@ export class Aquarium {
     getEntityCounts() {
         return {
             fish: this.fishManager ? this.fishManager.fish.length : 0,
+            sharks: this.sharkManager ? this.sharkManager.sharks.length : 0,
             bubbles: this.bubbleManager ? this.bubbleManager.bubbles.length : 0
         };
     }
@@ -1056,6 +1084,19 @@ export class Aquarium {
         // Unsubscribe from store updates
         if (this.unsubscribe) {
             this.unsubscribe();
+        }
+        
+        // Clean up managers
+        if (this.fishManager) {
+            this.fishManager.destroy();
+        }
+        
+        if (this.sharkManager) {
+            this.sharkManager.destroy();
+        }
+        
+        if (this.bubbleManager) {
+            this.bubbleManager.destroy();
         }
         
         if (this.app) {
