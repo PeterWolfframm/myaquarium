@@ -1210,3 +1210,86 @@ body {
 .grid-toggle-text {
     user-select: none;
 }
+
+/* Drag and Drop Styles */
+.draggable-collapsible {
+    transition: all 0.2s ease;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.draggable-collapsible.dragging {
+    transform: rotate(2deg);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+    z-index: 1000 !important;
+}
+
+.draggable-title-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.drag-handle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    transition: all 0.2s ease;
+    cursor: grab;
+    opacity: 0.7;
+    flex-shrink: 0;
+}
+
+.drag-handle:hover {
+    background: rgba(255, 255, 255, 0.2);
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(0.95);
+}
+
+.drag-handle-icon {
+    color: #ffffff;
+    opacity: 0.8;
+    transition: opacity 0.2s ease;
+}
+
+.drag-handle:hover .drag-handle-icon {
+    opacity: 1;
+}
+
+.draggable-title-text {
+    flex: 1;
+}
+
+.drag-overlay-item {
+    pointer-events: none;
+    transform-origin: top left;
+}
+
+/* Position overrides for draggable collapsibles */
+.draggable-collapsible .collapsible {
+    position: static !important;
+    transform: none !important;
+}
+
+/* Enhanced visual feedback during drag */
+.draggable-collapsible.dragging .collapsible {
+    background: rgba(0, 68, 102, 0.95);
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(0, 204, 255, 0.5);
+}
+
+.draggable-collapsible.dragging .drag-handle {
+    background: rgba(0, 204, 255, 0.4);
+    border: 1px solid rgba(0, 204, 255, 0.6);
+}

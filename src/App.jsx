@@ -4,6 +4,8 @@ import TimerOverlay from './components/TimerOverlay';
 import AquariumSettings from './components/AquariumSettings';
 import FishEditor from './components/FishEditor';
 import DataPanel from './components/DataPanel';
+import DragAndDropProvider from './components/DragAndDropProvider';
+import DraggableCollapsible from './components/DraggableCollapsible';
 import { useAquariumStore } from './stores/aquariumStore.js';
 import { useFishStore } from './stores/fishStore.js';
 import { databaseService } from './services/database.js';
@@ -34,6 +36,38 @@ function App() {
   const [showFishEditor, setShowFishEditor] = useState(false);
   const [showTimer, setShowTimer] = useState(true);
   const [showStats, setShowStats] = useState(true);
+  
+  // Panel positions for drag and drop
+  const [panelPositions, setPanelPositions] = useState(() => {
+    try {
+      const saved = localStorage.getItem('aquarium-panel-positions');
+      return saved ? JSON.parse(saved) : {
+        timer: { x: window.innerWidth / 2 - 150, y: 50 },
+        stats: { x: window.innerWidth - 320, y: 50 }
+      };
+    } catch {
+      return {
+        timer: { x: window.innerWidth / 2 - 150, y: 50 },
+        stats: { x: window.innerWidth - 320, y: 50 }
+      };
+    }
+  });
+
+  // Handle panel position changes
+  const handlePositionChange = (panelId, newPosition) => {
+    const updatedPositions = {
+      ...panelPositions,
+      [panelId]: newPosition
+    };
+    setPanelPositions(updatedPositions);
+    
+    // Persist to localStorage
+    try {
+      localStorage.setItem('aquarium-panel-positions', JSON.stringify(updatedPositions));
+    } catch (error) {
+      console.warn('Failed to save panel positions:', error);
+    }
+  };
 
   // Get store initialization functions
   const initializeAquariumStore = useAquariumStore(state => state.initializeFromDatabase);
@@ -209,63 +243,96 @@ function App() {
   };
 
   return (
-    <div className="aquarium-container">
-      {/* Show loading indicator while stores are initializing */}
-      {(aquariumLoading || fishLoading) && (
-        <div className="loading-overlay">
-          <div className="loading-spinner">🐠</div>
-          <div className="loading-text">Loading aquarium from cloud...</div>
+    <DragAndDropProvider
+      onPositionChange={handlePositionChange}
+      positions={panelPositions}
+    >
+      <div className="aquarium-container">
+        {/* Show loading indicator while stores are initializing */}
+        {(aquariumLoading || fishLoading) && (
+          <div className="loading-overlay">
+            <div className="loading-spinner">🐠</div>
+            <div className="loading-text">Loading aquarium from cloud...</div>
+          </div>
+        )}
+        
+        {/* Control Buttons */}
+        <div className="control-buttons">
+          <button className="control-button timer-button" onClick={toggleTimer}>
+            ⏱️ Timer
+          </button>
+          <button className="control-button stats-button" onClick={toggleStats}>
+            📊 Stats
+          </button>
+          <button className="control-button settings-button" onClick={toggleSettings}>
+            ⚙️ Settings
+          </button>
+          <button className="control-button fish-editor-button" onClick={toggleFishEditor}>
+            🐠 Edit Fish
+          </button>
         </div>
-      )}
-      
-      {/* Control Buttons */}
-      <div className="control-buttons">
-        <button className="control-button timer-button" onClick={toggleTimer}>
-          ⏱️ Timer
-        </button>
-        <button className="control-button stats-button" onClick={toggleStats}>
-          📊 Stats
-        </button>
-        <button className="control-button settings-button" onClick={toggleSettings}>
-          ⚙️ Settings
-        </button>
-        <button className="control-button fish-editor-button" onClick={toggleFishEditor}>
-          🐠 Edit Fish
-        </button>
-      </div>
 
-      <TimerOverlay 
-        time={time} 
-        mood={mood} 
-        onMoodChange={handleMoodChange}
-        currentSession={currentSession}
-        isOpen={showTimer}
-        onToggle={toggleTimer}
-      />
-      <AquariumContainer 
-        mood={mood} 
-        onAquariumReady={handleAquariumReady}
-      />
-      <AquariumSettings 
-        isVisible={showSettings}
-        onClose={closeSettings}
-        aquarium={aquariumRef}
-      />
-      <FishEditor 
-        isVisible={showFishEditor}
-        onClose={closeFishEditor}
-      />
-      <DataPanel 
-        visibleCubes={visibleCubes}
-        fishInfo={fishInfo}
-        viewportPosition={viewportPosition}
-        tileDimensions={tileDimensions}
-        zoomInfo={zoomInfo}
-        aquarium={aquariumRef}
-        isOpen={showStats}
-        onToggle={toggleStats}
-      />
-    </div>
+        {/* Draggable Timer Panel */}
+        {showTimer && (
+          <DraggableCollapsible
+            id="timer"
+            title={`⏱️ Timer - ${time}`}
+            draggablePosition={panelPositions.timer}
+            isOpen={showTimer}
+            onToggle={toggleTimer}
+            className="timer-collapsible"
+            hideWhenClosed={true}
+          >
+            <TimerOverlay 
+              time={time} 
+              mood={mood} 
+              onMoodChange={handleMoodChange}
+              currentSession={currentSession}
+              isOpen={true}
+              onToggle={() => {}}
+            />
+          </DraggableCollapsible>
+        )}
+
+        {/* Draggable Stats Panel */}
+        {showStats && (
+          <DraggableCollapsible
+            id="stats"
+            title="📊 Stats"
+            draggablePosition={panelPositions.stats}
+            isOpen={showStats}
+            onToggle={toggleStats}
+            className="stats-collapsible"
+            hideWhenClosed={true}
+          >
+            <DataPanel 
+              visibleCubes={visibleCubes}
+              fishInfo={fishInfo}
+              viewportPosition={viewportPosition}
+              tileDimensions={tileDimensions}
+              zoomInfo={zoomInfo}
+              aquarium={aquariumRef}
+              isOpen={true}
+              onToggle={() => {}}
+            />
+          </DraggableCollapsible>
+        )}
+
+        <AquariumContainer 
+          mood={mood} 
+          onAquariumReady={handleAquariumReady}
+        />
+        <AquariumSettings 
+          isVisible={showSettings}
+          onClose={closeSettings}
+          aquarium={aquariumRef}
+        />
+        <FishEditor 
+          isVisible={showFishEditor}
+          onClose={closeFishEditor}
+        />
+      </div>
+    </DragAndDropProvider>
   );
 }
 
