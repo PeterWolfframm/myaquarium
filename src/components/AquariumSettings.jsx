@@ -7,9 +7,13 @@ function AquariumSettings({ isVisible, onClose, aquarium }) {
     tilesHorizontal,
     tilesVertical,
     defaultVisibleVerticalTiles,
+    minZoom,
+    maxZoom,
     setTilesHorizontal,
     setTilesVertical,
-    setDefaultVisibleVerticalTiles
+    setDefaultVisibleVerticalTiles,
+    setMinZoom,
+    setMaxZoom
   } = useAquariumStore();
   
   const [localValues, setLocalValues] = useState({
@@ -79,6 +83,25 @@ function AquariumSettings({ isVisible, onClose, aquarium }) {
     }
   };
 
+  const handleCaptureMinZoom = () => {
+    if (aquarium) {
+      const currentZoom = aquarium.currentZoomLevel;
+      setMinZoom(Math.round(currentZoom * 100) / 100); // Round to 2 decimals
+    }
+  };
+
+  const handleCaptureMaxZoom = () => {
+    if (aquarium) {
+      const currentZoom = aquarium.currentZoomLevel;
+      setMaxZoom(Math.round(currentZoom * 100) / 100); // Round to 2 decimals
+    }
+  };
+
+  const handleClearZoomBoundaries = () => {
+    setMinZoom(null);
+    setMaxZoom(null);
+  };
+
   return (
     <Modal 
       isVisible={isVisible} 
@@ -106,6 +129,36 @@ function AquariumSettings({ isVisible, onClose, aquarium }) {
             <button className="reset-zoom-button" onClick={handleResetToDefaultZoom}>
               Reset to Default Zoom
             </button>
+          </div>
+        </div>
+
+        <div className="setting-group">
+          <h3>Zoom Boundaries</h3>
+          <div className="zoom-boundaries">
+            <div className="zoom-boundary-status">
+              <div className="zoom-info-row">
+                <span>Custom Min Zoom:</span>
+                <span className="zoom-value">{minZoom ? `${minZoom}x` : 'Not Set'}</span>
+              </div>
+              <div className="zoom-info-row">
+                <span>Custom Max Zoom:</span>
+                <span className="zoom-value">{maxZoom ? `${maxZoom}x` : 'Not Set'}</span>
+              </div>
+            </div>
+            <div className="zoom-boundary-controls">
+              <button className="capture-zoom-button capture-min" onClick={handleCaptureMinZoom}>
+                Capture Min Zoom
+              </button>
+              <button className="capture-zoom-button capture-max" onClick={handleCaptureMaxZoom}>
+                Capture Max Zoom
+              </button>
+              <button className="clear-boundaries-button" onClick={handleClearZoomBoundaries}>
+                Clear Boundaries
+              </button>
+            </div>
+            <div className="info-text">
+              <p>Set your current zoom level as the minimum or maximum boundary. Once set, you won't be able to zoom beyond these limits.</p>
+            </div>
           </div>
         </div>
 

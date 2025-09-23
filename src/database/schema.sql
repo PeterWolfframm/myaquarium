@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS aquarium_settings (
   default_visible_vertical_tiles INTEGER NOT NULL DEFAULT 17,
   target_vertical_tiles INTEGER NOT NULL DEFAULT 20,
   show_grid BOOLEAN NOT NULL DEFAULT true,
+  min_zoom NUMERIC(4,2), -- User-defined minimum zoom boundary
+  max_zoom NUMERIC(4,2), -- User-defined maximum zoom boundary
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

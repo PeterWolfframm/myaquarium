@@ -52,7 +52,9 @@ class DatabaseService {
         tiles_vertical: settings.tilesVertical,
         tile_size: settings.tileSize, // Always 64 for fixed tile system
         default_visible_vertical_tiles: settings.defaultVisibleVerticalTiles,
-        show_grid: settings.showGrid
+        show_grid: settings.showGrid,
+        min_zoom: settings.minZoom,
+        max_zoom: settings.maxZoom
       };
 
       let result;

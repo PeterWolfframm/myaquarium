@@ -143,7 +143,7 @@ export class Aquarium {
         this.viewport.plugins.remove('clamp-zoom');
         this.viewport.clampZoom({
             minScale: minScale,
-            maxScale: NAVIGATION.MAX_ZOOM_SCALE
+            maxScale: this.calculateMaxZoomScale()
         });
         
         console.log(`Force updated zoom constraints: minScale = ${minScale.toFixed(4)}`);
@@ -181,7 +181,7 @@ export class Aquarium {
     
     /**
      * Calculate minimum zoom scale to ensure you cannot zoom out more than showing all vertical tiles
-     * This is the key constraint requested by the user
+     * This respects user-defined minimum zoom boundaries when set
      */
     calculateMinZoomScale() {
         if (!this.app || this.worldHeight <= 0) {
@@ -191,6 +191,13 @@ export class Aquarium {
             });
             // Return a reasonable fallback when we can't calculate properly
             return 0.5;
+        }
+        
+        // Check if user has set a custom minimum zoom boundary
+        const customMinZoom = this.store.minZoom;
+        if (customMinZoom !== null && customMinZoom > 0) {
+            console.log(`Using custom minimum zoom: ${customMinZoom.toFixed(4)}`);
+            return customMinZoom;
         }
         
         // Calculate the scale needed to show all vertical tiles in the viewport
@@ -210,6 +217,21 @@ export class Aquarium {
         return minScale;
     }
 
+    /**
+     * Calculate maximum zoom scale respecting user-defined boundaries
+     */
+    calculateMaxZoomScale() {
+        // Check if user has set a custom maximum zoom boundary
+        const customMaxZoom = this.store.maxZoom;
+        if (customMaxZoom !== null && customMaxZoom > 0) {
+            console.log(`Using custom maximum zoom: ${customMaxZoom.toFixed(4)}`);
+            return customMaxZoom;
+        }
+        
+        // Use system default maximum zoom
+        return NAVIGATION.MAX_ZOOM_SCALE;
+    }
+
     setupViewport() {
         // Create viewport with pixi-viewport
         this.viewport = new Viewport({
@@ -223,14 +245,15 @@ export class Aquarium {
         // Add viewport to stage
         this.app.stage.addChild(this.viewport);
         
-        // Calculate minimum scale to show all vertical tiles
+        // Calculate minimum and maximum zoom scales
         const minScale = this.calculateMinZoomScale();
+        const maxScale = this.calculateMaxZoomScale();
         
         // Configure viewport plugins - only clamping, no mouse interactions
         this.viewport
             .clampZoom({
                 minScale: minScale,
-                maxScale: NAVIGATION.MAX_ZOOM_SCALE
+                maxScale: maxScale
             })
             .clamp({
                 left: 0,
@@ -351,7 +374,7 @@ export class Aquarium {
         
         // Ensure the scale is within valid bounds
         const minScale = this.calculateMinZoomScale();
-        const maxScale = NAVIGATION.MAX_ZOOM_SCALE;
+        const maxScale = this.calculateMaxZoomScale();
         const clampedScale = Math.max(minScale, Math.min(maxScale, defaultScale));
         
         this.viewport.setZoom(clampedScale, true);
@@ -642,7 +665,7 @@ export class Aquarium {
                 const currentScale = this.viewport.scale.x;
                 const zoomFactor = NAVIGATION.ZOOM_FACTOR;
                 const viewportHeight = this.app.screen.height;
-                const maxZoomScale = NAVIGATION.MAX_ZOOM_SCALE;
+                const maxZoomScale = this.calculateMaxZoomScale();
                 
                 if (e.key === '+' || e.key === '=') {
                     // Zoom in - respect max zoom constraint
@@ -727,7 +750,7 @@ export class Aquarium {
         this.viewport.plugins.remove('clamp-zoom');
         this.viewport.clampZoom({
             minScale: minScale,
-            maxScale: NAVIGATION.MAX_ZOOM_SCALE
+            maxScale: this.calculateMaxZoomScale()
         });
         
         console.log(`Updated zoom constraints: minScale = ${minScale.toFixed(4)}`);
@@ -998,7 +1021,7 @@ export class Aquarium {
         try {
             const currentZoom = this.viewport.scale.x;
             const minZoom = this.calculateMinZoomScale();
-            const maxZoom = NAVIGATION.MAX_ZOOM_SCALE;
+            const maxZoom = this.calculateMaxZoomScale();
             
             // Calculate how many vertical tiles are currently visible
             const viewportHeight = this.app.screen.height;
@@ -1021,7 +1044,7 @@ export class Aquarium {
             return {
                 currentZoom: 1.0,
                 minZoom: this.calculateMinZoomScale(),
-                maxZoom: NAVIGATION.MAX_ZOOM_SCALE,
+                maxZoom: this.calculateMaxZoomScale(),
                 defaultZoom: 1.0,
                 zoomPercentage: 100,
                 visibleVerticalTiles: 0

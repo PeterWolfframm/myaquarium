@@ -15,6 +15,10 @@ export const useAquariumStore = create((set, get) => ({
       
       // Default zoom level - how many vertical tiles to show when app opens
       defaultVisibleVerticalTiles: 20,
+      
+      // User-defined zoom boundaries
+      minZoom: null, // If null, use calculated minimum
+      maxZoom: null, // If null, use system maximum
         
       // Grid visibility toggle
       showGrid: true,
@@ -83,6 +87,25 @@ export const useAquariumStore = create((set, get) => ({
         });
       },
       
+      // Set custom zoom boundaries
+      setMinZoom: async (value) => {
+        set({ minZoom: value });
+        // Auto-sync to database
+        get().syncToDatabase().catch(error => {
+          console.error('Failed to sync settings to database:', error);
+          set({ syncError: error.message });
+        });
+      },
+      
+      setMaxZoom: async (value) => {
+        set({ maxZoom: value });
+        // Auto-sync to database
+        get().syncToDatabase().catch(error => {
+          console.error('Failed to sync settings to database:', error);
+          set({ syncError: error.message });
+        });
+      },
+      
       // Toggle grid visibility
       toggleGrid: async () => {
         const state = get();
@@ -133,6 +156,8 @@ export const useAquariumStore = create((set, get) => ({
           tileSize: AQUARIUM_CONFIG.TILE_SIZE, // Always use fixed 64px
           defaultVisibleVerticalTiles: settings.default_visible_vertical_tiles || 20,
           showGrid: settings.show_grid,
+          minZoom: settings.min_zoom || null,
+          maxZoom: settings.max_zoom || null,
           worldWidth: settings.tiles_horizontal * AQUARIUM_CONFIG.TILE_SIZE,
           worldHeight: settings.tiles_vertical * AQUARIUM_CONFIG.TILE_SIZE,
           lastSyncTime: new Date(),
@@ -146,7 +171,9 @@ export const useAquariumStore = create((set, get) => ({
           tilesVertical: state.tilesVertical,
           tileSize: AQUARIUM_CONFIG.TILE_SIZE,
           defaultVisibleVerticalTiles: state.defaultVisibleVerticalTiles,
-          showGrid: state.showGrid
+          showGrid: state.showGrid,
+          minZoom: state.minZoom,
+          maxZoom: state.maxZoom
         });
         
         set({ 
@@ -176,7 +203,9 @@ export const useAquariumStore = create((set, get) => ({
         tilesVertical: state.tilesVertical,
         tileSize: AQUARIUM_CONFIG.TILE_SIZE,
         defaultVisibleVerticalTiles: state.defaultVisibleVerticalTiles,
-        showGrid: state.showGrid
+        showGrid: state.showGrid,
+        minZoom: state.minZoom,
+        maxZoom: state.maxZoom
       });
       
       set({ 

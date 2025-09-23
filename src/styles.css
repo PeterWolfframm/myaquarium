@@ -856,6 +856,70 @@ body {
     transform: translateY(-1px);
 }
 
+/* Zoom Boundaries Styling */
+.zoom-boundaries {
+    background: rgba(0, 170, 221, 0.1);
+    border: 1px solid rgba(0, 170, 221, 0.3);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.zoom-boundary-status {
+    margin-bottom: 15px;
+}
+
+.zoom-boundary-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.capture-zoom-button {
+    padding: 8px 16px;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: all 0.3s ease;
+}
+
+.capture-zoom-button.capture-min {
+    background: linear-gradient(135deg, #ff9800, #f57c00);
+}
+
+.capture-zoom-button.capture-min:hover {
+    background: linear-gradient(135deg, #f57c00, #ef6c00);
+    transform: translateY(-1px);
+}
+
+.capture-zoom-button.capture-max {
+    background: linear-gradient(135deg, #9c27b0, #7b1fa2);
+}
+
+.capture-zoom-button.capture-max:hover {
+    background: linear-gradient(135deg, #7b1fa2, #6a1b9a);
+    transform: translateY(-1px);
+}
+
+.clear-boundaries-button {
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #f44336, #d32f2f);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: all 0.3s ease;
+}
+
+.clear-boundaries-button:hover {
+    background: linear-gradient(135deg, #d32f2f, #c62828);
+    transform: translateY(-1px);
+}
+
 .controls-info {
     background: rgba(255, 255, 255, 0.05);
     border-radius: 6px;
