@@ -109,10 +109,8 @@ export class Fish {
             this.sprite = new PIXI.Sprite(texture);
             this.sprite.anchor.set(0.5, 0.5);
             
-            // Scale sprite to reasonable size (maintain aspect ratio)
-            const targetSize = Math.max(FISH_CONFIG.SPRITE_SIZE.width, FISH_CONFIG.SPRITE_SIZE.height);
-            const scale = targetSize / Math.max(texture.width, texture.height);
-            this.sprite.scale.set(scale * 0.8); // Make it slightly smaller than default fish
+            // Scale sprite to reasonable size (similar to shark scaling)
+            this.sprite.scale.set(0.8, 0.8); // Use same scaling approach as shark
             
             // Ensure proper settings for PIXI v7
             this.sprite.interactive = false;
@@ -229,6 +227,7 @@ export class Fish {
             if (oldX !== undefined) this.sprite.x = oldX;
             if (oldY !== undefined) this.sprite.y = oldY;
             if (oldScaleX !== undefined) {
+                // Restore the sign of the scale while preserving the new calculated magnitude
                 this.sprite.scale.x = Math.abs(this.sprite.scale.x) * Math.sign(oldScaleX);
             }
         }
@@ -353,10 +352,10 @@ export class Fish {
         // Check world boundaries and flip direction
         if (this.sprite.x < -FISH_CONFIG.BOUNDARY_MARGIN) {
             this.direction = 1;
-            this.sprite.scale.x = 1;
+            this.sprite.scale.x = Math.abs(this.sprite.scale.x); // Face right while preserving scale
         } else if (this.sprite.x > this.worldWidth + FISH_CONFIG.BOUNDARY_MARGIN) {
             this.direction = -1;
-            this.sprite.scale.x = -1;
+            this.sprite.scale.x = -Math.abs(this.sprite.scale.x); // Face left while preserving scale
         }
         
         // Update vertical drift
@@ -375,9 +374,9 @@ export class Fish {
         
         // Ensure fish direction sprite flipping
         if (this.direction > 0) {
-            this.sprite.scale.x = 1;
+            this.sprite.scale.x = Math.abs(this.sprite.scale.x);
         } else {
-            this.sprite.scale.x = -1;
+            this.sprite.scale.x = -Math.abs(this.sprite.scale.x);
         }
     }
 }
