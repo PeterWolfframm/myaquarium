@@ -1,7 +1,7 @@
 import { useAquariumStore } from '../stores/aquariumStore.js';
 import Collapsible from './Collapsible.jsx';
 
-function DataPanel({ visibleCubes, fishInfo, viewportPosition, tileDimensions, zoomInfo, aquarium, isOpen, onToggle }) {
+function DataPanel({ visibleCubes, fishInfo, viewportPosition, tileDimensions, zoomInfo, aquarium, isOpen, onToggle, isDraggable = false, draggableId = null, draggablePosition = null }) {
   const { showGrid, toggleGrid } = useAquariumStore();
 
   const handleResetToDefaultZoom = () => {
@@ -13,12 +13,15 @@ function DataPanel({ visibleCubes, fishInfo, viewportPosition, tileDimensions, z
   return (
     <Collapsible 
       title="📊 Stats"
-      position="top-right"
+      position={isDraggable ? "static" : "top-right"}
       size="medium"
       isOpen={isOpen}
       onToggle={onToggle}
       className="stats-collapsible"
       hideWhenClosed={true}
+      isDraggable={isDraggable}
+      draggableId={draggableId}
+      draggablePosition={draggablePosition}
     >
       <div className="data-section">
         <div className="zoom-section">

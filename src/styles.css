@@ -1212,17 +1212,6 @@ body {
 }
 
 /* Drag and Drop Styles */
-.draggable-collapsible {
-    transition: all 0.2s ease;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-.draggable-collapsible.dragging {
-    transform: rotate(2deg);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
-    z-index: 1000 !important;
-}
 
 .draggable-title-container {
     display: flex;
@@ -1276,20 +1265,24 @@ body {
     transform-origin: top left;
 }
 
-/* Position overrides for draggable collapsibles */
-.draggable-collapsible .collapsible {
-    position: static !important;
-    transform: none !important;
+/* Base styles for draggable collapsibles */
+.collapsible.draggable-collapsible {
+    transition: all 0.2s ease;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 /* Enhanced visual feedback during drag */
-.draggable-collapsible.dragging .collapsible {
+.collapsible.draggable-collapsible.dragging {
+    transform: rotate(2deg);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
     background: rgba(0, 68, 102, 0.95);
     backdrop-filter: blur(10px);
     border: 2px solid rgba(0, 204, 255, 0.5);
+    z-index: 1000 !important;
 }
 
-.draggable-collapsible.dragging .drag-handle {
+.collapsible.draggable-collapsible.dragging .drag-handle {
     background: rgba(0, 204, 255, 0.4);
     border: 1px solid rgba(0, 204, 255, 0.6);
 }

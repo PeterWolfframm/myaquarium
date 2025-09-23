@@ -5,7 +5,6 @@ import AquariumSettings from './components/AquariumSettings';
 import FishEditor from './components/FishEditor';
 import DataPanel from './components/DataPanel';
 import DragAndDropProvider from './components/DragAndDropProvider';
-import DraggableCollapsible from './components/DraggableCollapsible';
 import { useAquariumStore } from './stores/aquariumStore.js';
 import { useFishStore } from './stores/fishStore.js';
 import { databaseService } from './services/database.js';
@@ -272,51 +271,31 @@ function App() {
           </button>
         </div>
 
-        {/* Draggable Timer Panel */}
-        {showTimer && (
-          <DraggableCollapsible
-            id="timer"
-            title={`⏱️ Timer - ${time}`}
-            draggablePosition={panelPositions.timer}
-            isOpen={showTimer}
-            onToggle={toggleTimer}
-            className="timer-collapsible"
-            hideWhenClosed={true}
-          >
-            <TimerOverlay 
-              time={time} 
-              mood={mood} 
-              onMoodChange={handleMoodChange}
-              currentSession={currentSession}
-              isOpen={true}
-              onToggle={() => {}}
-            />
-          </DraggableCollapsible>
-        )}
+        <TimerOverlay 
+          time={time} 
+          mood={mood} 
+          onMoodChange={handleMoodChange}
+          currentSession={currentSession}
+          isOpen={showTimer}
+          onToggle={toggleTimer}
+          isDraggable={true}
+          draggableId="timer"
+          draggablePosition={panelPositions.timer}
+        />
 
-        {/* Draggable Stats Panel */}
-        {showStats && (
-          <DraggableCollapsible
-            id="stats"
-            title="📊 Stats"
-            draggablePosition={panelPositions.stats}
-            isOpen={showStats}
-            onToggle={toggleStats}
-            className="stats-collapsible"
-            hideWhenClosed={true}
-          >
-            <DataPanel 
-              visibleCubes={visibleCubes}
-              fishInfo={fishInfo}
-              viewportPosition={viewportPosition}
-              tileDimensions={tileDimensions}
-              zoomInfo={zoomInfo}
-              aquarium={aquariumRef}
-              isOpen={true}
-              onToggle={() => {}}
-            />
-          </DraggableCollapsible>
-        )}
+        <DataPanel 
+          visibleCubes={visibleCubes}
+          fishInfo={fishInfo}
+          viewportPosition={viewportPosition}
+          tileDimensions={tileDimensions}
+          zoomInfo={zoomInfo}
+          aquarium={aquariumRef}
+          isOpen={showStats}
+          onToggle={toggleStats}
+          isDraggable={true}
+          draggableId="stats"
+          draggablePosition={panelPositions.stats}
+        />
 
         <AquariumContainer 
           mood={mood} 

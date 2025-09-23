@@ -2,7 +2,7 @@ import { useState, useEffect } from 'preact/hooks';
 import { databaseService } from '../services/database.js';
 import Collapsible from './Collapsible.jsx';
 
-function TimerOverlay({ time, mood, onMoodChange, currentSession, onSessionsLoaded, isOpen, onToggle }) {
+function TimerOverlay({ time, mood, onMoodChange, currentSession, onSessionsLoaded, isOpen, onToggle, isDraggable = false, draggableId = null, draggablePosition = null }) {
   const [recentSessions, setRecentSessions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [switchingMood, setSwitchingMood] = useState(null);
@@ -78,12 +78,15 @@ function TimerOverlay({ time, mood, onMoodChange, currentSession, onSessionsLoad
   return (
     <Collapsible 
       title={`⏱️ Timer - ${time}`}
-      position="center"
+      position={isDraggable ? "static" : "center"}
       size="medium"
       isOpen={isOpen}
       onToggle={onToggle}
       className="timer-collapsible"
       hideWhenClosed={true}
+      isDraggable={isDraggable}
+      draggableId={draggableId}
+      draggablePosition={draggablePosition}
     >
       <div className="timer-content">
         <div className="mood-controls">
