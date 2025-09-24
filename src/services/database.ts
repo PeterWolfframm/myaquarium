@@ -5,6 +5,7 @@ import type {
   AquariumSettings, 
   TimerSession, 
   SpriteData, 
+  UISettingsData,
   MoodType,
   DatabaseError 
 } from '../types/global';
@@ -971,6 +972,85 @@ class DatabaseService {
       return await this.updatePlacedObject(objectId, { layer: validLayer });
     } catch (error) {
       console.error('Error in setObjectLayer:', error);
+      return null;
+    }
+  }
+
+  // ==================== UI SETTINGS ====================
+
+  /**
+   * Get UI settings for the current user
+   * @returns {Promise<UISettingsData|null>} UI settings or null if not found
+   */
+  async getUISettings(): Promise<UISettingsData | null> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const { data, error } = await supabase
+        .from(TABLES.UI_SETTINGS || 'ui_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
+        console.error('Error fetching UI settings:', error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error in getUISettings:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Update UI settings for the current user
+   * @param {Partial<UISettingsData>} settings - UI settings to update
+   * @returns {Promise<UISettingsData|null>} Updated settings or null if error
+   */
+  async updateUISettings(settings: Partial<UISettingsData>): Promise<UISettingsData | null> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      // First try to get existing settings
+      const existingSettings = await this.getUISettings();
+      
+      const settingsData = {
+        user_id: user.id,
+        brutalist_primary_color: settings.brutalist_primary_color,
+        brutalist_secondary_color: settings.brutalist_secondary_color,
+        show_brutalist_panel: settings.show_brutalist_panel,
+      };
+
+      let result;
+      if (existingSettings) {
+        // Update existing settings
+        result = await supabase
+          .from(TABLES.UI_SETTINGS || 'ui_settings')
+          .update(settingsData)
+          .eq('user_id', user.id)
+          .select()
+          .single();
+      } else {
+        // Insert new settings
+        result = await supabase
+          .from(TABLES.UI_SETTINGS || 'ui_settings')
+          .insert(settingsData)
+          .select()
+          .single();
+      }
+
+      if (result.error) {
+        console.error('Error updating UI settings:', result.error);
+        return null;
+      }
+
+      return result.data;
+    } catch (error) {
+      console.error('Error in updateUISettings:', error);
       return null;
     }
   }

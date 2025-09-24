@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'preact/hooks';
 import { useAquariumStore } from '../stores/aquariumStore';
+import { useUIStore } from '../stores/uiStore';
 import Modal from './Modal';
 
 function AquariumSettings({ isVisible, onClose, aquarium }) {
@@ -15,6 +16,13 @@ function AquariumSettings({ isVisible, onClose, aquarium }) {
     setMinZoom,
     setMaxZoom
   } = useAquariumStore();
+  
+  const {
+    brutalistPrimaryColor,
+    brutalistSecondaryColor,
+    setBrutalistPrimaryColor,
+    setBrutalistSecondaryColor
+  } = useUIStore();
   
   const [localValues, setLocalValues] = useState({
     tilesHorizontal,
@@ -219,6 +227,63 @@ function AquariumSettings({ isVisible, onClose, aquarium }) {
             <p>World Dimensions: {localValues.tilesHorizontal * 64} × {localValues.tilesVertical * 64} pixels</p>
             <p>Default Visible: {localValues.defaultVisibleVerticalTiles} vertical tiles on app start</p>
             <p>Tile Size: 64px (fixed)</p>
+          </div>
+        </div>
+
+        <div className="setting-group">
+          <h3>Brutalist Panel Colors</h3>
+          <div className="brutalist-color-settings">
+            <div className="input-group">
+              <label>
+                Primary Color (Background):
+                <div className="color-input-container">
+                  <input
+                    type="color"
+                    value={brutalistPrimaryColor}
+                    onChange={(e) => setBrutalistPrimaryColor(e.target.value)}
+                    className="color-picker"
+                  />
+                  <span className="color-value">{brutalistPrimaryColor}</span>
+                </div>
+              </label>
+            </div>
+            <div className="input-group">
+              <label>
+                Secondary Color (Border/Accent):
+                <div className="color-input-container">
+                  <input
+                    type="color"
+                    value={brutalistSecondaryColor}
+                    onChange={(e) => setBrutalistSecondaryColor(e.target.value)}
+                    className="color-picker"
+                  />
+                  <span className="color-value">{brutalistSecondaryColor}</span>
+                </div>
+              </label>
+            </div>
+            <div className="color-preview">
+              <div 
+                className="brutalist-preview" 
+                style={{
+                  '--brutalist-primary': brutalistPrimaryColor,
+                  '--brutalist-secondary': brutalistSecondaryColor,
+                  background: 'var(--brutalist-primary)',
+                  border: '4px solid var(--brutalist-secondary)',
+                  borderRadius: '0',
+                  padding: '10px',
+                  color: '#FFFFFF',
+                  fontWeight: 'bold',
+                  textAlign: 'center',
+                  textShadow: '1px 1px 0 #000000',
+                  boxShadow: '4px 4px 0 #000000'
+                }}
+              >
+                BRUTALIST PREVIEW
+              </div>
+            </div>
+            <div className="info-text">
+              <p>Customize the colors for the brutalist UI panel. Changes apply immediately to the panel styling.</p>
+            </div>
           </div>
         </div>
 

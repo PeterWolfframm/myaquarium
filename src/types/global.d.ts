@@ -265,6 +265,7 @@ export interface PanelPositions {
   timer: Position;
   stats: Position;
   objectsManager: Position;
+  brutalistPanel: Position;
 }
 
 export interface FishInfo {
@@ -298,6 +299,16 @@ export interface SpriteData {
   height?: number;
   category?: string;
   user_id?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface UISettingsData {
+  id?: string;
+  user_id?: string;
+  brutalist_primary_color: string;
+  brutalist_secondary_color: string;
+  show_brutalist_panel: boolean;
   created_at?: string;
   updated_at?: string;
 }

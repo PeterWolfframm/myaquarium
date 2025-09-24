@@ -5,9 +5,11 @@ import AquariumSettings from './components/AquariumSettings';
 import FishEditor from './components/FishEditor';
 import ObjectsEditor from './components/ObjectsEditor';
 import DataPanel from './components/DataPanel';
+import BrutalistPanel from './components/BrutalistPanel';
 import DragAndDropProvider from './components/DragAndDropProvider';
 import { useAquariumStore } from './stores/aquariumStore';
 import { useFishStore } from './stores/fishStore';
+import { useUIStore } from './stores/uiStore';
 import { databaseService } from './services/database';
 import type { 
   MoodType, 
@@ -47,6 +49,7 @@ function App(): JSX.Element {
   const [showObjectsManager, setShowObjectsManager] = useState<boolean>(false);
   const [showTimer, setShowTimer] = useState<boolean>(true);
   const [showStats, setShowStats] = useState<boolean>(true);
+  const [showBrutalistPanel, setShowBrutalistPanel] = useState<boolean>(true);
   
   // Panel positions for drag and drop
   const [panelPositions, setPanelPositions] = useState<PanelPositions>(() => {
@@ -55,13 +58,15 @@ function App(): JSX.Element {
       return saved ? JSON.parse(saved) : {
         timer: { x: window.innerWidth / 2 - 150, y: 50 },
         stats: { x: window.innerWidth - 320, y: 50 },
-        objectsManager: { x: 20, y: 120 }
+        objectsManager: { x: 20, y: 120 },
+        brutalistPanel: { x: window.innerWidth - 320, y: 200 }
       };
     } catch {
       return {
         timer: { x: window.innerWidth / 2 - 150, y: 50 },
         stats: { x: window.innerWidth - 320, y: 50 },
-        objectsManager: { x: 20, y: 120 }
+        objectsManager: { x: 20, y: 120 },
+        brutalistPanel: { x: window.innerWidth - 320, y: 200 }
       };
     }
   });
@@ -85,8 +90,10 @@ function App(): JSX.Element {
   // Get store initialization functions
   const initializeAquariumStore = useAquariumStore(state => state.initializeFromDatabase);
   const initializeFishStore = useFishStore(state => state.initializeFromDatabase);
+  const initializeUIStore = useUIStore(state => state.initializeFromDatabase);
   const aquariumLoading = useAquariumStore(state => state.isLoading);
   const fishLoading = useFishStore(state => state.isLoading);
+  const uiLoading = useUIStore(state => state.isLoading);
 
   // Handle object drops on aquarium
   useEffect(() => {
@@ -161,6 +168,7 @@ function App(): JSX.Element {
         
         const aquariumInitPromise = initializeAquariumStore();
         const fishInitPromise = initializeFishStore();
+        const uiInitPromise = initializeUIStore();
         
         const timeoutPromise = new Promise((_, reject) => {
           setTimeout(() => reject(new Error('Store initialization timeout')), timeoutDuration);
@@ -169,16 +177,17 @@ function App(): JSX.Element {
         try {
           // Race the initialization against the timeout
           await Promise.race([
-            Promise.all([aquariumInitPromise, fishInitPromise]),
+            Promise.all([aquariumInitPromise, fishInitPromise, uiInitPromise]),
             timeoutPromise
           ]);
           console.log('Stores initialized successfully');
         } catch (error) {
           if (error.message.includes('timeout')) {
             console.warn('Store initialization timed out after 5 seconds, using temporary settings');
-            // Force both stores to stop loading and use defaults
+            // Force all stores to stop loading and use defaults
             useAquariumStore.getState().setLoadingFalse?.();
             useFishStore.getState().setLoadingFalse?.();
+            useUIStore.getState().setLoadingFalse?.();
           } else {
             throw error;
           }
@@ -186,13 +195,13 @@ function App(): JSX.Element {
         
         // Initialize time tracking
         await initializeTimeTracking();
-      } catch (error) {
-        console.error('Error initializing stores:', error);
-      }
-    };
+    } catch (error) {
+      console.error('Error initializing stores:', error);
+    }
+  };
 
-    initializeStores();
-  }, [initializeAquariumStore, initializeFishStore]);
+  initializeStores();
+}, [initializeAquariumStore, initializeFishStore, initializeUIStore]);
 
   // Initialize time tracking
   const initializeTimeTracking = async (): Promise<void> => {
@@ -343,6 +352,10 @@ function App(): JSX.Element {
     setShowObjectsManager(!showObjectsManager);
   };
 
+  const toggleBrutalistPanel = (): void => {
+    setShowBrutalistPanel(!showBrutalistPanel);
+  };
+
   return (
     <DragAndDropProvider
       onPositionChange={handlePositionChange}
@@ -350,7 +363,7 @@ function App(): JSX.Element {
     >
       <div className="aquarium-container">
         {/* Show loading indicator while stores are initializing */}
-        {(aquariumLoading || fishLoading) && (
+        {(aquariumLoading || fishLoading || uiLoading) && (
           <div className="loading-overlay">
             <div className="loading-spinner">🐠</div>
             <div className="loading-text">Loading aquarium from cloud...</div>
@@ -373,6 +386,9 @@ function App(): JSX.Element {
           </button>
           <button className="control-button objects-manager-button" onClick={toggleObjectsManager}>
             🎨 Objects
+          </button>
+          <button className="control-button brutalist-panel-button" onClick={toggleBrutalistPanel}>
+            🔥 Brutalist
           </button>
         </div>
 
@@ -409,6 +425,14 @@ function App(): JSX.Element {
           draggableId="objectsManager"
           draggablePosition={panelPositions.objectsManager}
           aquarium={aquariumRef}
+        />
+
+        <BrutalistPanel 
+          isOpen={showBrutalistPanel}
+          onToggle={toggleBrutalistPanel}
+          isDraggable={true}
+          draggableId="brutalistPanel"
+          draggablePosition={panelPositions.brutalistPanel}
         />
 
         <AquariumContainer 
