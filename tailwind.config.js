@@ -27,6 +27,11 @@ module.exports = {
       animation: {
         'slideDown': 'slideDown 0.3s ease-out',
       },
+      rotate: {
+        '0.5': '0.5deg',
+        '1.5': '1.5deg',
+        '2.5': '2.5deg',
+      },
       keyframes: {
         slideDown: {
           'from': {

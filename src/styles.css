@@ -1491,13 +1491,234 @@ body {
 
 /* ==================== DESIGN SYSTEM UTILITIES ==================== */
 
+/* ========== CARD COMPONENTS ========== */
+.card-base {
+  @apply bg-black/80 border border-white/20 backdrop-blur-sm transition-all duration-150 box-border;
+}
+
+.card-hover {
+  @apply hover:shadow-[2px_2px_15px_rgba(138,43,226,0.8),0_0_0_1px_rgba(138,43,226,0.4)] hover:border-[rgba(138,43,226,0.6)];
+}
+
+.card-sticky {
+  @apply absolute z-10 rounded-lg max-w-[calc(100vw-30px)] max-h-[calc(100vh-30px)];
+}
+
+.card-fullscreen-overlay {
+  @apply fixed top-0 left-0 w-screen h-screen bg-black/80 flex justify-center items-center z-[1000] backdrop-blur-sm p-4 box-border;
+}
+
+.card-fullscreen-content {
+  @apply bg-slate-900/95 border-2 border-white/20 rounded-xl p-0 max-h-[calc(100vh-30px)] max-w-[calc(100vw-30px)] overflow-hidden relative box-border transition-all duration-150;
+}
+
+.card-draggable {
+  @apply rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.3)] transition-all duration-100;
+}
+
+.card-dragging {
+  @apply rotate-0.5 shadow-[0_6px_20px_rgba(0,0,0,0.5)] bg-slate-700/95 backdrop-blur-[8px] border-primary-500/50 border-2 z-[1000];
+}
+
+.card-header {
+  @apply flex justify-between items-center px-4 py-2 cursor-pointer select-none transition-colors duration-100 hover:bg-white/5;
+}
+
+.card-header-fullscreen {
+  @apply flex justify-between items-center px-5 py-4 border-b border-white/10 bg-slate-800/70 rounded-t-xl;
+}
+
+.card-title {
+  @apply m-0 text-white text-base font-bold font-mono;
+}
+
+.card-title-fullscreen {
+  @apply text-white text-xl font-bold m-0 font-mono uppercase tracking-wider;
+}
+
+.card-content {
+  @apply px-4 pb-3 animate-slideDown max-h-[calc(100vh-100px)] overflow-y-auto box-border;
+}
+
+.card-content-fullscreen {
+  @apply px-5 py-4 max-h-[calc(100vh-130px)] overflow-y-auto box-border;
+}
+
+.card-toggle-btn {
+  @apply bg-transparent border-none text-white text-xl cursor-pointer p-0 w-5 h-5 flex items-center justify-center rounded transition-colors duration-200 hover:bg-white/10 font-mono font-bold;
+}
+
+.card-close-btn {
+  @apply bg-transparent border-none text-white text-2xl cursor-pointer p-0 w-8 h-8 flex items-center justify-center rounded-full transition-colors duration-200 hover:bg-white/10 font-mono font-bold;
+}
+
+.card-view-mode-btn {
+  @apply bg-primary-500/20 border border-primary-500/30 text-primary-400 rounded px-2 py-1 text-xs cursor-pointer transition-all duration-200 hover:bg-primary-500/30 hover:border-primary-500/50 hover:scale-105 active:scale-95 font-mono font-bold;
+}
+
+.card-view-mode-btn-sticky {
+  @apply bg-primary-500/20 border border-primary-500/30 text-primary-400 rounded px-1 py-0.5 text-[10px] cursor-pointer transition-all duration-200 ml-2 flex-shrink-0 hover:bg-primary-500/30 hover:border-primary-500/50 hover:scale-105 active:scale-95 font-mono font-bold;
+}
+
+/* ========== BUTTON SYSTEM ========== */
+.btn-base {
+  @apply px-6 py-3 border-2 font-black text-sm uppercase tracking-wider transition-all duration-200 ease-out cursor-pointer transform;
+}
+
+.btn-hover-lift {
+  @apply hover:-translate-y-1 hover:shadow-xl hover:scale-105 hover:-rotate-1 active:scale-95;
+}
+
+.btn-primary-enhanced {
+  @apply btn-base bg-primary-500 text-white border-primary-600 shadow-lg shadow-primary-500/50;
+  @apply hover:bg-primary-600 hover:text-white hover:border-primary-500 btn-hover-lift hover:shadow-primary-500/40;
+}
+
+.btn-secondary-enhanced {
+  @apply btn-base bg-slate-800 text-primary-300 border-primary-400/50;
+  @apply hover:bg-primary-600 hover:text-white hover:border-primary-500 btn-hover-lift hover:shadow-primary-500/40;
+}
+
+.btn-danger-enhanced {
+  @apply btn-base bg-red-500/20 text-red-400 border-red-500/50;
+  @apply hover:bg-red-500/40 hover:text-red-300 hover:border-red-500/70 btn-hover-lift hover:shadow-red-500/40;
+}
+
+.btn-success-enhanced {
+  @apply btn-base bg-green-500/20 text-green-400 border-green-500/50;
+  @apply hover:bg-green-500/40 hover:text-green-300 hover:border-green-500/70 btn-hover-lift hover:shadow-green-500/40;
+}
+
+.btn-warning-enhanced {
+  @apply btn-base bg-yellow-500/20 text-yellow-400 border-yellow-500/50;
+  @apply hover:bg-yellow-500/40 hover:text-yellow-300 hover:border-yellow-500/70 btn-hover-lift hover:shadow-yellow-500/40;
+}
+
+.btn-compact {
+  @apply px-3 py-1 border font-bold text-xs uppercase tracking-wider transition-all duration-200 cursor-pointer;
+}
+
+.btn-icon {
+  @apply p-2 border-2 rounded-full transition-all duration-200 cursor-pointer hover:scale-110 active:scale-95;
+}
+
+/* ========== DRAG HANDLE ========== */
+.drag-handle {
+  @apply flex items-center justify-center w-5 h-5 rounded bg-white/10 transition-all duration-200 opacity-70 flex-shrink-0 hover:bg-white/20 hover:opacity-100 hover:scale-110 active:bg-white/30 active:scale-95;
+}
+
+.drag-handle-cursor {
+  @apply cursor-grab;
+}
+
+.drag-handle-cursor.dragging {
+  @apply cursor-grabbing;
+}
+
+.drag-handle-icon {
+  @apply text-white opacity-80 transition-opacity duration-200 hover:opacity-100 contrast-200 brightness-75;
+}
+
+/* ========== INTERACTIVE GALLERY ITEMS ========== */
+.gallery-item-enhanced {
+  @apply bg-slate-800/70 border-2 border-primary-400/30 p-3 cursor-pointer transition-all duration-200 transform hover:scale-[1.02] hover:-translate-y-0.5 hover:bg-slate-700/70 hover:border-primary-400/60 rounded-lg;
+}
+
+.gallery-item-selected {
+  @apply border-primary-500 bg-primary-500/20 shadow-lg shadow-primary-500/40 scale-105;
+}
+
+.gallery-item-dragging {
+  @apply opacity-70 rotate-1 scale-105 z-50;
+}
+
+.gallery-thumbnail-enhanced {
+  @apply w-full h-16 object-cover rounded border-2 border-white/20 hover:border-primary-400/50 transition-all duration-200;
+}
+
+/* ========== FORM ENHANCEMENTS ========== */
+.form-section-enhanced {
+  @apply bg-slate-800/70 border-2 border-primary-400/40 p-4 space-y-4 hover:bg-slate-700/70 hover:border-primary-400/70 transition-all duration-200 transform hover:scale-[1.02] rounded-lg;
+}
+
+.form-input-enhanced {
+  @apply w-full bg-slate-800/70 border-2 border-primary-400/40 p-3 text-white hover:bg-slate-700/70 hover:border-primary-400/70 focus:border-primary-400 focus:outline-none transition-all duration-200 rounded;
+}
+
+.form-label-enhanced {
+  @apply text-primary-300 font-black text-sm uppercase tracking-wider block mb-2;
+}
+
+/* ========== ERROR/SUCCESS STATES ========== */
+.error-alert {
+  @apply bg-red-500/20 border border-red-400/50 text-red-400 p-3 rounded-lg flex items-center justify-between;
+}
+
+.success-alert {
+  @apply bg-green-500/20 border border-green-400/50 text-green-400 p-3 rounded-lg flex items-center justify-between;
+}
+
+.warning-alert {
+  @apply bg-yellow-500/20 border border-yellow-400/50 text-yellow-400 p-3 rounded-lg flex items-center justify-between;
+}
+
+.info-alert {
+  @apply bg-blue-500/20 border border-blue-400/50 text-blue-400 p-3 rounded-lg flex items-center justify-between;
+}
+
+/* ========== POSITIONING UTILITIES ========== */
+.position-top-left {
+  @apply top-5 left-5 right-auto bottom-auto;
+}
+
+.position-top-right {
+  @apply top-[70px] right-5 left-auto bottom-auto;
+}
+
+.position-bottom-left {
+  @apply bottom-5 left-5 right-auto top-auto;
+}
+
+.position-bottom-right {
+  @apply bottom-5 right-5 left-auto top-auto;
+}
+
+.position-center {
+  @apply top-5 left-1/2 transform -translate-x-1/2 right-auto bottom-auto max-w-[calc(100vw-40px)];
+}
+
+/* ========== SIZE UTILITIES ========== */
+.size-small {
+  @apply min-w-[min(180px,calc(100vw-30px))] max-w-[calc(100vw-30px)];
+}
+
+.size-medium {
+  @apply min-w-[min(220px,calc(100vw-30px))] max-w-[calc(100vw-30px)];
+}
+
+.size-large {
+  @apply min-w-[min(300px,calc(100vw-30px))] max-w-[calc(100vw-30px)];
+}
+
+.size-fullscreen-small {
+  @apply min-w-[min(280px,calc(100vw-30px))] max-w-[min(450px,calc(100vw-30px))] w-[85%];
+}
+
+.size-fullscreen-medium {
+  @apply min-w-[min(350px,calc(100vw-30px))] max-w-[min(550px,calc(100vw-30px))] w-[85%];
+}
+
+.size-fullscreen-large {
+  @apply min-w-[min(550px,calc(100vw-30px))] max-w-[min(800px,calc(100vw-30px))] w-[85%];
+}
+
 /* ========== SECTION CONTAINERS ========== */
 .section-primary {
-  @apply border-2 border-primary-400/60 bg-slate-800/50 p-4 transform hover:scale-[1.02] transition-all duration-200;
+  @apply border-2 border-primary-400/60 bg-slate-800/50 p-4 transition-all duration-200;
 }
 
 .section-secondary {
-  @apply bg-slate-800/70 border-2 border-primary-400/40 p-3 hover:bg-slate-700/70 hover:border-primary-400/70 transition-all duration-200 transform hover:scale-[1.02];
+  @apply bg-slate-800/70 border-2 border-primary-400/40 p-3 hover:bg-slate-700/70 hover:border-primary-400/70 transition-all duration-200;
 }
 
 .section-tertiary {
@@ -1509,7 +1730,7 @@ body {
 }
 
 .section-interactive {
-  @apply bg-slate-800/70 border border-primary-400/30 hover:bg-slate-700/70 hover:border-primary-400/60 transition-all duration-200 transform hover:scale-[1.02] hover:-translate-y-0.5;
+  @apply bg-slate-800/70 border border-primary-400/30 hover:bg-slate-700/70 hover:border-primary-400/60 transition-all duration-200;
 }
 
 /* ========== BUTTONS ========== */

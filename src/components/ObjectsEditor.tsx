@@ -281,7 +281,7 @@ function ObjectsEditor({
       draggablePosition={draggablePosition}
     >
       {error && (
-        <div className="section-interactive bg-red-500/20 border-red-500/50 text-red-300 p-3 mb-4 rounded flex justify-between items-center">
+        <div className="error-alert mb-4">
           Error: {error}
           <button className="text-red-300 hover:text-white ml-3" onClick={() => setError(null)}>×</button>
         </div>
@@ -290,7 +290,7 @@ function ObjectsEditor({
       <div className="card-content-stats space-y-6">
         <div className="section-primary">
           <h3 className="text-section-title">Object Sprites</h3>
-          <p className="text-sm text-slate-300 text-center">Upload and manage object sprites for your aquarium. Only name input is required for uploads.</p>
+          <p className="text-mono-small text-center">Upload and manage object sprites for your aquarium. Only name input is required for uploads.</p>
         </div>
 
         {/* Size Selector */}
@@ -301,7 +301,7 @@ function ObjectsEditor({
               {[6, 7, 8, 9, 10, 12].map(size => (
                 <button
                   key={size}
-                  className={`px-4 py-2 border-2 font-bold text-sm transition-all duration-200 ${
+                  className={`btn-compact ${
                     selectedSize === size 
                       ? 'bg-primary-500 text-white border-primary-600 shadow-lg shadow-primary-500/50 scale-105' 
                       : 'bg-slate-800 text-primary-300 border-primary-400/50 hover:bg-primary-600 hover:text-white hover:border-primary-500 hover:scale-105'
@@ -343,14 +343,14 @@ function ObjectsEditor({
                 {placedObjects.map((obj) => (
                   <div 
                     key={obj.object_id}
-                    className={`section-interactive p-3 cursor-pointer ${selectedObject?.object_id === obj.object_id ? 'border-primary-500 bg-primary-500/20' : ''}`}
+                    className={`gallery-item-enhanced p-3 cursor-pointer ${selectedObject?.object_id === obj.object_id ? 'gallery-item-selected' : ''}`}
                     onClick={() => handleObjectSelect(obj)}
                   >
                     <div className="flex items-center gap-3">
                       <img 
                         src={obj.sprite_url} 
                         alt="Placed object"
-                        className="w-12 h-12 object-cover rounded border border-white/20 flex-shrink-0"
+                        className="gallery-thumbnail-enhanced w-12 h-12 flex-shrink-0"
                         onError={(e) => {
                           e.target.style.display = 'none';
                           e.target.nextSibling.style.display = 'block';
@@ -394,7 +394,7 @@ function ObjectsEditor({
                 <div className="grid grid-cols-3 grid-rows-3 gap-1 w-32 h-32">
                   <div></div>
                   <button 
-                    className="btn-primary flex items-center justify-center text-lg font-bold hover:-translate-y-1"
+                    className="btn-primary-enhanced flex items-center justify-center text-lg font-bold"
                     onClick={() => moveObject('up')}
                     title="Move up one tile"
                   >
@@ -402,7 +402,7 @@ function ObjectsEditor({
                   </button>
                   <div></div>
                   <button 
-                    className="btn-primary flex items-center justify-center text-lg font-bold hover:-translate-x-1"
+                    className="btn-primary-enhanced flex items-center justify-center text-lg font-bold"
                     onClick={() => moveObject('left')}
                     title="Move left one tile"
                   >
@@ -414,7 +414,7 @@ function ObjectsEditor({
                     </span>
                   </div>
                   <button 
-                    className="btn-primary flex items-center justify-center text-lg font-bold hover:translate-x-1"
+                    className="btn-primary-enhanced flex items-center justify-center text-lg font-bold"
                     onClick={() => moveObject('right')}
                     title="Move right one tile"
                   >
@@ -422,7 +422,7 @@ function ObjectsEditor({
                   </button>
                   <div></div>
                   <button 
-                    className="btn-primary flex items-center justify-center text-lg font-bold hover:translate-y-1"
+                    className="btn-primary-enhanced flex items-center justify-center text-lg font-bold"
                     onClick={() => moveObject('down')}
                     title="Move down one tile"
                   >
@@ -436,14 +436,14 @@ function ObjectsEditor({
                 <h5 className="text-label-large text-center">Layer Controls</h5>
                 <div className="flex gap-3">
                   <button 
-                    className="btn-secondary flex-1"
+                    className="btn-secondary-enhanced flex-1"
                     onClick={() => moveObjectToLayer('background')}
                     title="Move to background (layer -1)"
                   >
                     ↓ Background
                   </button>
                   <button 
-                    className="btn-secondary flex-1"
+                    className="btn-secondary-enhanced flex-1"
                     onClick={() => moveObjectToLayer('foreground')}
                     title="Move to foreground (layer +1)"
                   >
@@ -455,13 +455,13 @@ function ObjectsEditor({
 
               <div className="flex gap-3 pt-4">
                 <button 
-                  className="btn-secondary flex-1"
+                  className="btn-secondary-enhanced flex-1"
                   onClick={handleClearObjectSelection}
                 >
                   Clear Selection
                 </button>
                 <button 
-                  className="btn-secondary flex-1 bg-red-500/20 border-red-500/50 text-red-400 hover:bg-red-500/40 hover:text-red-300"
+                  className="btn-danger-enhanced flex-1"
                   onClick={deleteObject}
                 >
                   Delete Object
@@ -491,7 +491,7 @@ function ObjectsEditor({
               </div>
               <p className="text-mono-small text-center break-all">{selectedSprite}</p>
               <button 
-                className="btn-secondary w-full"
+                className="btn-secondary-enhanced w-full"
                 onClick={handleRemoveSelection}
               >
                 Clear Selection

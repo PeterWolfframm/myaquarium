@@ -282,18 +282,18 @@ function FishEditor({
       draggablePosition={draggablePosition}
     >
       {syncError && (
-        <div className="section-interactive bg-red-500/20 border-red-500/50 text-red-300 p-3 mb-4 rounded flex justify-between items-center">
+        <div className="error-alert mb-4">
           Error: {syncError}
           <button className="text-red-300 hover:text-white ml-3" onClick={clearSyncError}>×</button>
         </div>
       )}
       
       <div className="card-content-stats space-y-6">
-          <div className="border-2 border-primary-400/60 bg-slate-800/50 p-4 transform hover:scale-[1.02] transition-all duration-200">
+          <div className="section-primary">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-primary-300 font-black text-base uppercase tracking-wider mb-4 text-center border-b-2 border-primary-400/30 pb-2">Your Fish ({fish.length})</h3>
+              <h3 className="text-section-title">Your Fish ({fish.length})</h3>
               <button 
-                className="px-6 py-3 border-2 font-black text-sm uppercase tracking-wider transition-all duration-200 ease-out cursor-pointer transform bg-primary-500 text-white border-primary-600 shadow-lg shadow-primary-500/50 hover:bg-primary-600 hover:text-white hover:border-primary-500 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary-500/40 hover:scale-105 hover:-rotate-1 active:scale-95"
+                className="btn-primary-enhanced"
                 onClick={handleStartCreating}
                 disabled={isSyncing}
               >
@@ -301,26 +301,26 @@ function FishEditor({
               </button>
             </div>
             {isLoading ? (
-              <div className="text-center text-primary-400 font-bold italic py-4">Loading fish...</div>
+              <div className="loading-state">Loading fish...</div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {fish.map((fishData) => (
                   <div 
                     key={fishData.id} 
-                    className={`section-interactive p-3 cursor-pointer relative ${selectedFish?.id === fishData.id ? 'border-primary-500 bg-primary-500/20' : ''} ${isSyncing ? 'opacity-70 animate-pulse' : ''}`}
+                    className={`gallery-item-enhanced p-3 cursor-pointer relative ${selectedFish?.id === fishData.id ? 'gallery-item-selected' : ''} ${isSyncing ? 'opacity-70 animate-pulse' : ''}`}
                     onClick={() => handleFishSelect(fishData)}
                   >
                     <div className="flex items-center gap-3">
                       <img 
                         src={fishData.spriteUrl || fishData.sprite_url || FISH_CONFIG.DEFAULT_SPRITE_URL}
                         alt={fishData.name || 'Fish sprite'}
-                        className="w-8 h-8 object-cover rounded border-2 border-white/30 flex-shrink-0"
+                        className="gallery-thumbnail-enhanced w-8 h-8 flex-shrink-0"
                         onError={(e) => {
                           e.target.src = FISH_CONFIG.DEFAULT_SPRITE_URL;
                         }}
                       />
                       <div className="flex-1 min-w-0">
-                        <div className="text-white font-black text-sm font-bold truncate">{fishData.name || 'Unnamed'}</div>
+                        <div className="text-value text-sm font-bold truncate">{fishData.name || 'Unnamed'}</div>
                         <div className="text-mono-small">#{fishData.color}</div>
                         <div className="text-mono-small">Size: {(fishData.size || 1.0).toFixed(1)}x</div>
                       </div>
@@ -343,18 +343,18 @@ function FishEditor({
           </div>
 
           {isCreating && (
-            <div className="bg-slate-800/70 border-2 border-primary-400/40 p-3 hover:bg-slate-700/70 hover:border-primary-400/70 transition-all duration-200 transform hover:scale-[1.02]">
-              <h3 className="text-primary-300 font-black text-base uppercase tracking-wider mb-4 text-center border-b-2 border-primary-400/30 pb-2">Create New Fish</h3>
+            <div className="form-section-enhanced">
+              <h3 className="text-section-title">Create New Fish</h3>
               
               <div className="section-content space-y-4">
-                <label className="text-primary-300 font-black text-sm uppercase tracking-wider block">
+                <label className="form-label-enhanced">
                   Name:
                   <input
                     type="text"
                     value={newFishName}
                     onChange={(e) => setNewFishName(e.target.value)}
                     placeholder="Enter fish name"
-                    className="input-primary mt-2 w-full"
+                    className="form-input-enhanced mt-2"
                   />
                 </label>
 
@@ -435,14 +435,14 @@ function FishEditor({
 
                 <div className="flex gap-3 pt-4">
                   <button 
-                    className="px-6 py-3 border-2 font-black text-sm uppercase tracking-wider transition-all duration-200 ease-out cursor-pointer transform bg-primary-500 text-white border-primary-600 shadow-lg shadow-primary-500/50 hover:bg-primary-600 hover:text-white hover:border-primary-500 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary-500/40 hover:scale-105 hover:-rotate-1 active:scale-95 flex-1" 
+                    className="btn-primary-enhanced flex-1" 
                     onClick={handleCreateFish}
                     disabled={isSyncing}
                   >
                     {isSyncing ? 'Creating...' : 'Create Fish'}
                   </button>
                   <button 
-                    className="px-6 py-3 border-2 font-black text-sm uppercase tracking-wider transition-all duration-200 ease-out cursor-pointer transform bg-slate-800 text-primary-300 border-primary-400/50 hover:bg-primary-600 hover:text-white hover:border-primary-500 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary-500/40 hover:scale-105 hover:-rotate-1 active:scale-95 flex-1" 
+                    className="btn-secondary-enhanced flex-1" 
                     onClick={handleCancelCreation}
                   >
                     Cancel
@@ -453,18 +453,18 @@ function FishEditor({
           )}
 
           {selectedFish && (
-            <div className="bg-slate-800/70 border-2 border-primary-400/40 p-3 hover:bg-slate-700/70 hover:border-primary-400/70 transition-all duration-200 transform hover:scale-[1.02]">
-              <h3 className="text-primary-300 font-black text-base uppercase tracking-wider mb-4 text-center border-b-2 border-primary-400/30 pb-2">Edit {selectedFish.name || 'Fish'}</h3>
+            <div className="form-section-enhanced">
+              <h3 className="text-section-title">Edit {selectedFish.name || 'Fish'}</h3>
               
               <div className="section-content space-y-4">
-                <label className="text-primary-300 font-black text-sm uppercase tracking-wider block">
+                <label className="form-label-enhanced">
                   Name:
                   <input
                     type="text"
                     value={editingName}
                     onChange={(e) => setEditingName(e.target.value)}
                     placeholder="Enter fish name"
-                    className="input-primary mt-2 w-full"
+                    className="form-input-enhanced mt-2"
                   />
                 </label>
 
@@ -506,7 +506,7 @@ function FishEditor({
                 */}
 
                 <div>
-                  <label className="text-primary-300 font-black text-sm uppercase tracking-wider block mb-3">Size:</label>
+                  <label className="form-label-enhanced mb-3">Size:</label>
                   <div className="flex items-center gap-3">
                     <input
                       type="range"
@@ -531,7 +531,7 @@ function FishEditor({
                 </div>
 
                 <div>
-                  <label className="text-primary-300 font-black text-sm uppercase tracking-wider block mb-3">Sprite:</label>
+                  <label className="form-label-enhanced mb-3">Sprite:</label>
                   <SpriteGallery
                     selectedSpriteUrl={editingSpriteUrl}
                     onSpriteSelect={setEditingSpriteUrl}
@@ -545,14 +545,14 @@ function FishEditor({
 
                 <div className="flex gap-3 pt-4">
                   <button 
-                    className="px-6 py-3 border-2 font-black text-sm uppercase tracking-wider transition-all duration-200 ease-out cursor-pointer transform bg-primary-500 text-white border-primary-600 shadow-lg shadow-primary-500/50 hover:bg-primary-600 hover:text-white hover:border-primary-500 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary-500/40 hover:scale-105 hover:-rotate-1 active:scale-95 flex-1" 
+                    className="btn-primary-enhanced flex-1" 
                     onClick={handleSaveChanges}
                     disabled={isSyncing}
                   >
                     {isSyncing ? 'Saving...' : 'Save Changes'}
                   </button>
                   <button 
-                    className="px-6 py-3 border-2 font-black text-sm uppercase tracking-wider transition-all duration-200 ease-out cursor-pointer transform bg-slate-800 text-primary-300 border-primary-400/50 hover:bg-primary-600 hover:text-white hover:border-primary-500 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary-500/40 hover:scale-105 hover:-rotate-1 active:scale-95 flex-1" 
+                    className="btn-secondary-enhanced flex-1" 
                     onClick={handleCancelEdit}
                   >
                     Cancel

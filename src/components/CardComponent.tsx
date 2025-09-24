@@ -222,26 +222,26 @@ function FullscreenCard({
 
   const getSizeClass = () => {
     switch (size) {
-      case 'small': return 'min-w-[min(280px,calc(100vw-30px))] max-w-[min(450px,calc(100vw-30px))] w-[85%]';
-      case 'large': return 'min-w-[min(550px,calc(100vw-30px))] max-w-[min(800px,calc(100vw-30px))] w-[85%]';
+      case 'small': return 'size-fullscreen-small';
+      case 'large': return 'size-fullscreen-large';
       case 'medium':
-      default: return 'min-w-[min(350px,calc(100vw-30px))] max-w-[min(550px,calc(100vw-30px))] w-[85%]';
+      default: return 'size-fullscreen-medium';
     }
   };
 
   return (
     <div 
-      className="fixed top-0 left-0 w-screen h-screen bg-black/80 flex justify-center items-center z-[1000] backdrop-blur-sm p-4 box-border"
+      className="card-fullscreen-overlay"
       onClick={handleOverlayClick}
     >
-      <div className={`bg-slate-900/95 border-2 border-white/20 rounded-xl p-0 max-h-[calc(100vh-30px)] max-w-[calc(100vw-30px)] overflow-hidden relative box-border hover:shadow-[2px_2px_20px_rgba(138,43,226,0.8),0_0_0_2px_rgba(138,43,226,0.4)] hover:border-[rgba(138,43,226,0.6)] transition-all duration-150 ${getSizeClass()} ${className}`}>
-        <div className="flex justify-between items-center px-5 py-4 border-b border-white/10 bg-slate-800/70 rounded-t-xl">
-          <h2 className="text-white text-xl font-bold m-0 font-mono uppercase tracking-wider">
+      <div className={`card-fullscreen-content card-hover ${getSizeClass()} ${className}`}>
+        <div className="card-header-fullscreen">
+          <h2 className="card-title-fullscreen">
             {title}
           </h2>
           <div className="flex items-center gap-2">
             <button 
-              className="bg-primary-500/20 border border-primary-500/30 text-primary-400 rounded px-2 py-1 text-xs cursor-pointer transition-all duration-200 hover:bg-primary-500/30 hover:border-primary-500/50 hover:scale-105 active:scale-95 font-mono font-bold"
+              className="card-view-mode-btn"
               onClick={onViewModeToggle}
               title="Switch to sticky view"
             >
@@ -249,7 +249,7 @@ function FullscreenCard({
             </button>
             {closable && (
               <button 
-                className="bg-transparent border-none text-white text-2xl cursor-pointer p-0 w-8 h-8 flex items-center justify-center rounded-full transition-colors duration-200 hover:bg-white/10 font-mono font-bold"
+                className="card-close-btn"
                 onClick={onToggle}
               >
                 ×
@@ -258,7 +258,7 @@ function FullscreenCard({
           </div>
         </div>
         
-        <div className="px-5 py-4 max-h-[calc(100vh-130px)] overflow-y-auto box-border">
+        <div className="card-content-fullscreen">
           {children}
         </div>
       </div>
@@ -318,22 +318,22 @@ function StickyCard({
     if (isDraggable) return ''; // No position class for draggable items
     
     switch (position) {
-      case 'top-left': return 'top-5 left-5 right-auto bottom-auto';
-      case 'top-right': return 'top-[70px] right-5 left-auto bottom-auto';
-      case 'bottom-left': return 'bottom-5 left-5 right-auto top-auto';
-      case 'bottom-right': return 'bottom-5 right-5 left-auto top-auto';
-      case 'center': return 'top-5 left-1/2 transform -translate-x-1/2 right-auto bottom-auto max-w-[calc(100vw-40px)]';
+      case 'top-left': return 'position-top-left';
+      case 'top-right': return 'position-top-right';
+      case 'bottom-left': return 'position-bottom-left';
+      case 'bottom-right': return 'position-bottom-right';
+      case 'center': return 'position-center';
       case 'static': return '';
-      default: return 'top-5 left-5 right-auto bottom-auto';
+      default: return 'position-top-left';
     }
   };
 
   const getSizeClass = () => {
     switch (size) {
-      case 'small': return 'min-w-[min(180px,calc(100vw-30px))] max-w-[calc(100vw-30px)]';
-      case 'large': return 'min-w-[min(300px,calc(100vw-30px))] max-w-[calc(100vw-30px)]';
+      case 'small': return 'size-small';
+      case 'large': return 'size-large';
       case 'medium':
-      default: return 'min-w-[min(220px,calc(100vw-30px))] max-w-[calc(100vw-30px)]';
+      default: return 'size-medium';
     }
   };
 
@@ -353,7 +353,7 @@ function StickyCard({
     <div className="flex items-center gap-2 flex-1 min-w-0">
       {isDraggable && (
         <div 
-          className={`flex items-center justify-center w-5 h-5 rounded bg-white/10 transition-all duration-200 opacity-70 flex-shrink-0 hover:bg-white/20 hover:opacity-100 hover:scale-110 active:bg-white/30 active:scale-95 ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+          className={`drag-handle ${isDragging ? 'drag-handle-cursor dragging' : 'drag-handle-cursor'}`}
           {...attributes}
           {...listeners}
         >
@@ -362,7 +362,7 @@ function StickyCard({
             height="12" 
             viewBox="0 0 12 12" 
             fill="currentColor"
-            className="text-white opacity-80 transition-opacity duration-200 hover:opacity-100 contrast-200 brightness-75"
+            className="drag-handle-icon"
           >
             <rect x="2" y="2" width="2" height="2"/>
             <rect x="8" y="2" width="2" height="2"/>
@@ -379,7 +379,7 @@ function StickyCard({
         {title}
       </span>
       <button 
-        className="bg-primary-500/20 border border-primary-500/30 text-primary-400 rounded px-1 py-0.5 text-[10px] cursor-pointer transition-all duration-200 ml-2 flex-shrink-0 hover:bg-primary-500/30 hover:border-primary-500/50 hover:scale-105 active:scale-95 font-mono font-bold"
+        className="card-view-mode-btn-sticky"
         onClick={(e) => {
           e.stopPropagation();
           onViewModeToggle();
@@ -396,20 +396,20 @@ function StickyCard({
       ref={isDraggable ? setNodeRef : null}
       style={containerStyle}
       data-draggable-id={componentId}
-      className={`absolute z-10 bg-black/80 rounded-lg backdrop-blur-sm border border-white/20 transition-all duration-150 max-w-[calc(100vw-30px)] max-h-[calc(100vh-30px)] box-border hover:shadow-[2px_2px_15px_rgba(138,43,226,0.8),0_0_0_1px_rgba(138,43,226,0.4)] hover:border-[rgba(138,43,226,0.6)] ${getPositionClass()} ${getSizeClass()} ${className} ${isOpen ? 'opacity-100' : 'opacity-85'} ${isDraggable ? 'rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.3)] transition-all duration-100' : ''} ${isDragging ? 'rotate-0.5 shadow-[0_6px_20px_rgba(0,0,0,0.5)] bg-slate-700/95 backdrop-blur-[8px] border-primary-500/50 border-2 z-[1000]' : ''}`}
+      className={`card-base card-sticky card-hover ${getPositionClass()} ${getSizeClass()} ${className} ${isOpen ? 'opacity-100' : 'opacity-85'} ${isDraggable ? 'card-draggable' : ''} ${isDragging ? 'card-dragging' : ''}`}
     >
       <div 
-        className="flex justify-between items-center px-4 py-2 cursor-pointer select-none transition-colors duration-100 hover:bg-white/5"
+        className="card-header"
         onClick={collapsible ? onToggle : undefined}
       >
         <h3 
-          className="m-0 text-white text-base font-bold font-mono"
+          className="card-title"
         >
           {enhancedTitle}
         </h3>
         {collapsible && (
           <button 
-            className="bg-transparent border-none text-white text-xl cursor-pointer p-0 w-5 h-5 flex items-center justify-center rounded transition-colors duration-200 hover:bg-white/10 font-mono font-bold"
+            className="card-toggle-btn"
           >
             {isOpen ? '−' : '+'}
           </button>
@@ -417,7 +417,7 @@ function StickyCard({
       </div>
       
       {isOpen && (
-        <div className="px-4 pb-3 animate-slideDown max-h-[calc(100vh-100px)] overflow-y-auto box-border">
+        <div className="card-content">
           {children}
         </div>
       )}

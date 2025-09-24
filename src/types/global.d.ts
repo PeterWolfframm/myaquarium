@@ -265,6 +265,7 @@ export interface PanelPositions {
   timer: Position;
   stats: Position;
   objectsManager: Position;
+  cardShowcase: Position;
   settings: Position;
   fishEditor: Position;
 }

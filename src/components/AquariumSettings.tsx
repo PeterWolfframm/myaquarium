@@ -328,13 +328,13 @@ function AquariumSettings({
 
       <div className="flex gap-4 justify-end pt-6 border-t-4 border-primary-400/50">
         <button 
-          className="px-8 py-3 bg-slate-700 hover:bg-slate-600 text-white font-black uppercase tracking-wider border-4 border-slate-500 hover:border-slate-400 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg active:scale-95 transform"
+          className="btn-secondary-enhanced"
           onClick={handleReset}
         >
           Reset
         </button>
         <button 
-          className="px-8 py-3 bg-primary-600 hover:bg-primary-500 text-white font-black uppercase tracking-wider border-4 border-primary-500 hover:border-primary-400 transition-all duration-200 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary-500/40 active:scale-95 transform"
+          className="btn-primary-enhanced"
           onClick={handleApply}
         >
           Apply

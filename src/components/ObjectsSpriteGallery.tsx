@@ -32,11 +32,11 @@ function DraggableSpriteItem({ sprite, isSelected, onSelect, selectedSize = 6 })
       style={style}
       {...listeners}
       {...attributes}
-      className={`section-interactive relative cursor-pointer transition-all duration-200 p-3 rounded-lg border ${
+      className={`gallery-item-enhanced relative cursor-pointer p-3 ${
         isSelected 
-          ? 'border-primary-500 bg-primary-500/20 shadow-lg' 
-          : 'border-white/20 bg-white/5 hover:border-primary-400/50 hover:bg-primary-500/10'
-      } ${isDragging ? 'opacity-70 rotate-1 scale-105 z-50' : ''}`}
+          ? 'gallery-item-selected' 
+          : ''
+      } ${isDragging ? 'gallery-item-dragging' : ''}`}
       onClick={() => onSelect(sprite.url)}
       title={`${sprite.name} - Drag to aquarium to place`}
     >
@@ -44,7 +44,7 @@ function DraggableSpriteItem({ sprite, isSelected, onSelect, selectedSize = 6 })
         <img 
           src={sprite.url} 
           alt={sprite.name}
-          className="w-12 h-12 object-cover rounded border border-white/20"
+          className="gallery-thumbnail-enhanced w-12 h-12"
           onError={(e) => {
             e.target.style.display = 'none';
             e.target.nextSibling.style.display = 'block';
@@ -197,10 +197,10 @@ function ObjectsSpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadCompl
       {/* Upload Section */}
       <div className="section-secondary">
         <div className="section-content">
-          <label className={`inline-flex items-center justify-center px-4 py-2 rounded-lg border transition-all duration-200 cursor-pointer ${
+          <label className={`btn-compact cursor-pointer ${
             uploading 
-              ? 'border-gray-400/50 bg-gray-500/20 text-gray-400 cursor-not-allowed' 
-              : 'border-primary-400/50 bg-primary-500/20 text-primary-400 hover:border-primary-500/70 hover:bg-primary-500/30 hover:scale-105 active:scale-95'
+              ? 'bg-gray-500/20 text-gray-400 border-gray-400/50 cursor-not-allowed' 
+              : 'bg-primary-500/20 text-primary-400 border-primary-400/50 hover:bg-primary-500/30 hover:border-primary-500/70'
           }`}>
             <input
               type="file"
@@ -218,32 +218,32 @@ function ObjectsSpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadCompl
 
       {/* Upload Form */}
       {showUploadForm && (
-        <div className="section-secondary">
+        <div className="form-section-enhanced">
           <h5 className="text-section-title mb-4">Upload Object Sprite</h5>
           <div className="section-content space-y-4">
             <div>
-              <label className="text-label block mb-2">Object Name:</label>
+              <label className="form-label-enhanced block mb-2">Object Name:</label>
               <input
                 type="text"
                 value={uploadName}
                 onChange={(e) => setUploadName(e.target.value)}
                 placeholder="Enter object name (e.g. 'rock', 'seaweed', 'treasure chest')"
                 disabled={uploading}
-                className="input-primary w-full"
+                className="form-input-enhanced w-full"
               />
             </div>
             <div>
-              <label className="text-label block mb-2">Selected File:</label>
+              <label className="form-label-enhanced block mb-2">Selected File:</label>
               <div className="text-value p-3 bg-white/5 border border-white/20 rounded-lg">
                 {selectedFile ? selectedFile.name : 'No file selected'}
               </div>
             </div>
             <div className="flex gap-3 pt-2">
               <button 
-                className={`flex-1 px-4 py-2 rounded-lg border transition-all duration-200 ${
+                className={`btn-compact flex-1 ${
                   uploading || !uploadName.trim()
-                    ? 'border-gray-400/50 bg-gray-500/20 text-gray-400 cursor-not-allowed'
-                    : 'border-primary-400/50 bg-primary-500/20 text-primary-400 hover:border-primary-500/70 hover:bg-primary-500/30 hover:scale-105 active:scale-95'
+                    ? 'bg-gray-500/20 text-gray-400 border-gray-400/50 cursor-not-allowed'
+                    : 'bg-primary-500/20 text-primary-400 border-primary-400/50 hover:bg-primary-500/30 hover:border-primary-500/70'
                 }`}
                 onClick={handleUpload}
                 disabled={uploading || !uploadName.trim()}
@@ -251,10 +251,10 @@ function ObjectsSpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadCompl
                 {uploading ? 'Uploading...' : 'Upload'}
               </button>
               <button 
-                className={`flex-1 px-4 py-2 rounded-lg border transition-all duration-200 ${
+                className={`btn-compact flex-1 ${
                   uploading
-                    ? 'border-gray-400/50 bg-gray-500/20 text-gray-400 cursor-not-allowed'
-                    : 'border-red-400/50 bg-red-500/20 text-red-400 hover:border-red-500/70 hover:bg-red-500/30 hover:scale-105 active:scale-95'
+                    ? 'bg-gray-500/20 text-gray-400 border-gray-400/50 cursor-not-allowed'
+                    : 'bg-red-500/20 text-red-400 border-red-400/50 hover:bg-red-500/30 hover:border-red-500/70'
                 }`}
                 onClick={handleCancelUpload}
                 disabled={uploading}
@@ -271,12 +271,12 @@ function ObjectsSpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadCompl
         <div className="section-secondary">
           <h5 className="text-section-title mb-3">Current Selection:</h5>
           <div className="section-content">
-            <div className="section-interactive border-primary-500 bg-primary-500/20 p-4 relative">
+            <div className="gallery-item-enhanced gallery-item-selected p-4 relative">
               <div className="flex items-center gap-4">
                 <img 
                   src={selectedSpriteUrl} 
                   alt="Current object sprite" 
-                  className="w-16 h-16 object-cover rounded border border-white/20"
+                  className="gallery-thumbnail-enhanced w-16 h-16"
                   onError={(e) => {
                     e.target.style.display = 'none';
                     e.target.nextSibling.style.display = 'block';
@@ -290,7 +290,7 @@ function ObjectsSpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadCompl
                   <div className="text-mono-small">Size: {selectedSize}x{selectedSize}</div>
                 </div>
                 <button 
-                  className="px-3 py-1 rounded border border-red-400/50 bg-red-500/20 text-red-400 hover:border-red-500/70 hover:bg-red-500/30 transition-all duration-200 hover:scale-105 active:scale-95"
+                  className="btn-compact bg-red-500/20 text-red-400 border-red-400/50 hover:bg-red-500/30 hover:border-red-500/70"
                   onClick={handleRemoveSprite}
                   title="Remove selection"
                 >
