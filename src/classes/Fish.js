@@ -23,11 +23,11 @@ export class Fish {
             // Restore fish from database data
             this.id = fishData.id;
             this.name = fishData.name;
-            this.baseSpeed = fishData.baseSpeed || randomRange(FISH_CONFIG.BASE_SPEED_MIN, FISH_CONFIG.BASE_SPEED_MAX);
-            this.currentSpeed = fishData.currentSpeed || this.baseSpeed;
-            this.direction = fishData.direction || (Math.random() > 0.5 ? 1 : -1);
+            this.baseSpeed = (fishData.baseSpeed !== undefined && fishData.baseSpeed > 0) ? fishData.baseSpeed : randomRange(FISH_CONFIG.BASE_SPEED_MIN, FISH_CONFIG.BASE_SPEED_MAX);
+            this.currentSpeed = (fishData.currentSpeed !== undefined && fishData.currentSpeed > 0) ? fishData.currentSpeed : this.baseSpeed;
+            this.direction = (fishData.direction !== undefined && (fishData.direction === 1 || fishData.direction === -1)) ? fishData.direction : (Math.random() > 0.5 ? 1 : -1);
             this.targetY = fishData.targetY || this.getRandomTargetY();
-            this.verticalSpeed = fishData.verticalSpeed || randomRange(FISH_CONFIG.VERTICAL_SPEED_MIN, FISH_CONFIG.VERTICAL_SPEED_MAX);
+            this.verticalSpeed = (fishData.verticalSpeed !== undefined && fishData.verticalSpeed > 0) ? fishData.verticalSpeed : randomRange(FISH_CONFIG.VERTICAL_SPEED_MIN, FISH_CONFIG.VERTICAL_SPEED_MAX);
             this.driftInterval = fishData.driftInterval || Math.round(randomRange(FISH_CONFIG.DRIFT_INTERVAL_MIN, FISH_CONFIG.DRIFT_INTERVAL_MAX));
             this.animationSpeed = fishData.animationSpeed || Math.round(randomRange(FISH_CONFIG.ANIMATION_SPEED_MIN, FISH_CONFIG.ANIMATION_SPEED_MAX));
             this.frameCount = fishData.frameCount || FISH_CONFIG.ANIMATION_FRAMES;
@@ -63,6 +63,7 @@ export class Fish {
         this.initialPositionX = fishData?.positionX;
         this.initialPositionY = fishData?.positionY;
         this.spriteReady = false;
+        this.hasWarnedZeroMovement = false;
         
         // Create sprite (async for custom sprites)
         this.createSprite();
@@ -337,6 +338,12 @@ export class Fish {
     update(deltaTime) {
         // Don't update if sprite isn't ready
         if (!this.sprite || !this.spriteReady) return;
+        
+        // Debug: Check for zero movement issues (warn only once)
+        if ((this.currentSpeed <= 0 || this.direction === 0 || this.verticalSpeed <= 0) && !this.hasWarnedZeroMovement) {
+            console.warn(`Fish ${this.id || 'unnamed'} has zero movement! currentSpeed: ${this.currentSpeed}, direction: ${this.direction}, verticalSpeed: ${this.verticalSpeed}`);
+            this.hasWarnedZeroMovement = true;
+        }
         
         // Update animation frame
         this.lastFrameTime += deltaTime;

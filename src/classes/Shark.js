@@ -22,11 +22,11 @@ export class Shark {
             // Restore shark from data
             this.id = sharkData.id;
             this.name = sharkData.name;
-            this.baseSpeed = sharkData.baseSpeed || randomRange(FISH_CONFIG.BASE_SPEED_MIN * 1.5, FISH_CONFIG.BASE_SPEED_MAX * 1.5); // Sharks are faster
-            this.currentSpeed = sharkData.currentSpeed || this.baseSpeed;
-            this.direction = sharkData.direction || (Math.random() > 0.5 ? 1 : -1);
+            this.baseSpeed = (sharkData.baseSpeed !== undefined && sharkData.baseSpeed > 0) ? sharkData.baseSpeed : randomRange(FISH_CONFIG.BASE_SPEED_MIN * 1.5, FISH_CONFIG.BASE_SPEED_MAX * 1.5); // Sharks are faster
+            this.currentSpeed = (sharkData.currentSpeed !== undefined && sharkData.currentSpeed > 0) ? sharkData.currentSpeed : this.baseSpeed;
+            this.direction = (sharkData.direction !== undefined && (sharkData.direction === 1 || sharkData.direction === -1)) ? sharkData.direction : (Math.random() > 0.5 ? 1 : -1);
             this.targetY = sharkData.targetY || this.getRandomTargetY();
-            this.verticalSpeed = sharkData.verticalSpeed || randomRange(FISH_CONFIG.VERTICAL_SPEED_MIN, FISH_CONFIG.VERTICAL_SPEED_MAX);
+            this.verticalSpeed = (sharkData.verticalSpeed !== undefined && sharkData.verticalSpeed > 0) ? sharkData.verticalSpeed : randomRange(FISH_CONFIG.VERTICAL_SPEED_MIN, FISH_CONFIG.VERTICAL_SPEED_MAX);
             this.driftInterval = sharkData.driftInterval || Math.round(randomRange(FISH_CONFIG.DRIFT_INTERVAL_MIN, FISH_CONFIG.DRIFT_INTERVAL_MAX));
         } else {
             // Create new random shark
