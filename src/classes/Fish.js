@@ -356,13 +356,30 @@ export class Fish {
         // Horizontal movement
         this.sprite.x += this.direction * this.currentSpeed * deltaTime * 0.1;
         
-        // Check world boundaries and flip direction
+        // Check world boundaries and bounce with random direction
         if (this.sprite.x < -FISH_CONFIG.BOUNDARY_MARGIN) {
-            this.direction = 1;
-            this.sprite.scale.x = Math.abs(this.sprite.scale.x); // Face right while preserving scale
+            // Hit left boundary - choose random direction favoring right
+            this.direction = Math.random() > 0.2 ? 1 : -1; // 80% chance to go right, 20% to stay left
+            this.sprite.scale.x = this.direction > 0 ? -Math.abs(this.sprite.scale.x) : Math.abs(this.sprite.scale.x);
+            
+            // Also randomize vertical target for more chaotic bouncing behavior
+            this.targetY = this.getRandomTargetY();
         } else if (this.sprite.x > this.worldWidth + FISH_CONFIG.BOUNDARY_MARGIN) {
-            this.direction = -1;
-            this.sprite.scale.x = -Math.abs(this.sprite.scale.x); // Face left while preserving scale
+            // Hit right boundary - choose random direction favoring left
+            this.direction = Math.random() > 0.2 ? -1 : 1; // 80% chance to go left, 20% to stay right
+            this.sprite.scale.x = this.direction > 0 ? -Math.abs(this.sprite.scale.x) : Math.abs(this.sprite.scale.x);
+            
+            // Also randomize vertical target for more chaotic bouncing behavior
+            this.targetY = this.getRandomTargetY();
+        }
+        
+        // Check vertical boundaries and bounce
+        if (this.sprite.y < FISH_CONFIG.VERTICAL_MARGIN) {
+            // Hit top boundary - set target to lower area
+            this.targetY = randomRange(this.worldHeight * 0.3, this.worldHeight - FISH_CONFIG.VERTICAL_MARGIN);
+        } else if (this.sprite.y > this.worldHeight - FISH_CONFIG.VERTICAL_MARGIN) {
+            // Hit bottom boundary - set target to upper area
+            this.targetY = randomRange(FISH_CONFIG.VERTICAL_MARGIN, this.worldHeight * 0.7);
         }
         
         // Update vertical drift
@@ -379,11 +396,11 @@ export class Fish {
             this.sprite.y += Math.sign(yDiff) * this.verticalSpeed * deltaTime * 0.1;
         }
         
-        // Ensure fish direction sprite flipping
+        // Ensure fish direction sprite flipping (sprites naturally face right, so flip for right movement)
         if (this.direction > 0) {
-            this.sprite.scale.x = Math.abs(this.sprite.scale.x);
+            this.sprite.scale.x = -Math.abs(this.sprite.scale.x); // Flip for right movement
         } else {
-            this.sprite.scale.x = -Math.abs(this.sprite.scale.x);
+            this.sprite.scale.x = Math.abs(this.sprite.scale.x); // Normal for left movement
         }
     }
 }
