@@ -23,12 +23,14 @@ function FishEditor({ isVisible, onClose }) {
   const [editingColor, setEditingColor] = useState('');
   const [editingName, setEditingName] = useState('');
   const [editingSpriteUrl, setEditingSpriteUrl] = useState(null);
+  const [editingSize, setEditingSize] = useState(1.0);
   
   // Creation form state
   const [isCreating, setIsCreating] = useState(false);
   const [newFishName, setNewFishName] = useState('');
   const [newFishColor, setNewFishColor] = useState('4CAF50');
   const [newFishSpriteUrl, setNewFishSpriteUrl] = useState(null);
+  const [newFishSize, setNewFishSize] = useState(1.0);
 
   // Reset when modal opens/closes
   useEffect(() => {
@@ -37,10 +39,12 @@ function FishEditor({ isVisible, onClose }) {
       setEditingColor('');
       setEditingName('');
       setEditingSpriteUrl(null);
+      setEditingSize(1.0);
       setIsCreating(false);
       setNewFishName('');
       setNewFishColor('4CAF50');
       setNewFishSpriteUrl(null);
+      setNewFishSize(1.0);
       clearSyncError();
     }
   }, [isVisible, clearSyncError]);
@@ -52,7 +56,8 @@ function FishEditor({ isVisible, onClose }) {
       if (updatedFish && (
         updatedFish.color !== selectedFish.color ||
         updatedFish.name !== selectedFish.name ||
-        updatedFish.sprite_url !== selectedFish.spriteUrl
+        updatedFish.sprite_url !== selectedFish.spriteUrl ||
+        updatedFish.size !== selectedFish.size
       )) {
         setSelectedFish({
           ...updatedFish,
@@ -68,9 +73,12 @@ function FishEditor({ isVisible, onClose }) {
         if (editingSpriteUrl === selectedFish.spriteUrl) {
           setEditingSpriteUrl(updatedFish.sprite_url || null);
         }
+        if (editingSize === selectedFish.size) {
+          setEditingSize(updatedFish.size || 1.0);
+        }
       }
     }
-  }, [fish, selectedFish, editingColor, editingName, editingSpriteUrl]);
+  }, [fish, selectedFish, editingColor, editingName, editingSpriteUrl, editingSize]);
 
   if (!isVisible) return null;
 
@@ -84,6 +92,7 @@ function FishEditor({ isVisible, onClose }) {
     setEditingColor(normalizedFishData.color || '4CAF50');
     setEditingName(normalizedFishData.name || '');
     setEditingSpriteUrl(normalizedFishData.spriteUrl || null);
+    setEditingSize(normalizedFishData.size || 1.0);
   };
 
   const handleSaveChanges = async () => {
@@ -92,7 +101,8 @@ function FishEditor({ isVisible, onClose }) {
     const updates = {
       color: editingColor.replace('#', ''), // Remove # if present
       name: editingName || selectedFish.name,
-      sprite_url: editingSpriteUrl
+      sprite_url: editingSpriteUrl,
+      size: editingSize
     };
 
     // Optimistic update: immediately update the selected fish display
@@ -100,7 +110,8 @@ function FishEditor({ isVisible, onClose }) {
       ...selectedFish,
       color: updates.color,
       name: updates.name,
-      spriteUrl: updates.sprite_url
+      spriteUrl: updates.sprite_url,
+      size: updates.size
     };
     setSelectedFish(optimisticFish);
 
@@ -123,6 +134,7 @@ function FishEditor({ isVisible, onClose }) {
         setEditingColor('');
         setEditingName('');
         setEditingSpriteUrl(null);
+        setEditingSize(1.0);
       }
     }
   };
@@ -164,6 +176,7 @@ function FishEditor({ isVisible, onClose }) {
       name: newFishName.trim(),
       color: newFishColor.replace('#', ''), // Remove # if present
       sprite_url: newFishSpriteUrl,
+      size: newFishSize,
       baseSpeed: 0.5 + Math.random() * 1.5, // 0.5 to 2.0
       currentSpeed: 1.0,
       direction: Math.random() > 0.5 ? 1 : -1,
@@ -183,6 +196,7 @@ function FishEditor({ isVisible, onClose }) {
       setNewFishName('');
       setNewFishColor('4CAF50');
       setNewFishSpriteUrl(null);
+      setNewFishSize(1.0);
       setIsCreating(false);
       console.log('Fish created successfully:', success);
     }
@@ -193,6 +207,7 @@ function FishEditor({ isVisible, onClose }) {
     setEditingColor('');
     setEditingName('');
     setEditingSpriteUrl(null);
+    setEditingSize(1.0);
     setIsCreating(true);
   };
 
@@ -201,6 +216,7 @@ function FishEditor({ isVisible, onClose }) {
     setNewFishName('');
     setNewFishColor('4CAF50');
     setNewFishSpriteUrl(null);
+    setNewFishSize(1.0);
   };
 
   const handleCancelEdit = () => {
@@ -208,6 +224,7 @@ function FishEditor({ isVisible, onClose }) {
     setEditingColor('');
     setEditingName('');
     setEditingSpriteUrl(null);
+    setEditingSize(1.0);
   };
 
   const presetColors = [
@@ -261,6 +278,7 @@ function FishEditor({ isVisible, onClose }) {
                     <div className="fish-info">
                       <div className="fish-name">{fishData.name || 'Unnamed'}</div>
                       <div className="fish-color">#{fishData.color}</div>
+                      <div className="fish-size">Size: {(fishData.size || 1.0).toFixed(1)}x</div>
                       {(fishData.spriteUrl || fishData.sprite_url) && <div className="fish-sprite-indicator">🖼️ Custom Sprite</div>}
                     </div>
                     <button 
@@ -323,6 +341,31 @@ function FishEditor({ isVisible, onClose }) {
                       title={`#${color}`}
                     />
                   ))}
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Size:</label>
+                <div className="size-input-group">
+                  <input
+                    type="range"
+                    min="0.1"
+                    max="3.0"
+                    step="0.1"
+                    value={newFishSize}
+                    onChange={(e) => setNewFishSize(parseFloat(e.target.value))}
+                    className="size-slider"
+                  />
+                  <input
+                    type="number"
+                    min="0.1"
+                    max="3.0"
+                    step="0.1"
+                    value={newFishSize}
+                    onChange={(e) => setNewFishSize(parseFloat(e.target.value) || 1.0)}
+                    className="size-number-input"
+                  />
+                  <span className="size-label">{newFishSize.toFixed(1)}x</span>
                 </div>
               </div>
 
@@ -401,6 +444,31 @@ function FishEditor({ isVisible, onClose }) {
                       title={`#${color}`}
                     />
                   ))}
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Size:</label>
+                <div className="size-input-group">
+                  <input
+                    type="range"
+                    min="0.1"
+                    max="3.0"
+                    step="0.1"
+                    value={editingSize}
+                    onChange={(e) => setEditingSize(parseFloat(e.target.value))}
+                    className="size-slider"
+                  />
+                  <input
+                    type="number"
+                    min="0.1"
+                    max="3.0"
+                    step="0.1"
+                    value={editingSize}
+                    onChange={(e) => setEditingSize(parseFloat(e.target.value) || 1.0)}
+                    className="size-number-input"
+                  />
+                  <span className="size-label">{editingSize.toFixed(1)}x</span>
                 </div>
               </div>
 

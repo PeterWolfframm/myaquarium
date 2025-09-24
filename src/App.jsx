@@ -34,7 +34,7 @@ function App() {
   const [aquariumRef, setAquariumRef] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showFishEditor, setShowFishEditor] = useState(false);
-  const [showObjectsEditor, setShowObjectsEditor] = useState(false);
+  const [showObjectsManager, setShowObjectsManager] = useState(false);
   const [showTimer, setShowTimer] = useState(true);
   const [showStats, setShowStats] = useState(true);
   
@@ -44,12 +44,14 @@ function App() {
       const saved = localStorage.getItem('aquarium-panel-positions');
       return saved ? JSON.parse(saved) : {
         timer: { x: window.innerWidth / 2 - 150, y: 50 },
-        stats: { x: window.innerWidth - 320, y: 50 }
+        stats: { x: window.innerWidth - 320, y: 50 },
+        objectsManager: { x: 20, y: 120 }
       };
     } catch {
       return {
         timer: { x: window.innerWidth / 2 - 150, y: 50 },
-        stats: { x: window.innerWidth - 320, y: 50 }
+        stats: { x: window.innerWidth - 320, y: 50 },
+        objectsManager: { x: 20, y: 120 }
       };
     }
   });
@@ -258,13 +260,6 @@ function App() {
     setShowFishEditor(false);
   };
 
-  const toggleObjectsEditor = () => {
-    setShowObjectsEditor(!showObjectsEditor);
-  };
-  
-  const closeObjectsEditor = () => {
-    setShowObjectsEditor(false);
-  };
 
   const toggleTimer = () => {
     setShowTimer(!showTimer);
@@ -272,6 +267,10 @@ function App() {
 
   const toggleStats = () => {
     setShowStats(!showStats);
+  };
+
+  const toggleObjectsManager = () => {
+    setShowObjectsManager(!showObjectsManager);
   };
 
   return (
@@ -302,7 +301,7 @@ function App() {
           <button className="control-button fish-editor-button" onClick={toggleFishEditor}>
             🐠 Edit Fish
           </button>
-          <button className="control-button objects-editor-button" onClick={toggleObjectsEditor}>
+          <button className="control-button objects-manager-button" onClick={toggleObjectsManager}>
             🎨 Objects
           </button>
         </div>
@@ -333,6 +332,14 @@ function App() {
           draggablePosition={panelPositions.stats}
         />
 
+        <ObjectsEditor 
+          isOpen={showObjectsManager}
+          onToggle={toggleObjectsManager}
+          isDraggable={true}
+          draggableId="objectsManager"
+          draggablePosition={panelPositions.objectsManager}
+        />
+
         <AquariumContainer 
           mood={mood} 
           onAquariumReady={handleAquariumReady}
@@ -345,10 +352,6 @@ function App() {
         <FishEditor 
           isVisible={showFishEditor}
           onClose={closeFishEditor}
-        />
-        <ObjectsEditor 
-          isVisible={showObjectsEditor}
-          onClose={closeObjectsEditor}
         />
       </div>
     </DragAndDropProvider>

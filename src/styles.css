@@ -368,9 +368,40 @@ body {
 }
 
 .color-input-group {
-    display: flex;
-    gap: 10px;
-    align-items: center;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.size-input-group {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.size-slider {
+  flex: 1;
+  min-width: 100px;
+}
+
+.size-number-input {
+  width: 60px;
+  padding: 4px 6px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.size-label {
+  min-width: 35px;
+  font-size: 12px;
+  color: #666;
+  text-align: center;
+}
+
+.fish-size {
+  font-size: 0.75rem;
+  color: #888;
 }
 
 .color-input-group input[type="color"] {

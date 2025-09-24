@@ -142,6 +142,7 @@ class DatabaseService {
         animation_speed: fishData.animationSpeed,
         frame_count: fishData.frameCount,
         current_frame: fishData.currentFrame,
+        size: fishData.size || 1.0,
         is_active: true
       };
 

@@ -1,20 +1,26 @@
 import { useState, useEffect } from 'preact/hooks';
-import Modal from './Modal.jsx';
+import Collapsible from './Collapsible.jsx';
 import ObjectsSpriteGallery from './ObjectsSpriteGallery.jsx';
 
-function ObjectsEditor({ isVisible, onClose }) {
+function ObjectsEditor({ 
+  isOpen, 
+  onToggle, 
+  isDraggable = false, 
+  draggableId = null, 
+  draggablePosition = null 
+}) {
   const [selectedSprite, setSelectedSprite] = useState(null);
   const [uploadHistory, setUploadHistory] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Reset when modal opens/closes
+  // Reset when panel opens/closes
   useEffect(() => {
-    if (isVisible) {
+    if (isOpen) {
       setSelectedSprite(null);
       setError(null);
     }
-  }, [isVisible]);
+  }, [isOpen]);
 
   const handleSpriteSelect = (spriteUrl) => {
     setSelectedSprite(spriteUrl);
@@ -39,15 +45,18 @@ function ObjectsEditor({ isVisible, onClose }) {
     setSelectedSprite(null);
   };
 
-  if (!isVisible) return null;
-
   return (
-    <Modal 
-      isVisible={isVisible} 
-      onClose={onClose} 
-      title="Objects Manager"
+    <Collapsible 
+      title="🎨 Objects Manager"
+      position={isDraggable ? "static" : "top-left"}
       size="large"
-      className="objects-editor-modal"
+      isOpen={isOpen}
+      onToggle={onToggle}
+      className="objects-manager-collapsible"
+      hideWhenClosed={true}
+      isDraggable={isDraggable}
+      draggableId={draggableId}
+      draggablePosition={draggablePosition}
     >
       {error && (
         <div className="error-message">
@@ -123,7 +132,7 @@ function ObjectsEditor({ isVisible, onClose }) {
           )}
         </div>
       </div>
-    </Modal>
+    </Collapsible>
   );
 }
 

@@ -263,7 +263,8 @@ export const useFishStore = create((set, get) => ({
       driftInterval: Math.round(fishInstance.driftInterval),
       animationSpeed: Math.round(fishInstance.animationSpeed),
       frameCount: Math.round(fishInstance.frameCount),
-      currentFrame: Math.round(fishInstance.currentFrame)
+      currentFrame: Math.round(fishInstance.currentFrame),
+      size: fishInstance.size || 1.0
     };
   },
 
@@ -289,6 +290,7 @@ export const useFishStore = create((set, get) => ({
       animationSpeed: dbFish.animation_speed,
       frameCount: dbFish.frame_count,
       currentFrame: dbFish.current_frame,
+      size: parseFloat(dbFish.size) || 1.0,
       createdAt: dbFish.created_at,
       updatedAt: dbFish.updated_at
     };
@@ -328,7 +330,8 @@ export const useFishStore = create((set, get) => ({
         driftInterval: Math.round(3000 + Math.random() * 4000), // 3-7 seconds
         animationSpeed: Math.round(100 + Math.random() * 100), // 100-200ms
         frameCount: 4,
-        currentFrame: Math.floor(Math.random() * 4)
+        currentFrame: Math.floor(Math.random() * 4),
+        size: 0.5 + Math.random() * 1.5 // Random size between 0.5 and 2.0
       };
       
       const savedFish = await databaseService.saveFish(fishData);
@@ -386,7 +389,8 @@ export const useFishStore = create((set, get) => ({
           driftInterval: Math.round(3000 + Math.random() * 4000), // 3-7 seconds
           animationSpeed: Math.round(100 + Math.random() * 100), // 100-200ms
           frameCount: 4,
-          currentFrame: Math.floor(Math.random() * 4)
+          currentFrame: Math.floor(Math.random() * 4),
+          size: 0.8 + Math.random() * 0.4 // Default fish size between 0.8 and 1.2
         };
         
         promises.push(databaseService.saveFish(fishData));
