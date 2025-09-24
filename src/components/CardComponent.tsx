@@ -61,15 +61,31 @@ export default function CardComponent({
   }, [componentId]);
 
   const loadViewPreference = async () => {
+    // Skip database call if componentId is invalid
+    if (!componentId || componentId.trim() === '') {
+      console.warn('Skipping preference load: invalid componentId');
+      return;
+    }
+    
     try {
       setIsLoadingPreference(true);
-      const preference = await databaseService.getComponentViewPreference(componentId);
+      
+      // Add timeout to prevent hanging database calls from blocking UI
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Database preference loading timeout')), 2000);
+      });
+      
+      const preferencePromise = databaseService.getComponentViewPreference(componentId);
+      
+      const preference = await Promise.race([preferencePromise, timeoutPromise]);
+      
       if (preference) {
         setViewMode(preference);
         onViewModeChange?.(preference);
       }
     } catch (error) {
-      console.error('Error loading view preference:', error);
+      console.warn('Could not load view preference (using default):', error.message);
+      // Continue with default view mode - don't let database issues break functionality
     } finally {
       setIsLoadingPreference(false);
     }
@@ -80,11 +96,23 @@ export default function CardComponent({
     setViewMode(newViewMode);
     onViewModeChange?.(newViewMode);
     
-    // Save preference to database
+    // Save preference to database (in background, don't block UI)
+    if (!componentId || componentId.trim() === '') {
+      console.warn('Skipping preference save: invalid componentId');
+      return;
+    }
+    
     try {
-      await databaseService.saveComponentViewPreference(componentId, newViewMode);
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Database preference save timeout')), 3000);
+      });
+      
+      const savePromise = databaseService.saveComponentViewPreference(componentId, newViewMode);
+      
+      await Promise.race([savePromise, timeoutPromise]);
     } catch (error) {
-      console.error('Error saving view preference:', error);
+      console.warn('Could not save view preference (change still applied locally):', error.message);
+      // Don't block UI even if database save fails - user sees their change immediately
     }
   };
 
@@ -299,13 +327,15 @@ function StickyCard({
     }
   };
 
-  // Calculate styles for draggable items
+  // Calculate styles for draggable items with viewport constraints
   const containerStyle = isDraggable ? {
     position: 'fixed' as const,
-    left: (draggablePosition?.x || 0) + (transform?.x || 0),
-    top: (draggablePosition?.y || 0) + (transform?.y || 0),
+    left: Math.max(0, Math.min((draggablePosition?.x || 0) + (transform?.x || 0), window.innerWidth - 300)),
+    top: Math.max(0, Math.min((draggablePosition?.y || 0) + (transform?.y || 0), window.innerHeight - 200)),
     zIndex: isDragging ? 1000 : 100,
     transition: isDragging ? 'none' : 'transform 0.2s ease',
+    maxWidth: 'calc(100vw - 20px)',
+    maxHeight: 'calc(100vh - 20px)',
   } : {};
 
   // Enhanced title with drag handle for draggable items and view mode toggle

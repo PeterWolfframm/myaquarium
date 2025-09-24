@@ -67,6 +67,8 @@ body {
     align-items: center;
     z-index: 1000;
     backdrop-filter: blur(5px);
+    padding: 20px;
+    box-sizing: border-box;
 }
 
 .modal-panel {
@@ -74,26 +76,28 @@ body {
     border: 2px solid rgba(255, 255, 255, 0.2);
     border-radius: 15px;
     padding: 0;
-    max-height: 90vh;
+    max-height: calc(100vh - 40px);
+    max-width: calc(100vw - 40px);
     overflow: hidden;
     position: relative;
+    box-sizing: border-box;
 }
 
 .modal-small {
-    min-width: 300px;
-    max-width: 500px;
+    min-width: min(300px, calc(100vw - 40px));
+    max-width: min(500px, calc(100vw - 40px));
     width: 90%;
 }
 
 .modal-medium {
-    min-width: 400px;
-    max-width: 600px;
+    min-width: min(400px, calc(100vw - 40px));
+    max-width: min(600px, calc(100vw - 40px));
     width: 90%;
 }
 
 .modal-large {
-    min-width: 600px;
-    max-width: 900px;
+    min-width: min(600px, calc(100vw - 40px));
+    max-width: min(900px, calc(100vw - 40px));
     width: 90%;
 }
 
@@ -135,8 +139,9 @@ body {
 
 .modal-content {
     padding: 20px 25px;
-    max-height: calc(90vh - 80px);
+    max-height: calc(100vh - 160px);
     overflow-y: auto;
+    box-sizing: border-box;
 }
 
 .fish-editor-panel {
@@ -532,34 +537,47 @@ body {
     backdrop-filter: blur(5px);
     border: 1px solid rgba(255, 255, 255, 0.2);
     transition: all 0.3s ease;
+    max-width: calc(100vw - 40px);
+    max-height: calc(100vh - 40px);
+    box-sizing: border-box;
 }
 
 .collapsible-top-left {
     top: 20px;
     left: 20px;
+    right: auto;
+    bottom: auto;
 }
 
 .collapsible-top-right {
     top: 70px;
     right: 20px;
+    left: auto;
+    bottom: auto;
 }
 
 .collapsible-center {
     top: 20px;
     left: 50%;
     transform: translateX(-50%);
+    right: auto;
+    bottom: auto;
+    max-width: calc(100vw - 40px);
 }
 
 .collapsible-small {
-    min-width: 200px;
+    min-width: min(200px, calc(100vw - 40px));
+    max-width: calc(100vw - 40px);
 }
 
 .collapsible-medium {
-    min-width: 250px;
+    min-width: min(250px, calc(100vw - 40px));
+    max-width: calc(100vw - 40px);
 }
 
 .collapsible-large {
-    min-width: 350px;
+    min-width: min(350px, calc(100vw - 40px));
+    max-width: calc(100vw - 40px);
 }
 
 .collapsible-header {
@@ -606,6 +624,9 @@ body {
 .collapsible-content {
     padding: 0 20px 15px 20px;
     animation: slideDown 0.3s ease;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+    box-sizing: border-box;
 }
 
 .collapsible.closed {
@@ -2025,11 +2046,13 @@ body {
   letter-spacing: 1px;
   position: absolute;
   z-index: 10;
-  min-width: 280px;
-  max-width: 400px;
+  min-width: min(280px, calc(100vw - 40px));
+  max-width: min(400px, calc(100vw - 40px));
+  max-height: calc(100vh - 40px);
   transition: none;
   transform: none;
   backdrop-filter: blur(5px);
+  box-sizing: border-box;
 }
 
 .brutalist-panel.draggable-brutalist-panel {
@@ -2070,18 +2093,18 @@ body {
 
 /* Size classes */
 .brutalist-panel-small {
-  min-width: 200px;
-  max-width: 280px;
+  min-width: min(200px, calc(100vw - 40px));
+  max-width: min(280px, calc(100vw - 40px));
 }
 
 .brutalist-panel-medium {
-  min-width: 280px;
-  max-width: 400px;
+  min-width: min(280px, calc(100vw - 40px));
+  max-width: min(400px, calc(100vw - 40px));
 }
 
 .brutalist-panel-large {
-  min-width: 400px;
-  max-width: 600px;
+  min-width: min(400px, calc(100vw - 40px));
+  max-width: min(600px, calc(100vw - 40px));
 }
 
 /* Header */
@@ -2134,9 +2157,10 @@ body {
   background: rgba(25, 42, 85, 0.3);
   color: #FFFFFF;
   padding: 16px;
-  max-height: 500px;
+  max-height: calc(100vh - 200px);
   overflow-y: auto;
   border-top: 2px solid #ff9500;
+  box-sizing: border-box;
 }
 
 /* Draggable title container */

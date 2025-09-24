@@ -22,7 +22,35 @@ import type {
   Position 
 } from './types/global';
 
-function App(): JSX.Element {
+// Utility function to ensure positions stay within viewport bounds
+const constrainToViewport = (position: Position, panelWidth: number = 300, panelHeight: number = 200): Position => {
+  const margin = 20; // Minimum margin from viewport edge
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  
+  return {
+    x: Math.max(margin, Math.min(position.x, viewportWidth - panelWidth - margin)),
+    y: Math.max(margin, Math.min(position.y, viewportHeight - panelHeight - margin))
+  };
+};
+
+// Function to get safe default positions
+const getSafeDefaultPositions = (): PanelPositions => {
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  const margin = 20;
+  
+  return {
+    timer: constrainToViewport({ x: Math.max(margin, viewportWidth / 2 - 150), y: 50 }, 300, 200),
+    stats: constrainToViewport({ x: Math.max(margin, viewportWidth - 320), y: 50 }, 320, 300),
+    objectsManager: constrainToViewport({ x: margin, y: 120 }, 350, 400),
+    brutalistPanel: constrainToViewport({ x: Math.max(margin, viewportWidth - 320), y: 200 }, 320, 300),
+    settings: constrainToViewport({ x: Math.max(margin, viewportWidth / 2 - 200), y: 100 }, 400, 500),
+    fishEditor: constrainToViewport({ x: Math.max(margin, viewportWidth / 2 - 250), y: 80 }, 500, 600)
+  };
+};
+
+function App() {
   const [mood, setMood] = useState<MoodType>('work');
   const [time, setTime] = useState<string>('00:00');
   const [currentSession, setCurrentSession] = useState<TimerSession | null>(null);
@@ -51,65 +79,128 @@ function App(): JSX.Element {
   const [showStats, setShowStats] = useState<boolean>(true);
   const [showBrutalistPanel, setShowBrutalistPanel] = useState<boolean>(true);
   
-  // Panel positions for drag and drop
-  const [panelPositions, setPanelPositions] = useState<PanelPositions>(() => {
-    try {
-      const saved = localStorage.getItem('aquarium-panel-positions');
-      return saved ? JSON.parse(saved) : {
-        timer: { x: window.innerWidth / 2 - 150, y: 50 },
-        stats: { x: window.innerWidth - 320, y: 50 },
-        objectsManager: { x: 20, y: 120 },
-        brutalistPanel: { x: window.innerWidth - 320, y: 200 },
-        settings: { x: window.innerWidth / 2 - 200, y: 100 },
-        fishEditor: { x: window.innerWidth / 2 - 250, y: 80 }
-      };
-    } catch {
-      return {
-        timer: { x: window.innerWidth / 2 - 150, y: 50 },
-        stats: { x: window.innerWidth - 320, y: 50 },
-        objectsManager: { x: 20, y: 120 },
-        brutalistPanel: { x: window.innerWidth - 320, y: 200 },
-        settings: { x: window.innerWidth / 2 - 200, y: 100 },
-        fishEditor: { x: window.innerWidth / 2 - 250, y: 80 }
-      };
-    }
-  });
+  // Panel positions for drag and drop - using safe default positions
+  const [panelPositions, setPanelPositions] = useState<PanelPositions>(getSafeDefaultPositions());
+  
+  const [positionsLoading, setPositionsLoading] = useState<boolean>(true);
 
   // Handle panel position changes
-  const handlePositionChange = (panelId: string, newPosition: Position): void => {
+  const handlePositionChange = async (panelId: string, newPosition: Position): Promise<void> => {
+    // Constrain position to viewport bounds
+    const constrainedPosition = constrainToViewport(newPosition);
     const updatedPositions = {
       ...panelPositions,
-      [panelId]: newPosition
+      [panelId]: constrainedPosition
     };
     setPanelPositions(updatedPositions);
     
-    // Persist to localStorage
+    // Persist to Supabase
     try {
-      localStorage.setItem('aquarium-panel-positions', JSON.stringify(updatedPositions));
+      await databaseService.saveComponentPosition(panelId, constrainedPosition);
     } catch (error) {
-      console.warn('Failed to save panel positions:', error);
+      console.warn('Failed to save panel position to database:', error);
+      // Fallback to localStorage for offline use
+      try {
+        localStorage.setItem('aquarium-panel-positions', JSON.stringify(updatedPositions));
+      } catch (localStorageError) {
+        console.warn('Failed to save panel positions to localStorage:', localStorageError);
+      }
     }
   };
 
   // Get store initialization functions
-  const initializeAquariumStore = useAquariumStore(state => state.initializeFromDatabase);
-  const initializeFishStore = useFishStore(state => state.initializeFromDatabase);
-  const initializeUIStore = useUIStore(state => state.initializeFromDatabase);
+  const initializeAquariumStore = useAquariumStore(state => (state as any).initializeFromDatabase);
+  const initializeFishStore = useFishStore(state => (state as any).initializeFromDatabase);
+  const initializeUIStore = useUIStore(state => (state as any).initializeFromDatabase);
   const aquariumLoading = useAquariumStore(state => state.isLoading);
   const fishLoading = useFishStore(state => state.isLoading);
   const uiLoading = useUIStore(state => state.isLoading);
 
+  // Load component positions from database
+  useEffect(() => {
+    const loadPositions = async () => {
+      try {
+        setPositionsLoading(true);
+        const savedPositions = await databaseService.getAllComponentPositions();
+        
+        if (Object.keys(savedPositions).length > 0) {
+          // Merge saved positions with safe defaults for any missing components
+          const defaultPositions = getSafeDefaultPositions();
+          
+          // Constrain all saved positions to ensure they're within viewport bounds
+          const constrainedSavedPositions: Partial<PanelPositions> = {};
+          for (const [panelId, position] of Object.entries(savedPositions)) {
+            constrainedSavedPositions[panelId as keyof PanelPositions] = constrainToViewport(position as Position);
+          }
+          
+          const mergedPositions = { ...defaultPositions, ...constrainedSavedPositions };
+          setPanelPositions(mergedPositions);
+        } else {
+          // Fallback to localStorage if no database positions found
+          try {
+            const localSaved = localStorage.getItem('aquarium-panel-positions');
+            if (localSaved) {
+              const localPositions = JSON.parse(localSaved);
+              
+              // Constrain localStorage positions to viewport bounds
+              const constrainedLocalPositions: Partial<PanelPositions> = {};
+              for (const [panelId, position] of Object.entries(localPositions)) {
+                constrainedLocalPositions[panelId as keyof PanelPositions] = constrainToViewport(position as Position);
+              }
+              
+              const mergedWithDefaults = { ...getSafeDefaultPositions(), ...constrainedLocalPositions };
+              setPanelPositions(mergedWithDefaults);
+              
+              // Migrate constrained localStorage positions to database
+              for (const [componentId, position] of Object.entries(constrainedLocalPositions)) {
+                await databaseService.saveComponentPosition(componentId, position as Position);
+              }
+              
+              // Clear localStorage after successful migration
+              localStorage.removeItem('aquarium-panel-positions');
+            }
+          } catch (localStorageError) {
+            console.warn('Could not load positions from localStorage:', localStorageError);
+          }
+        }
+      } catch (error) {
+        console.warn('Could not load positions from database, using defaults:', error);
+      } finally {
+        setPositionsLoading(false);
+      }
+    };
+
+    loadPositions();
+  }, []);
+
+  // Handle window resize to keep panels within bounds
+  useEffect(() => {
+    const handleResize = () => {
+      setPanelPositions(currentPositions => {
+        const constrainedPositions = { ...currentPositions };
+        for (const [panelId, position] of Object.entries(currentPositions)) {
+          constrainedPositions[panelId as keyof PanelPositions] = constrainToViewport(position);
+        }
+        return constrainedPositions;
+      });
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Handle object drops on aquarium
   useEffect(() => {
-    const handleObjectDrop = async (event: CustomEvent<{
-      spriteUrl: string;
-      spriteName: string;
-      selectedSize: number;
-      screenX: number;
-      screenY: number;
-      useGridPlacement: boolean;
-    }>) => {
-      const { spriteUrl, spriteName, selectedSize, screenX, screenY, useGridPlacement } = event.detail;
+    const handleObjectDrop = async (event: Event) => {
+      const customEvent = event as CustomEvent<{
+        spriteUrl: string;
+        spriteName: string;
+        selectedSize: number;
+        screenX: number;
+        screenY: number;
+        useGridPlacement: boolean;
+      }>;
+      const { spriteUrl, spriteName, selectedSize, screenX, screenY, useGridPlacement } = customEvent.detail;
       
       if (aquariumRef) {
         console.log(`Placing object: ${spriteName} at screen position (${screenX}, ${screenY})`);
@@ -185,13 +276,13 @@ function App(): JSX.Element {
             timeoutPromise
           ]);
           console.log('Stores initialized successfully');
-        } catch (error) {
-          if (error.message.includes('timeout')) {
+        } catch (error: any) {
+          if (error?.message?.includes('timeout')) {
             console.warn('Store initialization timed out after 5 seconds, using temporary settings');
             // Force all stores to stop loading and use defaults
-            useAquariumStore.getState().setLoadingFalse?.();
-            useFishStore.getState().setLoadingFalse?.();
-            useUIStore.getState().setLoadingFalse?.();
+            (useAquariumStore.getState() as any).setLoadingFalse?.();
+            (useFishStore.getState() as any).setLoadingFalse?.();
+            (useUIStore.getState() as any).setLoadingFalse?.();
           } else {
             throw error;
           }
@@ -246,7 +337,7 @@ function App(): JSX.Element {
     const interval = setInterval(() => {
       if (sessionStartTime) {
         const now = new Date();
-        const elapsedMs = now - sessionStartTime;
+        const elapsedMs = now.getTime() - sessionStartTime.getTime();
         const elapsedSeconds = Math.floor(elapsedMs / 1000);
         const minutes = Math.floor(elapsedSeconds / 60);
         const seconds = elapsedSeconds % 60;
@@ -359,7 +450,7 @@ function App(): JSX.Element {
     >
       <div className="aquarium-container">
         {/* Show loading indicator while stores are initializing */}
-        {(aquariumLoading || fishLoading || uiLoading) && (
+        {(aquariumLoading || fishLoading || uiLoading || positionsLoading) && (
           <div className="loading-overlay">
             <div className="loading-spinner">🐠</div>
             <div className="loading-text">Loading aquarium from cloud...</div>

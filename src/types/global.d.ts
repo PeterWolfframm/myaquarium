@@ -374,6 +374,16 @@ export interface ComponentPreference {
   updated_at?: string;
 }
 
+export interface ComponentPosition {
+  id?: string;
+  user_id: string;
+  component_id: string;
+  x: number;
+  y: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
 // ==================== DRAG AND DROP TYPES ====================
 
 export interface DragEndEvent {

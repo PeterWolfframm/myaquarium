@@ -9,7 +9,9 @@ import type {
   MoodType,
   DatabaseError,
   ViewMode,
-  ComponentPreference
+  ComponentPreference,
+  ComponentPosition,
+  Position
 } from '../types/global';
 
 /**
@@ -1189,6 +1191,151 @@ class DatabaseService {
       return true;
     } catch (error) {
       console.error('Error in deleteComponentViewPreference:', error);
+      return false;
+    }
+  }
+
+  // ==================== COMPONENT POSITIONS ====================
+
+  /**
+   * Get component position for the current user
+   * @param {string} componentId - Component identifier
+   * @returns {Promise<Position|null>} Component position or null if not found
+   */
+  async getComponentPosition(componentId: string): Promise<Position | null> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const { data, error } = await supabase
+        .from(TABLES.COMPONENT_POSITIONS)
+        .select('x, y')
+        .eq('user_id', user.id)
+        .eq('component_id', componentId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
+        console.error('Error fetching component position:', error);
+        return null;
+      }
+
+      return data ? { x: data.x, y: data.y } : null;
+    } catch (error) {
+      console.error('Error in getComponentPosition:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Save component position for the current user
+   * @param {string} componentId - Component identifier
+   * @param {Position} position - Position coordinates
+   * @returns {Promise<ComponentPosition|null>} Saved position or null if error
+   */
+  async saveComponentPosition(componentId: string, position: Position): Promise<ComponentPosition | null> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      // Check if position already exists
+      const existingPosition = await this.getComponentPosition(componentId);
+      
+      const positionData = {
+        user_id: user.id,
+        component_id: componentId,
+        x: position.x,
+        y: position.y
+      };
+
+      let result;
+      if (existingPosition) {
+        // Update existing position
+        result = await supabase
+          .from(TABLES.COMPONENT_POSITIONS)
+          .update({ x: position.x, y: position.y })
+          .eq('user_id', user.id)
+          .eq('component_id', componentId)
+          .select()
+          .single();
+      } else {
+        // Insert new position
+        result = await supabase
+          .from(TABLES.COMPONENT_POSITIONS)
+          .insert(positionData)
+          .select()
+          .single();
+      }
+
+      if (result.error) {
+        console.error('Error saving component position:', result.error);
+        return null;
+      }
+
+      return result.data;
+    } catch (error) {
+      console.error('Error in saveComponentPosition:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get all component positions for the current user
+   * @returns {Promise<{[componentId: string]: Position}>} Object with component positions
+   */
+  async getAllComponentPositions(): Promise<{[componentId: string]: Position}> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return {};
+
+      const { data, error } = await supabase
+        .from(TABLES.COMPONENT_POSITIONS)
+        .select('component_id, x, y')
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error fetching component positions:', error);
+        return {};
+      }
+
+      // Convert array to object with componentId as key
+      const positions: {[componentId: string]: Position} = {};
+      if (data) {
+        data.forEach(item => {
+          positions[item.component_id] = { x: item.x, y: item.y };
+        });
+      }
+
+      return positions;
+    } catch (error) {
+      console.error('Error in getAllComponentPositions:', error);
+      return {};
+    }
+  }
+
+  /**
+   * Delete component position for the current user
+   * @param {string} componentId - Component identifier
+   * @returns {Promise<boolean>} Success status
+   */
+  async deleteComponentPosition(componentId: string): Promise<boolean> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return false;
+
+      const { error } = await supabase
+        .from(TABLES.COMPONENT_POSITIONS)
+        .delete()
+        .eq('user_id', user.id)
+        .eq('component_id', componentId);
+
+      if (error) {
+        console.error('Error deleting component position:', error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error in deleteComponentPosition:', error);
       return false;
     }
   }
