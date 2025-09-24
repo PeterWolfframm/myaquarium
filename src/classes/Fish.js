@@ -23,7 +23,13 @@ export class Fish {
             // Restore fish from database data
             this.id = fishData.id;
             this.name = fishData.name;
-            this.baseSpeed = (fishData.baseSpeed !== undefined && fishData.baseSpeed > 0) ? fishData.baseSpeed : randomRange(FISH_CONFIG.BASE_SPEED_MIN, FISH_CONFIG.BASE_SPEED_MAX);
+            this.spriteUrl = fishData.spriteUrl || FISH_CONFIG.DEFAULT_SPRITE_URL;
+            
+            // Check if this is a shark sprite to apply shark-like characteristics
+            const isSharkSprite = this.spriteUrl.includes('shark.png');
+            const speedMultiplier = isSharkSprite ? 1.5 : 1.0; // Sharks are faster
+            
+            this.baseSpeed = (fishData.baseSpeed !== undefined && fishData.baseSpeed > 0) ? fishData.baseSpeed : randomRange(FISH_CONFIG.BASE_SPEED_MIN * speedMultiplier, FISH_CONFIG.BASE_SPEED_MAX * speedMultiplier);
             this.currentSpeed = (fishData.currentSpeed !== undefined && fishData.currentSpeed > 0) ? fishData.currentSpeed : this.baseSpeed;
             this.direction = (fishData.direction !== undefined && (fishData.direction === 1 || fishData.direction === -1)) ? fishData.direction : (Math.random() > 0.5 ? 1 : -1);
             this.targetY = fishData.targetY || this.getRandomTargetY();
@@ -33,13 +39,18 @@ export class Fish {
             this.frameCount = fishData.frameCount || FISH_CONFIG.ANIMATION_FRAMES;
             this.currentFrame = fishData.currentFrame || 0;
             this.color = fishData.color || randomChoice(COLORS.FISH_COLORS);
-            this.spriteUrl = fishData.spriteUrl || FISH_CONFIG.DEFAULT_SPRITE_URL;
-            this.size = (fishData.size !== undefined && fishData.size > 0) ? fishData.size : 1.0;
+            this.size = (fishData.size !== undefined && fishData.size > 0) ? fishData.size : (isSharkSprite ? 0.8 : 1.0); // Sharks are larger by default
         } else {
             // Create new random fish
             this.id = null; // Will be assigned when saved to database
             this.name = null;
-            this.baseSpeed = randomRange(FISH_CONFIG.BASE_SPEED_MIN, FISH_CONFIG.BASE_SPEED_MAX);
+            this.spriteUrl = FISH_CONFIG.DEFAULT_SPRITE_URL;
+            
+            // Check if this is a shark sprite to apply shark-like characteristics
+            const isSharkSprite = this.spriteUrl.includes('shark.png');
+            const speedMultiplier = isSharkSprite ? 1.5 : 1.0; // Sharks are faster
+            
+            this.baseSpeed = randomRange(FISH_CONFIG.BASE_SPEED_MIN * speedMultiplier, FISH_CONFIG.BASE_SPEED_MAX * speedMultiplier);
             this.currentSpeed = this.baseSpeed;
             this.direction = Math.random() > 0.5 ? 1 : -1;
             this.targetY = this.getRandomTargetY();
@@ -49,8 +60,7 @@ export class Fish {
             this.frameCount = FISH_CONFIG.ANIMATION_FRAMES;
             this.currentFrame = 0;
             this.color = randomChoice(COLORS.FISH_COLORS);
-            this.spriteUrl = FISH_CONFIG.DEFAULT_SPRITE_URL;
-            this.size = 1.0;
+            this.size = isSharkSprite ? 0.8 : 1.0; // Sharks are larger by default
         }
         
         // Animation properties
@@ -64,6 +74,7 @@ export class Fish {
         this.initialPositionX = fishData?.positionX;
         this.initialPositionY = fishData?.positionY;
         this.spriteReady = false;
+        this.spritePositioned = false;
         this.hasWarnedZeroMovement = false;
         
         // Create sprite (async loading)
@@ -149,6 +160,9 @@ export class Fish {
             // Random spawn position
             this.respawn();
         }
+        
+        // Mark sprite as positioned
+        this.spritePositioned = true;
     }
     
     /**
@@ -300,7 +314,9 @@ export class Fish {
      * @param {number} multiplier - Speed multiplier (0.3 for pause, 1.0 for work, 2.0 for lunch)
      */
     setMoodSpeed(multiplier) {
-        this.currentSpeed = clamp(this.baseSpeed * multiplier, 0.1, 5.0);
+        // Sharks have higher max speed (8.0 vs 5.0 for regular fish)
+        const maxSpeed = this.spriteUrl && this.spriteUrl.includes('shark.png') ? 8.0 : 5.0;
+        this.currentSpeed = clamp(this.baseSpeed * multiplier, 0.1, maxSpeed);
     }
     
     /**
@@ -600,7 +616,7 @@ export class FishManager {
      */
     waitForFishSprite(fish) {
         const checkSprite = () => {
-            if (fish.spriteReady && fish.sprite) {
+            if (fish.spriteReady && fish.sprite && fish.spritePositioned) {
                 this.container.addChild(fish.sprite);
                 console.log(`Fish sprite ${fish.id || 'unnamed'} added to container`);
             } else {

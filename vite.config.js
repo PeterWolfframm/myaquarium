@@ -16,5 +16,8 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['preact', 'preact/hooks']
+  },
+  esbuild: {
+    logOverride: { 'this-is-undefined-in-esm': 'silent' }
   }
 });

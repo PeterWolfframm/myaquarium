@@ -30,8 +30,26 @@ function FishEditor({ isVisible, onClose }) {
   const [isCreating, setIsCreating] = useState(false);
   const [newFishName, setNewFishName] = useState('');
   const [newFishColor, setNewFishColor] = useState('4CAF50');
-  const [newFishSpriteUrl, setNewFishSpriteUrl] = useState(null);
+  const [newFishSpriteUrl, setNewFishSpriteUrl] = useState(FISH_CONFIG.DEFAULT_SPRITE_URL);
   const [newFishSize, setNewFishSize] = useState(1.0);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  // Shark sprite URL (now used by Fish class for offline mode)
+  const sharkSpriteUrl = new URL('../sprites/shark.png', import.meta.url).href;
+
+  // Listen for online/offline events
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   // Reset when modal opens/closes
   useEffect(() => {
@@ -44,11 +62,12 @@ function FishEditor({ isVisible, onClose }) {
       setIsCreating(false);
       setNewFishName('');
       setNewFishColor('4CAF50');
-      setNewFishSpriteUrl(null);
+      // Set default sprite based on online status
+      setNewFishSpriteUrl(isOnline ? FISH_CONFIG.DEFAULT_SPRITE_URL : sharkSpriteUrl);
       setNewFishSize(1.0);
       clearSyncError();
     }
-  }, [isVisible, clearSyncError]);
+  }, [isVisible, clearSyncError, isOnline, sharkSpriteUrl]);
 
   // Update selected fish when store data changes
   useEffect(() => {
@@ -196,7 +215,7 @@ function FishEditor({ isVisible, onClose }) {
       // Reset creation form
       setNewFishName('');
       setNewFishColor('4CAF50');
-      setNewFishSpriteUrl(null);
+      setNewFishSpriteUrl(isOnline ? FISH_CONFIG.DEFAULT_SPRITE_URL : sharkSpriteUrl);
       setNewFishSize(1.0);
       setIsCreating(false);
       console.log('Fish created successfully:', success);
@@ -209,6 +228,7 @@ function FishEditor({ isVisible, onClose }) {
     setEditingName('');
     setEditingSpriteUrl(null);
     setEditingSize(1.0);
+    setNewFishSpriteUrl(isOnline ? FISH_CONFIG.DEFAULT_SPRITE_URL : sharkSpriteUrl);
     setIsCreating(true);
   };
 
@@ -216,7 +236,7 @@ function FishEditor({ isVisible, onClose }) {
     setIsCreating(false);
     setNewFishName('');
     setNewFishColor('4CAF50');
-    setNewFishSpriteUrl(null);
+    setNewFishSpriteUrl(isOnline ? FISH_CONFIG.DEFAULT_SPRITE_URL : sharkSpriteUrl);
     setNewFishSize(1.0);
   };
 

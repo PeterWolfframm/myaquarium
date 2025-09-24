@@ -37,7 +37,7 @@ export const FISH_CONFIG = {
   ANIMATION_FRAMES: 4,
   ANIMATION_SPEED_MIN: 100,
   ANIMATION_SPEED_MAX: 200,
-  DEFAULT_SPRITE_URL: new URL('../sprites/default-fish.svg', import.meta.url).href,
+  DEFAULT_SPRITE_URL: new URL('../sprites/shark.png', import.meta.url).href, // Default to shark sprite for offline compatibility
   BOUNDARY_MARGIN: 30,
   VERTICAL_MARGIN: 50
 };

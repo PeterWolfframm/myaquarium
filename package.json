@@ -7,24 +7,23 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "serve": "vite preview"
+    "serve": "vite preview",
+    "type-check": "tsc --noEmit",
+    "type-check:watch": "tsc --noEmit --watch"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/modifiers": "^9.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@supabase/supabase-js": "^2.57.4",
-    "cors": "^2.8.5",
-    "express": "^5.1.0",
     "pixi-viewport": "^6.0.3",
     "pixi.js": "^8.13.2",
     "preact": "^10.19.2",
-    "react-draggable": "^4.5.0",
-    "sqlite3": "^5.1.7",
     "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@preact/preset-vite": "^2.7.0",
+    "typescript": "^5.9.2",
     "vite": "^5.4.0"
   },
   "keywords": [

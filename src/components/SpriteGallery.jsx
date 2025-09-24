@@ -7,9 +7,27 @@ function SpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadComplete, on
   const [isLoading, setIsLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  // Shark sprite URL (now used by Fish class for offline mode)
+  const sharkSpriteUrl = new URL('../sprites/shark.png', import.meta.url).href;
 
   useEffect(() => {
     loadSprites();
+  }, []);
+
+  // Listen for online/offline events
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
 
   const loadSprites = async () => {
@@ -103,27 +121,17 @@ function SpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadComplete, on
 
       {/* Action Buttons Section */}
       <div className="sprite-actions-section">
-        <label className="upload-button">
+        <label className={`upload-button ${!isOnline ? 'disabled' : ''}`}>
           <input
             type="file"
             accept="image/*"
             onChange={handleFileUpload}
-            disabled={uploading}
+            disabled={uploading || !isOnline}
             style={{ display: 'none' }}
           />
-          {uploading ? 'Uploading...' : '+ Upload Sprite'}
+          {!isOnline ? 'Upload (offline)' : uploading ? 'Uploading...' : '+ Upload Sprite'}
         </label>
         
-        {onAddRandomFish && (
-          <button 
-            className="create-random-fish-button"
-            onClick={onAddRandomFish}
-            disabled={isCreatingFish}
-            title={selectedSpriteUrl ? "Create a random fish with the selected sprite" : "Create a random fish with default sprite"}
-          >
-            {isCreatingFish ? '🐠 Creating...' : '🐠 Create Random Fish'}
-          </button>
-        )}
       </div>
 
       {/* Current Selection */}
@@ -157,7 +165,30 @@ function SpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadComplete, on
       {/* Available Sprites */}
       <div className="available-sprites-section">
         <h5>Available Sprites:</h5>
-        {availableSprites.length === 0 ? (
+        {!isOnline ? (
+          // When offline, only show shark sprite
+          <div className="sprites-grid">
+            <div 
+              className={`sprite-item ${selectedSpriteUrl === sharkSpriteUrl ? 'selected' : ''}`}
+              onClick={() => handleSpriteSelect(sharkSpriteUrl)}
+              title="Shark (offline mode)"
+            >
+              <img 
+                src={sharkSpriteUrl} 
+                alt="Shark"
+                className="sprite-preview"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'block';
+                }}
+              />
+              <div className="sprite-error" style={{ display: 'none' }}>
+                Failed to load
+              </div>
+              <div className="sprite-name">Shark (offline)</div>
+            </div>
+          </div>
+        ) : availableSprites.length === 0 ? (
           <div className="no-sprites">
             No sprites available. Upload your first sprite!
           </div>
@@ -192,14 +223,26 @@ function SpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadComplete, on
       {/* Default Option */}
       <div className="default-sprite-section">
         <h5>Default:</h5>
-        <div 
-          className={`sprite-item ${selectedSpriteUrl === FISH_CONFIG.DEFAULT_SPRITE_URL ? 'selected' : ''}`}
-          onClick={() => handleSpriteSelect(FISH_CONFIG.DEFAULT_SPRITE_URL)}
-        >
-          <div className="default-sprite-preview">
-            🐠 Default Fish Sprite
+        {!isOnline ? (
+          // When offline, default is also shark
+          <div 
+            className={`sprite-item ${selectedSpriteUrl === sharkSpriteUrl ? 'selected' : ''}`}
+            onClick={() => handleSpriteSelect(sharkSpriteUrl)}
+          >
+            <div className="default-sprite-preview">
+              🦈 Shark (offline default)
+            </div>
           </div>
-        </div>
+        ) : (
+          <div 
+            className={`sprite-item ${selectedSpriteUrl === FISH_CONFIG.DEFAULT_SPRITE_URL ? 'selected' : ''}`}
+            onClick={() => handleSpriteSelect(FISH_CONFIG.DEFAULT_SPRITE_URL)}
+          >
+            <div className="default-sprite-preview">
+              🐠 Default Fish Sprite
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
