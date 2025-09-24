@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { databaseService } from '../services/database.js';
-import { COLORS } from '../constants/index.js';
+import { COLORS, FISH_CONFIG } from '../constants/index.js';
 
 /**
  * Zustand store for fish data management with Supabase integration
@@ -379,6 +379,7 @@ export const useFishStore = create((set, get) => ({
         const fishData = {
           name: `DefaultFish_${i + 1}`,
           color: COLORS.FISH_COLORS[Math.floor(Math.random() * COLORS.FISH_COLORS.length)].toString(16).padStart(6, '0'),
+          spriteUrl: FISH_CONFIG.DEFAULT_SPRITE_URL,
           baseSpeed: 0.5 + Math.random() * 1.5, // 0.5 to 2.0
           currentSpeed: 1.0,
           direction: Math.random() > 0.5 ? 1 : -1,

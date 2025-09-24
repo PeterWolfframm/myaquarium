@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'preact/hooks';
 import { databaseService } from '../services/database.js';
+import { FISH_CONFIG } from '../constants/index.js';
 
 function SpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadComplete, onAddRandomFish, isCreatingFish = false }) {
   const [availableSprites, setAvailableSprites] = useState([]);
@@ -118,7 +119,7 @@ function SpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadComplete, on
             className="create-random-fish-button"
             onClick={onAddRandomFish}
             disabled={isCreatingFish}
-            title={selectedSpriteUrl ? "Create a random fish with the selected sprite" : "Create a random fish with default graphics"}
+            title={selectedSpriteUrl ? "Create a random fish with the selected sprite" : "Create a random fish with default sprite"}
           >
             {isCreatingFish ? '🐠 Creating...' : '🐠 Create Random Fish'}
           </button>
@@ -192,11 +193,11 @@ function SpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadComplete, on
       <div className="default-sprite-section">
         <h5>Default:</h5>
         <div 
-          className={`sprite-item ${!selectedSpriteUrl ? 'selected' : ''}`}
-          onClick={() => handleSpriteSelect(null)}
+          className={`sprite-item ${selectedSpriteUrl === FISH_CONFIG.DEFAULT_SPRITE_URL ? 'selected' : ''}`}
+          onClick={() => handleSpriteSelect(FISH_CONFIG.DEFAULT_SPRITE_URL)}
         >
           <div className="default-sprite-preview">
-            🐠 Generated Fish
+            🐠 Default Fish Sprite
           </div>
         </div>
       </div>

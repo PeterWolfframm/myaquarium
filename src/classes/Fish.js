@@ -33,7 +33,7 @@ export class Fish {
             this.frameCount = fishData.frameCount || FISH_CONFIG.ANIMATION_FRAMES;
             this.currentFrame = fishData.currentFrame || 0;
             this.color = fishData.color || randomChoice(COLORS.FISH_COLORS);
-            this.spriteUrl = fishData.spriteUrl || null;
+            this.spriteUrl = fishData.spriteUrl || FISH_CONFIG.DEFAULT_SPRITE_URL;
             this.size = (fishData.size !== undefined && fishData.size > 0) ? fishData.size : 1.0;
         } else {
             // Create new random fish
@@ -49,7 +49,7 @@ export class Fish {
             this.frameCount = FISH_CONFIG.ANIMATION_FRAMES;
             this.currentFrame = 0;
             this.color = randomChoice(COLORS.FISH_COLORS);
-            this.spriteUrl = null;
+            this.spriteUrl = FISH_CONFIG.DEFAULT_SPRITE_URL;
             this.size = 1.0;
         }
         
@@ -59,7 +59,6 @@ export class Fish {
         
         // Sprite loading properties
         this.spriteTexture = null;
-        this.isUsingCustomSprite = false;
         
         // Store position data for later use
         this.initialPositionX = fishData?.positionX;
@@ -67,35 +66,41 @@ export class Fish {
         this.spriteReady = false;
         this.hasWarnedZeroMovement = false;
         
-        // Create sprite (async for custom sprites)
+        // Create sprite (async loading)
         this.createSprite();
     }
     
     /**
-     * Create the fish sprite with graphics or custom sprite
+     * Create the fish sprite from sprite URL
      */
     async createSprite() {
         try {
-            if (this.spriteUrl) {
-                await this.loadCustomSprite();
-            } else {
-                this.createGraphicsSprite();
-            }
+            await this.loadSprite();
             
             // Set initial position after sprite is created
             this.setSpritePosition();
         } catch (error) {
             console.error('Error creating fish sprite:', error);
-            // Fallback to graphics sprite
-            this.createGraphicsSprite();
-            this.setSpritePosition();
+            // Fallback to default sprite if sprite fails to load
+            if (this.spriteUrl !== FISH_CONFIG.DEFAULT_SPRITE_URL) {
+                this.spriteUrl = FISH_CONFIG.DEFAULT_SPRITE_URL;
+                try {
+                    await this.loadSprite();
+                    this.setSpritePosition();
+                } catch (fallbackError) {
+                    console.error('Error loading default fish sprite:', fallbackError);
+                    throw fallbackError;
+                }
+            } else {
+                throw error;
+            }
         }
     }
     
     /**
-     * Load custom sprite from URL
+     * Load sprite from URL
      */
-    async loadCustomSprite() {
+    async loadSprite() {
         try {
             const texture = await PIXI.Assets.load(this.spriteUrl);
             this.spriteTexture = texture;
@@ -112,7 +117,7 @@ export class Fish {
             this.sprite = new PIXI.Sprite(texture);
             this.sprite.anchor.set(0.5, 0.5);
             
-            // Apply custom size scaling (base scale of 0.8 multiplied by size factor)
+            // Apply size scaling (base scale of 0.8 multiplied by size factor)
             const baseScale = 0.8;
             this.sprite.scale.set(baseScale * this.size, baseScale * this.size);
             
@@ -120,46 +125,15 @@ export class Fish {
             this.sprite.interactive = false;
             this.sprite.interactiveChildren = false;
             
-            this.isUsingCustomSprite = true;
             this.spriteReady = true;
             
-            console.log(`Custom sprite loaded successfully from ${this.spriteUrl}`);
+            console.log(`Sprite loaded successfully from ${this.spriteUrl}`);
         } catch (error) {
-            console.error('Error loading custom sprite:', error);
-            // Fallback to graphics sprite
-            this.createGraphicsSprite();
-        }
-    }
-    
-    /**
-     * Create graphics-based fish sprite (original method)
-     */
-    createGraphicsSprite() {
-        try {
-            // Remove old sprite if exists
-            if (this.sprite) {
-                if (this.sprite.parent) {
-                    this.sprite.parent.removeChild(this.sprite);
-                }
-                this.sprite.destroy();
-            }
-            
-            this.sprite = new PIXI.Graphics();
-            
-            // Ensure proper settings for PIXI v7
-            this.sprite.interactive = false;
-            this.sprite.interactiveChildren = false;
-            
-            this.isUsingCustomSprite = false;
-            this.spriteReady = true;
-            this.updateFrame();
-            
-            console.log(`Graphics fish sprite created successfully with color 0x${this.color.toString(16)}`);
-        } catch (error) {
-            console.error('Error creating graphics fish sprite:', error);
+            console.error('Error loading sprite:', error);
             throw error;
         }
     }
+    
     
     /**
      * Set sprite position based on initial data or random spawn
@@ -179,55 +153,23 @@ export class Fish {
     
     /**
      * Update the fish sprite animation frame
+     * Note: Sprite-based fish don't need frame updates as they use static images
      */
     updateFrame() {
-        try {
-            // Only update graphics-based sprites, custom sprites don't need frame updates
-            if (!this.isUsingCustomSprite && this.sprite instanceof PIXI.Graphics) {
-                this.sprite.clear();
-                
-                // Apply size scaling to all drawing operations
-                const sizeScale = this.size;
-                
-                // Draw fish body
-                this.sprite.ellipse(0, 0, FISH_CONFIG.SPRITE_SIZE.width * sizeScale, FISH_CONFIG.SPRITE_SIZE.height * sizeScale);
-                this.sprite.fill({ color: this.color, alpha: 0.8 });
-                
-                // Tail animation (oscillates based on frame)
-                const tailOffset = Math.sin(this.currentFrame / this.frameCount * Math.PI * 2) * 3 * sizeScale;
-                this.sprite.poly([
-                    -15 * sizeScale, tailOffset - 4 * sizeScale,
-                    -25 * sizeScale, tailOffset - 8 * sizeScale,
-                    -25 * sizeScale, tailOffset + 8 * sizeScale,
-                    -15 * sizeScale, tailOffset + 4 * sizeScale
-                ]);
-                this.sprite.fill({ color: this.color, alpha: 0.6 });
-                
-                // Eye
-                this.sprite.circle(8 * sizeScale, -2 * sizeScale, FISH_CONFIG.EYE_SIZE * sizeScale);
-                this.sprite.fill(COLORS.EYE_WHITE);
-                this.sprite.circle(9 * sizeScale, -2 * sizeScale, (FISH_CONFIG.EYE_SIZE / 2) * sizeScale);
-                this.sprite.fill(COLORS.EYE_BLACK);
-            }
-        } catch (error) {
-            console.error('Error updating fish frame:', error);
-        }
+        // Sprite-based fish use static images, no frame updates needed
+        // This method is kept for compatibility but does nothing for sprite fish
     }
     
     /**
      * Update fish sprite (e.g., when sprite URL changes)
      */
     async updateSprite(newSpriteUrl) {
-        this.spriteUrl = newSpriteUrl;
+        this.spriteUrl = newSpriteUrl || FISH_CONFIG.DEFAULT_SPRITE_URL;
         const oldX = this.sprite?.x;
         const oldY = this.sprite?.y;
         const oldScaleX = this.sprite?.scale?.x;
         
-        if (newSpriteUrl) {
-            await this.loadCustomSprite();
-        } else {
-            this.createGraphicsSprite();
-        }
+        await this.loadSprite();
         
         // Restore position and direction if sprite is ready
         if (this.sprite && this.spriteReady) {
@@ -248,25 +190,19 @@ export class Fish {
     applySizeScaling() {
         if (!this.sprite || !this.spriteReady) return;
         
-        if (this.isUsingCustomSprite) {
-            // For custom sprites, apply size scaling to the base scale
-            const baseScale = 0.8;
-            const currentScaleSign = Math.sign(this.sprite.scale.x);
-            this.sprite.scale.set(baseScale * this.size * currentScaleSign, baseScale * this.size);
-        } else {
-            // For graphics sprites, the size is applied during drawing in updateFrame()
-            this.updateFrame();
-        }
+        // Apply size scaling to the base scale
+        const baseScale = 0.8;
+        const currentScaleSign = Math.sign(this.sprite.scale.x);
+        this.sprite.scale.set(baseScale * this.size * currentScaleSign, baseScale * this.size);
     }
 
     /**
-     * Update fish color and redraw
+     * Update fish color (stored for compatibility, sprites don't support color changes)
      */
     updateColor(newColor) {
         this.color = typeof newColor === 'string' ? parseInt(newColor, 16) : newColor;
-        if (!this.isUsingCustomSprite && this.sprite instanceof PIXI.Graphics) {
-            this.updateFrame(); // This will redraw with new color
-        }
+        // Note: Sprite-based fish cannot change color dynamically
+        // Color is stored for database persistence but doesn't affect rendering
     }
 
     /**

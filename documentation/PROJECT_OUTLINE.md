@@ -54,7 +54,7 @@ Represents individual fish entities with autonomous swimming behavior.
 - **Mood Responsiveness**: Speed adjusts based on application mood (work/pause/lunch)
 
 **Key Methods:**
-- `createSprite()` - Generates PIXI graphics for fish body, tail, and eye
+- `createSprite()` - Loads sprite image for fish rendering
 - `update(deltaTime)` - Handles movement, animation, and boundary checking
 - `setMoodSpeed(multiplier)` - Adjusts swimming speed based on current mood
 - `respawn()` - Repositions fish when needed

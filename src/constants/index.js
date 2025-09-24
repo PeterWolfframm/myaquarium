@@ -37,9 +37,7 @@ export const FISH_CONFIG = {
   ANIMATION_FRAMES: 4,
   ANIMATION_SPEED_MIN: 100,
   ANIMATION_SPEED_MAX: 200,
-  SPRITE_SIZE: { width: 20, height: 8 },
-  TAIL_SIZE: { width: 10, height: 12 },
-  EYE_SIZE: 3,
+  DEFAULT_SPRITE_URL: new URL('../sprites/default-fish.svg', import.meta.url).href,
   BOUNDARY_MARGIN: 30,
   VERTICAL_MARGIN: 50
 };

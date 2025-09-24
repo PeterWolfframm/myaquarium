@@ -3,6 +3,7 @@ import { useFishStore } from '../stores/fishStore.js';
 import { useAquariumStore } from '../stores/aquariumStore.js';
 import Modal from './Modal.jsx';
 import SpriteGallery from './SpriteGallery.jsx';
+import { FISH_CONFIG } from '../constants/index.js';
 
 function FishEditor({ isVisible, onClose }) {
   const { 
@@ -279,7 +280,7 @@ function FishEditor({ isVisible, onClose }) {
                       <div className="fish-name">{fishData.name || 'Unnamed'}</div>
                       <div className="fish-color">#{fishData.color}</div>
                       <div className="fish-size">Size: {(fishData.size || 1.0).toFixed(1)}x</div>
-                      {(fishData.spriteUrl || fishData.sprite_url) && <div className="fish-sprite-indicator">🖼️ Custom Sprite</div>}
+                      <div className="fish-sprite-indicator">🖼️ {((fishData.spriteUrl || fishData.sprite_url) === FISH_CONFIG.DEFAULT_SPRITE_URL) ? 'Default Sprite' : 'Custom Sprite'}</div>
                     </div>
                     <button 
                       className="delete-fish-btn"
