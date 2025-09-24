@@ -63,7 +63,7 @@ export class AquariumObject {
             
             this.isLoaded = true;
             
-            console.log(`Object sprite loaded: ${this.spriteUrl} at grid (${this.gridX}, ${this.gridY})`);
+            console.log(`Object sprite loaded at grid (${this.gridX}, ${this.gridY})`);
             
         } catch (error) {
             console.error('Failed to load object sprite:', error);
@@ -298,7 +298,7 @@ export class ObjectManager {
     }
     
     /**
-     * Add a new object to the aquarium
+     * Add a new object to the aquarium (using world coordinates)
      * @param {string} spriteUrl - URL of the sprite to add
      * @param {number} worldX - World X coordinate for placement
      * @param {number} worldY - World Y coordinate for placement  
@@ -340,6 +340,55 @@ export class ObjectManager {
         this.addSpriteToContainerInOrder(aquariumObject.sprite, layer);
         
         console.log(`Object placed at grid (${position.gridX}, ${position.gridY}) with layer ${layer} and ID: ${objectId}`);
+        
+        return objectId;
+    }
+    
+    /**
+     * Add a new object at specific grid coordinates
+     * @param {string} spriteUrl - URL of the sprite to add
+     * @param {number} gridX - Grid X coordinate (top-left tile)
+     * @param {number} gridY - Grid Y coordinate (top-left tile)
+     * @param {number} size - Size of the object (default: 6)
+     * @param {number} layer - Rendering layer (default: 0)
+     * @returns {string|null} Object ID if successful, null if failed
+     */
+    async addObjectAtGrid(spriteUrl, gridX, gridY, size = 6, layer = 0) {
+        // Check if the grid position is valid and within bounds
+        if (!this.isGridAreaInBounds(gridX, gridY, size)) {
+            console.warn(`Grid position (${gridX}, ${gridY}) is out of bounds for ${size}x${size} object`);
+            return null;
+        }
+        
+        // Allow overlapping for now (as requested)
+        // In the future, you could add overlap checking here: !this.isGridAreaAvailable(gridX, gridY, size)
+        
+        const objectId = `obj_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        const objectData = {
+            id: objectId,
+            spriteUrl: spriteUrl,
+            gridX: gridX,
+            gridY: gridY,
+            size: size,
+            layer: layer
+        };
+        
+        const aquariumObject = new AquariumObject(objectData, this.tileSize);
+        
+        // Wait for sprite to load
+        while (!aquariumObject.isLoaded) {
+            await new Promise(resolve => setTimeout(resolve, 50));
+        }
+        
+        // Track the object
+        this.objects.set(objectId, aquariumObject);
+        this.markGridAreaOccupied(objectId, gridX, gridY, size);
+        
+        // Add to container with proper layer ordering
+        this.addSpriteToContainerInOrder(aquariumObject.sprite, layer);
+        
+        console.log(`Object placed at precise grid (${gridX}, ${gridY}) with layer ${layer} and ID: ${objectId}`);
         
         return objectId;
     }

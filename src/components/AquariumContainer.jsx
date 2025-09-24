@@ -16,6 +16,39 @@ function AquariumContainer({ mood, onAquariumReady }) {
     }
   });
 
+  // Track drag hover position for tile highlighting
+  useEffect(() => {
+    if (!aquariumRef.current || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+
+    const handleMouseMove = (event) => {
+      // Only highlight during drag operations
+      if (isOver && aquariumRef.current) {
+        const rect = canvas.getBoundingClientRect();
+        const screenX = event.clientX - rect.left;
+        const screenY = event.clientY - rect.top;
+        
+        // Convert to grid coordinates and show highlight
+        const gridCoords = aquariumRef.current.screenToGridCoordinates(screenX, screenY);
+        // Show tile highlighting at calculated grid position
+        aquariumRef.current.showTileHighlight(gridCoords.gridX, gridCoords.gridY, 6);
+      }
+    };
+
+    if (isOver) {
+      aquariumRef.current.startDragMode();
+      canvas.addEventListener('mousemove', handleMouseMove);
+    } else {
+      aquariumRef.current.endDragMode();
+      canvas.removeEventListener('mousemove', handleMouseMove);
+    }
+
+    return () => {
+      canvas.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, [isOver]);
+
   useEffect(() => {
     // Initialize aquarium when component mounts
     if (canvasRef.current && !aquariumRef.current) {
@@ -77,7 +110,7 @@ function AquariumContainer({ mood, onAquariumReady }) {
       {isOver && (
         <div className="drop-overlay">
           <div className="drop-message">
-            Release to place object in aquarium
+            Release to place object on highlighted tiles
           </div>
         </div>
       )}

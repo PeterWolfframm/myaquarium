@@ -52,6 +52,11 @@ export class Aquarium {
         this.gridContainer = null;
         this.grid = null;
         
+        // Tile highlighting for drag and drop
+        this.tileHighlightContainer = null;
+        this.tileHighlight = null;
+        this.isDragActive = false;
+        
         // Orange cube properties
         this.orangeCube = null;
         this.cubePosition = { x: 0, y: 0 }; // Grid position
@@ -301,6 +306,7 @@ export class Aquarium {
         this.backgroundContainer = new PIXI.Container();
         this.objectContainer = new PIXI.Container();
         this.gridContainer = new PIXI.Container();
+        this.tileHighlightContainer = new PIXI.Container();
         this.bubbleContainer = new PIXI.Container();
         this.fishContainer = new PIXI.Container();
         this.sharkContainer = new PIXI.Container();
@@ -309,6 +315,7 @@ export class Aquarium {
         this.viewport.addChild(this.backgroundContainer);
         this.viewport.addChild(this.objectContainer); // Objects above background
         this.viewport.addChild(this.gridContainer);
+        this.viewport.addChild(this.tileHighlightContainer); // Tile highlights above grid
         this.viewport.addChild(this.bubbleContainer);
         this.viewport.addChild(this.fishContainer);
         this.viewport.addChild(this.sharkContainer); // Sharks on top of fish
@@ -368,6 +375,109 @@ export class Aquarium {
         if (this.gridContainer) {
             this.gridContainer.visible = this.showGrid;
         }
+    }
+    
+    /**
+     * Create or update tile highlight for 6x6 area
+     * @param {number} gridX - Grid X position (top-left tile)
+     * @param {number} gridY - Grid Y position (top-left tile)
+     * @param {number} size - Size in tiles (default 6 for 6x6)
+     */
+    showTileHighlight(gridX, gridY, size = 6) {
+        // Remove existing highlight
+        this.hideTileHighlight();
+        
+        // Ensure grid is visible during drag
+        if (this.gridContainer) {
+            this.gridContainer.visible = true;
+        }
+        
+        // Create new highlight graphics
+        this.tileHighlight = new PIXI.Graphics();
+        
+        // Disable interactivity
+        this.tileHighlight.interactive = false;
+        this.tileHighlight.interactiveChildren = false;
+        
+        // Calculate world position and size
+        const worldX = gridX * this.tileSize;
+        const worldY = gridY * this.tileSize;
+        const worldSize = size * this.tileSize;
+        
+        // Draw highlight rectangle with semi-transparent fill and bright border
+        this.tileHighlight.rect(worldX, worldY, worldSize, worldSize);
+        this.tileHighlight.fill({ color: 0x00ff00, alpha: 0.2 }); // Green with transparency
+        
+        this.tileHighlight.rect(worldX, worldY, worldSize, worldSize);
+        this.tileHighlight.stroke({ width: 3, color: 0x00ff00, alpha: 0.8 }); // Bright green border
+        
+        this.tileHighlightContainer.addChild(this.tileHighlight);
+        
+        // Tile highlight now visible
+    }
+    
+    /**
+     * Hide tile highlight
+     */
+    hideTileHighlight() {
+        if (this.tileHighlight) {
+            this.tileHighlightContainer.removeChild(this.tileHighlight);
+            this.tileHighlight.destroy();
+            this.tileHighlight = null;
+        }
+        
+        // Restore original grid visibility
+        this.updateGridVisibility();
+    }
+    
+    /**
+     * Convert screen coordinates to grid coordinates
+     * @param {number} screenX - Screen X coordinate
+     * @param {number} screenY - Screen Y coordinate
+     * @returns {Object} {gridX, gridY, worldX, worldY}
+     */
+    screenToGridCoordinates(screenX, screenY) {
+        // Convert screen to world coordinates using viewport
+        const worldPos = this.viewport.toWorld(screenX, screenY);
+        
+        // Convert world coordinates to grid coordinates
+        const gridX = Math.floor(worldPos.x / this.tileSize);
+        const gridY = Math.floor(worldPos.y / this.tileSize);
+        
+        // Apply clamping to ensure 6x6 object fits within bounds
+        const clampedGridX = Math.max(0, Math.min(gridX, this.tilesHorizontal - 6));
+        const clampedGridY = Math.max(0, Math.min(gridY, this.tilesVertical - 6));
+        
+        return {
+            gridX: clampedGridX,
+            gridY: clampedGridY,
+            worldX: worldPos.x,
+            worldY: worldPos.y
+        };
+    }
+    
+    /**
+     * Start drag mode - show grid and prepare for tile highlighting
+     */
+    startDragMode() {
+        this.isDragActive = true;
+        
+        // Ensure grid is visible during drag
+        if (this.gridContainer) {
+            this.gridContainer.visible = true;
+        }
+        
+        // Grid is now visible during drag
+    }
+    
+    /**
+     * End drag mode - hide highlight and restore grid visibility
+     */
+    endDragMode() {
+        this.isDragActive = false;
+        this.hideTileHighlight();
+        
+        // Drag mode ended, highlight hidden
     }
     
     /**
@@ -1126,7 +1236,7 @@ export class Aquarium {
     }
     
     /**
-     * Handle object placement from drag and drop
+     * Handle object placement from drag and drop (legacy method using world coordinates)
      * @param {string} spriteUrl - URL of the sprite to place
      * @param {number} worldX - World X coordinate for placement
      * @param {number} worldY - World Y coordinate for placement
@@ -1161,6 +1271,48 @@ export class Aquarium {
             }
         } catch (error) {
             console.error('Error placing object:', error);
+            return false;
+        }
+    }
+    
+    /**
+     * Place object at specific grid coordinates
+     * @param {string} spriteUrl - URL of the sprite to place
+     * @param {number} gridX - Grid X coordinate (top-left tile)
+     * @param {number} gridY - Grid Y coordinate (top-left tile) 
+     * @param {number} size - Size in tiles (default 6)
+     * @param {number} layer - Rendering layer (default 0)
+     * @returns {Promise<boolean>} True if placement successful
+     */
+    async placeObjectAtGrid(spriteUrl, gridX, gridY, size = 6, layer = 0) {
+        if (!this.objectManager) {
+            console.warn('ObjectManager not initialized');
+            return false;
+        }
+        
+        try {
+            const objectId = await this.objectManager.addObjectAtGrid(spriteUrl, gridX, gridY, size, layer);
+            
+            if (objectId) {
+                // Save to database
+                const objectData = this.objectManager.objects.get(objectId).toData();
+                await databaseService.savePlacedObject({
+                    object_id: objectData.id,
+                    sprite_url: objectData.spriteUrl,
+                    grid_x: objectData.gridX,
+                    grid_y: objectData.gridY,
+                    size: objectData.size,
+                    layer: objectData.layer
+                });
+                
+                console.log(`Object placed at grid (${gridX}, ${gridY}) with ID: ${objectId}`);
+                return true;
+            } else {
+                console.warn(`Failed to place object at grid (${gridX}, ${gridY}) - position not available`);
+                return false;
+            }
+        } catch (error) {
+            console.error('Error placing object at grid:', error);
             return false;
         }
     }

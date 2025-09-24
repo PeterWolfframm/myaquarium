@@ -81,22 +81,46 @@ function App() {
   // Handle object drops on aquarium
   useEffect(() => {
     const handleObjectDrop = async (event) => {
-      const { spriteUrl, spriteName, screenX, screenY } = event.detail;
+      const { spriteUrl, spriteName, screenX, screenY, useGridPlacement } = event.detail;
       
       if (aquariumRef) {
         console.log(`Placing object: ${spriteName} at screen position (${screenX}, ${screenY})`);
         
-        // Convert screen coordinates to world coordinates
-        const worldPos = aquariumRef.screenToWorld(screenX, screenY);
+        let success = false;
         
-        // Place the object in the aquarium
-        const success = await aquariumRef.placeObject(spriteUrl, worldPos.worldX, worldPos.worldY);
+        if (useGridPlacement) {
+          // Convert absolute screen coordinates to canvas-relative coordinates
+          const canvas = document.getElementById('aquarium-canvas');
+          if (canvas) {
+            const rect = canvas.getBoundingClientRect();
+            const canvasX = screenX - rect.left;
+            const canvasY = screenY - rect.top;
+            
+            // Use precise grid-based placement with canvas-relative coordinates
+            const gridCoords = aquariumRef.screenToGridCoordinates(canvasX, canvasY);
+            console.log(`🎯 Placing object at grid (${gridCoords.gridX}, ${gridCoords.gridY})`);
+            
+            success = await aquariumRef.placeObjectAtGrid(
+              spriteUrl, 
+              gridCoords.gridX, 
+              gridCoords.gridY, 
+              6, // size 
+              0  // layer
+            );
+          } else {
+            console.warn('Canvas element not found for coordinate conversion');
+          }
+        } else {
+          // Use legacy world coordinate placement
+          const worldPos = aquariumRef.screenToWorld(screenX, screenY);
+          success = await aquariumRef.placeObject(spriteUrl, worldPos.worldX, worldPos.worldY);
+        }
         
         if (success) {
           console.log(`Object ${spriteName} placed successfully!`);
           // Show success message or update UI as needed
         } else {
-          console.warn(`Failed to place object ${spriteName} - no available space`);
+          console.warn(`Failed to place object ${spriteName} - position not available`);
           // Show error message to user
         }
       }
