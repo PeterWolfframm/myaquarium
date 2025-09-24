@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'preact/hooks';
 import { databaseService } from '../services/database.js';
 
-function SpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadComplete }) {
+function SpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadComplete, onAddRandomFish, isCreatingFish = false }) {
   const [availableSprites, setAvailableSprites] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -100,8 +100,8 @@ function SpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadComplete }) 
         </div>
       )}
 
-      {/* Upload Section */}
-      <div className="sprite-upload-section">
+      {/* Action Buttons Section */}
+      <div className="sprite-actions-section">
         <label className="upload-button">
           <input
             type="file"
@@ -112,6 +112,17 @@ function SpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadComplete }) 
           />
           {uploading ? 'Uploading...' : '+ Upload Sprite'}
         </label>
+        
+        {onAddRandomFish && (
+          <button 
+            className="create-random-fish-button"
+            onClick={onAddRandomFish}
+            disabled={isCreatingFish}
+            title={selectedSpriteUrl ? "Create a random fish with the selected sprite" : "Create a random fish with default graphics"}
+          >
+            {isCreatingFish ? '🐠 Creating...' : '🐠 Create Random Fish'}
+          </button>
+        )}
       </div>
 
       {/* Current Selection */}

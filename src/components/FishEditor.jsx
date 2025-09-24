@@ -1,23 +1,34 @@
 import { useState, useEffect } from 'preact/hooks';
 import { useFishStore } from '../stores/fishStore.js';
+import { useAquariumStore } from '../stores/aquariumStore.js';
 import Modal from './Modal.jsx';
 import SpriteGallery from './SpriteGallery.jsx';
 
 function FishEditor({ isVisible, onClose }) {
   const { 
     fish, 
+    addFish,
     updateFish, 
     removeFish, 
+    addRandomFish,
     isLoading, 
     isSyncing,
     syncError,
     clearSyncError 
   } = useFishStore();
   
+  const { getWorldDimensions } = useAquariumStore();
+  
   const [selectedFish, setSelectedFish] = useState(null);
   const [editingColor, setEditingColor] = useState('');
   const [editingName, setEditingName] = useState('');
   const [editingSpriteUrl, setEditingSpriteUrl] = useState(null);
+  
+  // Creation form state
+  const [isCreating, setIsCreating] = useState(false);
+  const [newFishName, setNewFishName] = useState('');
+  const [newFishColor, setNewFishColor] = useState('4CAF50');
+  const [newFishSpriteUrl, setNewFishSpriteUrl] = useState(null);
 
   // Reset when modal opens/closes
   useEffect(() => {
@@ -26,6 +37,10 @@ function FishEditor({ isVisible, onClose }) {
       setEditingColor('');
       setEditingName('');
       setEditingSpriteUrl(null);
+      setIsCreating(false);
+      setNewFishName('');
+      setNewFishColor('4CAF50');
+      setNewFishSpriteUrl(null);
       clearSyncError();
     }
   }, [isVisible, clearSyncError]);
@@ -112,6 +127,89 @@ function FishEditor({ isVisible, onClose }) {
     }
   };
 
+  const handleAddRandomFish = async () => {
+    const { worldWidth, worldHeight } = getWorldDimensions();
+    
+    // Determine which sprite to use based on current mode
+    let spriteToUse = null;
+    if (isCreating) {
+      spriteToUse = newFishSpriteUrl;
+    } else if (selectedFish) {
+      spriteToUse = editingSpriteUrl;
+    }
+    
+    // Create random fish, optionally with the currently selected sprite
+    const customName = spriteToUse ? `Fish_${Date.now()}` : null;
+    const newFish = await addRandomFish(worldWidth, worldHeight, customName);
+    
+    if (newFish && spriteToUse) {
+      // If we have a selected sprite, update the new fish to use it
+      await updateFish(newFish.id, { sprite_url: spriteToUse });
+      console.log('Random fish created with custom sprite:', newFish);
+    } else if (newFish) {
+      console.log('Random fish added successfully:', newFish);
+    }
+  };
+
+  const handleCreateFish = async () => {
+    if (!newFishName.trim()) {
+      alert('Please enter a name for the fish');
+      return;
+    }
+
+    const { worldWidth, worldHeight } = getWorldDimensions();
+    
+    // Create fish data
+    const fishData = {
+      name: newFishName.trim(),
+      color: newFishColor.replace('#', ''), // Remove # if present
+      sprite_url: newFishSpriteUrl,
+      baseSpeed: 0.5 + Math.random() * 1.5, // 0.5 to 2.0
+      currentSpeed: 1.0,
+      direction: Math.random() > 0.5 ? 1 : -1,
+      positionX: Math.random() * worldWidth,
+      positionY: 50 + Math.random() * (worldHeight - 100),
+      targetY: 50 + Math.random() * (worldHeight - 100),
+      verticalSpeed: 0.1 + Math.random() * 0.2, // 0.1 to 0.3
+      driftInterval: Math.round(3000 + Math.random() * 4000), // 3-7 seconds
+      animationSpeed: Math.round(100 + Math.random() * 100), // 100-200ms
+      frameCount: 4,
+      currentFrame: Math.floor(Math.random() * 4)
+    };
+
+    const success = await addFish(fishData);
+    if (success) {
+      // Reset creation form
+      setNewFishName('');
+      setNewFishColor('4CAF50');
+      setNewFishSpriteUrl(null);
+      setIsCreating(false);
+      console.log('Fish created successfully:', success);
+    }
+  };
+
+  const handleStartCreating = () => {
+    setSelectedFish(null);
+    setEditingColor('');
+    setEditingName('');
+    setEditingSpriteUrl(null);
+    setIsCreating(true);
+  };
+
+  const handleCancelCreation = () => {
+    setIsCreating(false);
+    setNewFishName('');
+    setNewFishColor('4CAF50');
+    setNewFishSpriteUrl(null);
+  };
+
+  const handleCancelEdit = () => {
+    setSelectedFish(null);
+    setEditingColor('');
+    setEditingName('');
+    setEditingSpriteUrl(null);
+  };
+
   const presetColors = [
     '4CAF50', '2196F3', 'FF9800', 'E91E63', '9C27B0', '00BCD4',
     'FFC107', 'FF5722', '795548', '607D8B', '8BC34A', '4FC3F7',
@@ -136,7 +234,16 @@ function FishEditor({ isVisible, onClose }) {
       
       <div className="fish-editor-content">
           <div className="fish-list">
-            <h3>Your Fish ({fish.length})</h3>
+            <div className="fish-list-header">
+              <h3>Your Fish ({fish.length})</h3>
+              <button 
+                className="create-fish-button"
+                onClick={handleStartCreating}
+                disabled={isSyncing}
+              >
+                + Create New Fish
+              </button>
+            </div>
             {isLoading ? (
               <div className="loading">Loading fish...</div>
             ) : (
@@ -171,6 +278,84 @@ function FishEditor({ isVisible, onClose }) {
               </div>
             )}
           </div>
+
+          {isCreating && (
+            <div className="fish-creator-form">
+              <h3>Create New Fish</h3>
+              
+              <div className="form-group">
+                <label>Name:</label>
+                <input
+                  type="text"
+                  value={newFishName}
+                  onChange={(e) => setNewFishName(e.target.value)}
+                  placeholder="Enter fish name"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Color:</label>
+                <div className="color-input-group">
+                  <input
+                    type="color"
+                    value={`#${newFishColor}`}
+                    onChange={(e) => setNewFishColor(e.target.value.replace('#', ''))}
+                  />
+                  <input
+                    type="text"
+                    value={newFishColor}
+                    onChange={(e) => setNewFishColor(e.target.value.replace('#', ''))}
+                    placeholder="FF0000"
+                    maxLength={6}
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Preset Colors:</label>
+                <div className="color-presets">
+                  {presetColors.map((color) => (
+                    <button
+                      key={color}
+                      className="color-preset"
+                      style={{ backgroundColor: `#${color}` }}
+                      onClick={() => setNewFishColor(color)}
+                      title={`#${color}`}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Sprite:</label>
+                <SpriteGallery
+                  selectedSpriteUrl={newFishSpriteUrl}
+                  onSpriteSelect={setNewFishSpriteUrl}
+                  onUploadComplete={(result) => {
+                    console.log('Sprite uploaded:', result);
+                  }}
+                  onAddRandomFish={handleAddRandomFish}
+                  isCreatingFish={isSyncing}
+                />
+              </div>
+
+              <div className="form-actions">
+                <button 
+                  className="save-button" 
+                  onClick={handleCreateFish}
+                  disabled={isSyncing}
+                >
+                  {isSyncing ? 'Creating...' : 'Create Fish'}
+                </button>
+                <button 
+                  className="cancel-button" 
+                  onClick={handleCancelCreation}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
 
           {selectedFish && (
             <div className="fish-editor-form">
@@ -227,6 +412,8 @@ function FishEditor({ isVisible, onClose }) {
                   onUploadComplete={(result) => {
                     console.log('Sprite uploaded:', result);
                   }}
+                  onAddRandomFish={handleAddRandomFish}
+                  isCreatingFish={isSyncing}
                 />
               </div>
 
@@ -240,12 +427,7 @@ function FishEditor({ isVisible, onClose }) {
                 </button>
                 <button 
                   className="cancel-button" 
-                  onClick={() => {
-                    setSelectedFish(null);
-                    setEditingColor('');
-                    setEditingName('');
-                    setEditingSpriteUrl(null);
-                  }}
+                  onClick={handleCancelEdit}
                 >
                   Cancel
                 </button>

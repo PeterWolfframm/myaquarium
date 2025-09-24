@@ -493,7 +493,6 @@ export class FishManager {
             const checkLoading = () => {
                 const { isLoading } = useFishStore.getState();
                 if (!isLoading) {
-                    console.log('Fish Store finished loading');
                     resolve();
                 } else {
                     console.log('Waiting for Fish Store to finish loading...');

@@ -74,16 +74,39 @@ function App() {
   const aquariumLoading = useAquariumStore(state => state.isLoading);
   const fishLoading = useFishStore(state => state.isLoading);
 
-  // Initialize stores from Supabase on app start
+  // Initialize stores from Supabase on app start with timeout fallback
   useEffect(() => {
     const initializeStores = async () => {
       try {
         console.log('Initializing aquarium and fish stores from Supabase...');
-        await Promise.all([
-          initializeAquariumStore(),
-          initializeFishStore()
-        ]);
-        console.log('Stores initialized successfully');
+        
+        // Create timeout promises for each store initialization
+        const timeoutDuration = 5000; // 5 seconds
+        
+        const aquariumInitPromise = initializeAquariumStore();
+        const fishInitPromise = initializeFishStore();
+        
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Store initialization timeout')), timeoutDuration);
+        });
+        
+        try {
+          // Race the initialization against the timeout
+          await Promise.race([
+            Promise.all([aquariumInitPromise, fishInitPromise]),
+            timeoutPromise
+          ]);
+          console.log('Stores initialized successfully');
+        } catch (error) {
+          if (error.message.includes('timeout')) {
+            console.warn('Store initialization timed out after 5 seconds, using temporary settings');
+            // Force both stores to stop loading and use defaults
+            useAquariumStore.getState().setLoadingFalse?.();
+            useFishStore.getState().setLoadingFalse?.();
+          } else {
+            throw error;
+          }
+        }
         
         // Initialize time tracking
         await initializeTimeTracking();

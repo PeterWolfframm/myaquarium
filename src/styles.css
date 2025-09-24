@@ -181,6 +181,63 @@ body {
     margin: 0 0 15px 0;
 }
 
+.fish-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.create-fish-button {
+    background: #00ccff;
+    color: black;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.create-fish-button:hover {
+    background: #00aadd;
+    transform: translateY(-1px);
+}
+
+.create-fish-button:disabled {
+    background: #333;
+    color: #666;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.add-random-fish-button {
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.add-random-fish-button:hover {
+    background: linear-gradient(135deg, #45a049, #4CAF50);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.add-random-fish-button:disabled {
+    background: #666;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
 .fish-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -268,6 +325,17 @@ body {
 }
 
 .fish-editor-form h3 {
+    color: #00ccff;
+    margin: 0 0 20px 0;
+}
+
+.fish-creator-form {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.fish-creator-form h3 {
     color: #00ccff;
     margin: 0 0 20px 0;
 }
@@ -1325,8 +1393,11 @@ body {
   font-weight: 600;
 }
 
-.sprite-upload-section {
+.sprite-actions-section {
   margin-bottom: 1rem;
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .upload-button {
@@ -1344,6 +1415,34 @@ body {
 
 .upload-button:hover {
   background: #2563eb;
+}
+
+.create-random-fish-button {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: #059669;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+  border: 2px solid transparent;
+}
+
+.create-random-fish-button:hover:not(:disabled) {
+  background: #047857;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.create-random-fish-button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .upload-button:disabled {

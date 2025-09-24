@@ -214,8 +214,6 @@ export class Aquarium {
         // because it's too permissive (0.1) and allows zooming out beyond the aquarium bounds
         const minScale = minScaleTarget;
         
-        console.log(`Zoom constraint: minScale = ${minScale.toFixed(4)} (viewport: ${viewportHeight}px, world: ${this.worldHeight}px, ${this.tilesVertical} vertical tiles)`);
-        console.log(`At min scale, visible tiles: ${Math.round(viewportHeight / (this.tileSize * minScale))}`);
         
         return minScale;
     }
@@ -492,8 +490,6 @@ export class Aquarium {
             this.cubePosition.y = newY;
             this.updateOrangeCubePosition();
             
-            console.log(`Orange cube moved to grid position (${this.cubePosition.x}, ${this.cubePosition.y})`);
-            console.log(`World position: (${this.orangeCube.x}, ${this.orangeCube.y})`);
         }
     }
     

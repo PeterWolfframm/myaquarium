@@ -226,5 +226,13 @@ export const useAquariumStore = create((set, get) => ({
    */
   clearSyncError: () => {
     set({ syncError: null });
+  },
+
+  /**
+   * Force loading to false (used for timeout fallback)
+   */
+  setLoadingFalse: () => {
+    console.log('Aquarium store: Forcing loading to false due to timeout, using default settings');
+    set({ isLoading: false, syncError: 'Connection timeout - using temporary settings' });
   }
 }));

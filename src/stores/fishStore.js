@@ -295,6 +295,64 @@ export const useFishStore = create((set, get) => ({
   },
 
   /**
+   * Generate a single random fish and add it to the database
+   * @param {number} worldWidth - World width
+   * @param {number} worldHeight - World height  
+   * @param {string} customName - Optional custom name for the fish
+   * @returns {Promise<Object|null>} Created fish or null if error
+   */
+  addRandomFish: async (worldWidth, worldHeight, customName = null) => {
+    set({ isSyncing: true, syncError: null });
+    
+    try {
+      const fishNames = [
+        'Nemo', 'Dory', 'Marlin', 'Bruce', 'Gill', 'Bubbles', 'Peach', 'Jacques',
+        'Gurgle', 'Bloat', 'Anchor', 'Chum', 'Squirt', 'Crush', 'Flounder',
+        'Sebastian', 'Ariel', 'Splash', 'Finn', 'Coral', 'Pearl', 'Shelly',
+        'Aqua', 'Ocean', 'Wave', 'Tide', 'Current', 'Reef', 'Bay', 'Marina'
+      ];
+      
+      const randomName = customName || fishNames[Math.floor(Math.random() * fishNames.length)];
+      const timestamp = Date.now();
+      
+      const fishData = {
+        name: `${randomName}_${timestamp}`,
+        color: COLORS.FISH_COLORS[Math.floor(Math.random() * COLORS.FISH_COLORS.length)].toString(16).padStart(6, '0'),
+        baseSpeed: 0.5 + Math.random() * 1.5, // 0.5 to 2.0
+        currentSpeed: 1.0,
+        direction: Math.random() > 0.5 ? 1 : -1,
+        positionX: Math.random() * worldWidth,
+        positionY: 50 + Math.random() * (worldHeight - 100),
+        targetY: 50 + Math.random() * (worldHeight - 100),
+        verticalSpeed: 0.1 + Math.random() * 0.2, // 0.1 to 0.3
+        driftInterval: Math.round(3000 + Math.random() * 4000), // 3-7 seconds
+        animationSpeed: Math.round(100 + Math.random() * 100), // 100-200ms
+        frameCount: 4,
+        currentFrame: Math.floor(Math.random() * 4)
+      };
+      
+      const savedFish = await databaseService.saveFish(fishData);
+      
+      if (savedFish) {
+        set({ 
+          isSyncing: false,
+          lastSyncTime: new Date()
+        });
+        return savedFish;
+      } else {
+        throw new Error('Failed to save random fish to database');
+      }
+    } catch (error) {
+      console.error('Error adding random fish:', error);
+      set({ 
+        isSyncing: false, 
+        syncError: error.message 
+      });
+      return null;
+    }
+  },
+
+  /**
    * Populate aquarium with default fish if empty
    * @param {number} count - Number of fish to create
    * @param {number} worldWidth - World width
@@ -396,6 +454,18 @@ export const useFishStore = create((set, get) => ({
       isLoading: false,
       isSyncing: false,
       syncError: null
+    });
+  },
+
+  /**
+   * Force loading to false (used for timeout fallback)
+   */
+  setLoadingFalse: () => {
+    console.log('Fish store: Forcing loading to false due to timeout, using default fish population');
+    set({ 
+      isLoading: false, 
+      syncError: 'Connection timeout - using temporary fish',
+      needsDefaultPopulation: true 
     });
   }
 }));
