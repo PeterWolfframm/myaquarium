@@ -1,5 +1,59 @@
 import { useState, useEffect } from 'preact/hooks';
+import { useDraggable } from '@dnd-kit/core';
 import { databaseService } from '../services/database.js';
+
+// Draggable sprite item component
+function DraggableSpriteItem({ sprite, isSelected, onSelect }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    isDragging,
+  } = useDraggable({
+    id: `sprite_${sprite.name}`,
+    data: {
+      type: 'object-sprite',
+      spriteUrl: sprite.url,
+      spriteName: sprite.name
+    }
+  });
+
+  const style = transform ? {
+    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+    zIndex: isDragging ? 1000 : 'auto',
+    opacity: isDragging ? 0.5 : 1,
+  } : {};
+
+  return (
+    <div 
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
+      className={`sprite-item draggable-sprite ${isSelected ? 'selected' : ''} ${isDragging ? 'dragging' : ''}`}
+      onClick={() => onSelect(sprite.url)}
+      title={`${sprite.name} - Drag to aquarium to place`}
+    >
+      <img 
+        src={sprite.url} 
+        alt={sprite.name}
+        className="sprite-preview"
+        onError={(e) => {
+          e.target.style.display = 'none';
+          e.target.nextSibling.style.display = 'block';
+        }}
+      />
+      <div className="sprite-error" style={{ display: 'none' }}>
+        Failed to load
+      </div>
+      <div className="sprite-name">{sprite.name}</div>
+      {isDragging && (
+        <div className="drag-hint">Drop on aquarium</div>
+      )}
+    </div>
+  );
+}
 
 function ObjectsSpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadComplete, onError }) {
   const [availableSprites, setAvailableSprites] = useState([]);
@@ -224,26 +278,12 @@ function ObjectsSpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadCompl
         ) : (
           <div className="sprites-grid">
             {availableSprites.map((sprite) => (
-              <div 
+              <DraggableSpriteItem
                 key={sprite.name}
-                className={`sprite-item ${selectedSpriteUrl === sprite.url ? 'selected' : ''}`}
-                onClick={() => handleSpriteSelect(sprite.url)}
-                title={sprite.name}
-              >
-                <img 
-                  src={sprite.url} 
-                  alt={sprite.name}
-                  className="sprite-preview"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                    e.target.nextSibling.style.display = 'block';
-                  }}
-                />
-                <div className="sprite-error" style={{ display: 'none' }}>
-                  Failed to load
-                </div>
-                <div className="sprite-name">{sprite.name}</div>
-              </div>
+                sprite={sprite}
+                isSelected={selectedSpriteUrl === sprite.url}
+                onSelect={handleSpriteSelect}
+              />
             ))}
           </div>
         )}

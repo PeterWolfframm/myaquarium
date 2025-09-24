@@ -3,8 +3,10 @@ import { Viewport } from 'pixi-viewport';
 import { FishManager } from './Fish.js';
 import { SharkManager } from './Shark.js';
 import { BubbleManager } from './Bubble.js';
+import { ObjectManager } from './Object.js';
 import { useAquariumStore } from '../stores/aquariumStore.js';
 import { AQUARIUM_CONFIG, NAVIGATION, UI_CONFIG, COLORS } from '../constants/index.js';
+import { databaseService } from '../services/database.js';
 
 export class Aquarium {
     constructor(canvasElement) {
@@ -13,6 +15,7 @@ export class Aquarium {
         this.fishManager = null;
         this.sharkManager = null;
         this.bubbleManager = null;
+        this.objectManager = null;
         this.canvasElement = canvasElement;
         
         // Store reference
@@ -42,6 +45,7 @@ export class Aquarium {
         
         // Layer containers
         this.backgroundContainer = null;
+        this.objectContainer = null;
         this.fishContainer = null;
         this.sharkContainer = null;
         this.bubbleContainer = null;
@@ -295,6 +299,7 @@ export class Aquarium {
     createLayers() {
         // Create separate containers for organized rendering
         this.backgroundContainer = new PIXI.Container();
+        this.objectContainer = new PIXI.Container();
         this.gridContainer = new PIXI.Container();
         this.bubbleContainer = new PIXI.Container();
         this.fishContainer = new PIXI.Container();
@@ -302,6 +307,7 @@ export class Aquarium {
         
         // Add containers to viewport in order (back to front)
         this.viewport.addChild(this.backgroundContainer);
+        this.viewport.addChild(this.objectContainer); // Objects above background
         this.viewport.addChild(this.gridContainer);
         this.viewport.addChild(this.bubbleContainer);
         this.viewport.addChild(this.fishContainer);
@@ -594,6 +600,20 @@ export class Aquarium {
     
     spawnEntities() {
         console.log('Spawning entities...');
+        
+        // Create object manager
+        console.log(`Creating object manager with world size: ${this.worldWidth}x${this.worldHeight}`);
+        this.objectManager = new ObjectManager(
+            this.objectContainer,
+            this.worldWidth,
+            this.worldHeight,
+            this.tileSize,
+            this.tilesHorizontal,
+            this.tilesVertical
+        );
+        
+        // Load existing objects from database
+        this.loadObjectsFromDatabase();
         
         // Create fish manager
         console.log(`Creating fish manager with world size: ${this.worldWidth}x${this.worldHeight}`);
@@ -1074,6 +1094,121 @@ export class Aquarium {
                 visibleVerticalTiles: 0
             };
         }
+    }
+    
+    /**
+     * Load existing objects from database
+     */
+    async loadObjectsFromDatabase() {
+        try {
+            console.log('Loading placed objects from database...');
+            const objectsData = await databaseService.getPlacedObjects();
+            
+            if (objectsData && objectsData.length > 0) {
+                // Convert database format to ObjectManager format
+                const convertedData = objectsData.map(obj => ({
+                    id: obj.object_id,
+                    spriteUrl: obj.sprite_url,
+                    gridX: obj.grid_x,
+                    gridY: obj.grid_y,
+                    size: obj.size || 6
+                }));
+                
+                await this.objectManager.loadObjectsFromData(convertedData);
+                console.log(`Loaded ${objectsData.length} objects from database`);
+            } else {
+                console.log('No objects found in database');
+            }
+        } catch (error) {
+            console.error('Error loading objects from database:', error);
+        }
+    }
+    
+    /**
+     * Handle object placement from drag and drop
+     * @param {string} spriteUrl - URL of the sprite to place
+     * @param {number} worldX - World X coordinate for placement
+     * @param {number} worldY - World Y coordinate for placement
+     * @returns {Promise<boolean>} True if placement successful
+     */
+    async placeObject(spriteUrl, worldX, worldY) {
+        if (!this.objectManager) {
+            console.warn('ObjectManager not initialized');
+            return false;
+        }
+        
+        try {
+            const objectId = await this.objectManager.addObject(spriteUrl, worldX, worldY, 6);
+            
+            if (objectId) {
+                // Save to database
+                const objectData = this.objectManager.objects.get(objectId).toData();
+                await databaseService.savePlacedObject({
+                    object_id: objectData.id,
+                    sprite_url: objectData.spriteUrl,
+                    grid_x: objectData.gridX,
+                    grid_y: objectData.gridY,
+                    size: objectData.size
+                });
+                
+                console.log(`Object placed successfully with ID: ${objectId}`);
+                return true;
+            } else {
+                console.warn('Failed to place object - no available space');
+                return false;
+            }
+        } catch (error) {
+            console.error('Error placing object:', error);
+            return false;
+        }
+    }
+    
+    /**
+     * Remove an object from the aquarium
+     * @param {string} objectId - ID of object to remove
+     * @returns {Promise<boolean>} True if removal successful
+     */
+    async removeObject(objectId) {
+        if (!this.objectManager) {
+            console.warn('ObjectManager not initialized');
+            return false;
+        }
+        
+        try {
+            this.objectManager.removeObject(objectId);
+            await databaseService.deletePlacedObject(objectId);
+            console.log(`Object ${objectId} removed successfully`);
+            return true;
+        } catch (error) {
+            console.error('Error removing object:', error);
+            return false;
+        }
+    }
+    
+    /**
+     * Get object count for stats
+     * @returns {number} Number of placed objects
+     */
+    getObjectCount() {
+        return this.objectManager ? this.objectManager.getObjectCount() : 0;
+    }
+    
+    /**
+     * Convert screen coordinates to world coordinates
+     * @param {number} screenX - Screen X coordinate
+     * @param {number} screenY - Screen Y coordinate
+     * @returns {Object} {worldX, worldY} World coordinates
+     */
+    screenToWorld(screenX, screenY) {
+        if (!this.viewport) {
+            return { worldX: screenX, worldY: screenY };
+        }
+        
+        const worldPos = this.viewport.toWorld(screenX, screenY);
+        return {
+            worldX: worldPos.x,
+            worldY: worldPos.y
+        };
     }
     
     destroy() {

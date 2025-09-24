@@ -78,6 +78,36 @@ function App() {
   const aquariumLoading = useAquariumStore(state => state.isLoading);
   const fishLoading = useFishStore(state => state.isLoading);
 
+  // Handle object drops on aquarium
+  useEffect(() => {
+    const handleObjectDrop = async (event) => {
+      const { spriteUrl, spriteName, screenX, screenY } = event.detail;
+      
+      if (aquariumRef) {
+        console.log(`Placing object: ${spriteName} at screen position (${screenX}, ${screenY})`);
+        
+        // Convert screen coordinates to world coordinates
+        const worldPos = aquariumRef.screenToWorld(screenX, screenY);
+        
+        // Place the object in the aquarium
+        const success = await aquariumRef.placeObject(spriteUrl, worldPos.worldX, worldPos.worldY);
+        
+        if (success) {
+          console.log(`Object ${spriteName} placed successfully!`);
+          // Show success message or update UI as needed
+        } else {
+          console.warn(`Failed to place object ${spriteName} - no available space`);
+          // Show error message to user
+        }
+      }
+    };
+
+    window.addEventListener('aquarium-object-drop', handleObjectDrop);
+    return () => {
+      window.removeEventListener('aquarium-object-drop', handleObjectDrop);
+    };
+  }, [aquariumRef]);
+
   // Initialize stores from Supabase on app start with timeout fallback
   useEffect(() => {
     const initializeStores = async () => {
@@ -338,6 +368,7 @@ function App() {
           isDraggable={true}
           draggableId="objectsManager"
           draggablePosition={panelPositions.objectsManager}
+          aquarium={aquariumRef}
         />
 
         <AquariumContainer 

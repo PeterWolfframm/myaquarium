@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'preact/hooks';
+import { useDroppable } from '@dnd-kit/core';
 import { Aquarium } from '../classes/Aquarium.js';
 import { useAquariumStore } from '../stores/aquariumStore.js';
 
@@ -6,6 +7,14 @@ function AquariumContainer({ mood, onAquariumReady }) {
   const canvasRef = useRef(null);
   const aquariumRef = useRef(null);
   const store = useAquariumStore();
+
+  // Set up drop zone for sprite placement
+  const { isOver, setNodeRef } = useDroppable({
+    id: 'aquarium-drop-zone',
+    data: {
+      type: 'aquarium-canvas'
+    }
+  });
 
   useEffect(() => {
     // Initialize aquarium when component mounts
@@ -54,7 +63,26 @@ function AquariumContainer({ mood, onAquariumReady }) {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  return <canvas ref={canvasRef} id="aquarium-canvas" />;
+  return (
+    <div 
+      ref={setNodeRef}
+      className={`aquarium-drop-zone ${isOver ? 'drag-over' : ''}`}
+      style={{
+        position: 'relative',
+        width: '100%',
+        height: '100%'
+      }}
+    >
+      <canvas ref={canvasRef} id="aquarium-canvas" />
+      {isOver && (
+        <div className="drop-overlay">
+          <div className="drop-message">
+            Release to place object in aquarium
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default AquariumContainer;

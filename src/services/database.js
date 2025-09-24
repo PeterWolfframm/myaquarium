@@ -723,6 +723,165 @@ class DatabaseService {
 
     return subscription;
   }
+
+  // ==================== PLACED OBJECTS ====================
+  
+  /**
+   * Get all placed objects for the current user
+   * @returns {Promise<Array>} Array of placed objects
+   */
+  async getPlacedObjects() {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      const { data, error } = await supabase
+        .from('placed_objects')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching placed objects:', error);
+        return [];
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error('Error in getPlacedObjects:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Save a placed object to the database
+   * @param {Object} objectData - Object data to save
+   * @param {string} objectData.object_id - Unique object ID
+   * @param {string} objectData.sprite_url - URL of the sprite
+   * @param {number} objectData.grid_x - Grid X position
+   * @param {number} objectData.grid_y - Grid Y position  
+   * @param {number} objectData.size - Size in tiles (default: 6)
+   * @returns {Promise<Object|null>} Saved object data or null if error
+   */
+  async savePlacedObject(objectData) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const placedObjectData = {
+        user_id: user.id,
+        object_id: objectData.object_id,
+        sprite_url: objectData.sprite_url,
+        grid_x: objectData.grid_x,
+        grid_y: objectData.grid_y,
+        size: objectData.size || 6
+      };
+
+      const { data, error } = await supabase
+        .from('placed_objects')
+        .insert(placedObjectData)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error saving placed object:', error);
+        return null;
+      }
+
+      console.log('Placed object saved successfully:', data);
+      return data;
+    } catch (error) {
+      console.error('Error in savePlacedObject:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Update a placed object in the database
+   * @param {string} objectId - Object ID to update
+   * @param {Object} updates - Fields to update
+   * @returns {Promise<Object|null>} Updated object data or null if error
+   */
+  async updatePlacedObject(objectId, updates) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const { data, error } = await supabase
+        .from('placed_objects')
+        .update(updates)
+        .eq('object_id', objectId)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating placed object:', error);
+        return null;
+      }
+
+      console.log('Placed object updated successfully:', data);
+      return data;
+    } catch (error) {
+      console.error('Error in updatePlacedObject:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Delete a placed object from the database
+   * @param {string} objectId - Object ID to delete
+   * @returns {Promise<boolean>} True if successful, false if error
+   */
+  async deletePlacedObject(objectId) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return false;
+
+      const { error } = await supabase
+        .from('placed_objects')
+        .delete()
+        .eq('object_id', objectId)
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error deleting placed object:', error);
+        return false;
+      }
+
+      console.log('Placed object deleted successfully:', objectId);
+      return true;
+    } catch (error) {
+      console.error('Error in deletePlacedObject:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Delete all placed objects for the current user
+   * @returns {Promise<boolean>} True if successful, false if error
+   */
+  async deleteAllPlacedObjects() {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return false;
+
+      const { error } = await supabase
+        .from('placed_objects')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error deleting all placed objects:', error);
+        return false;
+      }
+
+      console.log('All placed objects deleted successfully');
+      return true;
+    } catch (error) {
+      console.error('Error in deleteAllPlacedObjects:', error);
+      return false;
+    }
+  }
 }
 
 // Export singleton instance
