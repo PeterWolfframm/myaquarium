@@ -5,7 +5,6 @@ import AquariumSettings from './components/AquariumSettings';
 import FishEditor from './components/FishEditor';
 import ObjectsEditor from './components/ObjectsEditor';
 import DataPanel from './components/DataPanel';
-import BrutalistPanel from './components/BrutalistPanel';
 import DragAndDropProvider from './components/DragAndDropProvider';
 import { useAquariumStore } from './stores/aquariumStore';
 import { useFishStore } from './stores/fishStore';
@@ -44,7 +43,6 @@ const getSafeDefaultPositions = (): PanelPositions => {
     timer: constrainToViewport({ x: Math.max(margin, viewportWidth / 2 - 150), y: 50 }, 300, 200),
     stats: constrainToViewport({ x: Math.max(margin, viewportWidth - 320), y: 50 }, 320, 300),
     objectsManager: constrainToViewport({ x: margin, y: 120 }, 350, 400),
-    brutalistPanel: constrainToViewport({ x: Math.max(margin, viewportWidth - 320), y: 200 }, 320, 300),
     settings: constrainToViewport({ x: Math.max(margin, viewportWidth / 2 - 200), y: 100 }, 400, 500),
     fishEditor: constrainToViewport({ x: Math.max(margin, viewportWidth / 2 - 250), y: 80 }, 500, 600)
   };
@@ -77,7 +75,6 @@ function App() {
   const [showObjectsManager, setShowObjectsManager] = useState<boolean>(false);
   const [showTimer, setShowTimer] = useState<boolean>(true);
   const [showStats, setShowStats] = useState<boolean>(true);
-  const [showBrutalistPanel, setShowBrutalistPanel] = useState<boolean>(true);
   
   // Panel positions for drag and drop - using safe default positions
   const [panelPositions, setPanelPositions] = useState<PanelPositions>(getSafeDefaultPositions());
@@ -439,9 +436,6 @@ function App() {
     setShowObjectsManager(!showObjectsManager);
   };
 
-  const toggleBrutalistPanel = (): void => {
-    setShowBrutalistPanel(!showBrutalistPanel);
-  };
 
   return (
     <DragAndDropProvider
@@ -473,9 +467,6 @@ function App() {
           </button>
           <button className="control-button objects-manager-button" onClick={toggleObjectsManager}>
             🎨 Objects
-          </button>
-          <button className="control-button brutalist-panel-button" onClick={toggleBrutalistPanel}>
-            🔥 Brutalist
           </button>
         </div>
 
@@ -515,13 +506,6 @@ function App() {
               aquarium={aquariumRef}
             />
 
-            <BrutalistPanel 
-              isOpen={showBrutalistPanel}
-              onToggle={toggleBrutalistPanel}
-              isDraggable={true}
-              draggableId="brutalistPanel"
-              draggablePosition={panelPositions.brutalistPanel}
-            />
 
             <AquariumSettings 
               isOpen={showSettings}

@@ -233,17 +233,18 @@ function FullscreenCard({
     <div className="modal-overlay" onClick={handleOverlayClick}>
       <div className={`modal-panel ${getSizeClass()} ${className}`}>
         <div className="modal-header">
-          <h2 className="modal-title">{title}</h2>
+          <h2 className="modal-title" style={{ fontFamily: 'Roboto Mono, monospace', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>{title}</h2>
           <div className="modal-header-actions">
             <button 
               className="view-mode-toggle-button" 
               onClick={onViewModeToggle}
               title="Switch to sticky view"
+              style={{ fontFamily: 'Roboto Mono, monospace', fontWeight: 700 }}
             >
               📌
             </button>
             {closable && (
-              <button className="modal-close-button" onClick={onToggle}>×</button>
+              <button className="modal-close-button" onClick={onToggle} style={{ fontFamily: 'Roboto Mono, monospace', fontWeight: 700 }}>×</button>
             )}
           </div>
         </div>
@@ -354,17 +355,18 @@ function StickyCard({
             viewBox="0 0 12 12" 
             fill="currentColor"
             className="drag-handle-icon"
+            style={{ filter: 'contrast(2) brightness(0.8)' }}
           >
-            <circle cx="3" cy="3" r="1"/>
-            <circle cx="9" cy="3" r="1"/>
-            <circle cx="3" cy="6" r="1"/>
-            <circle cx="9" cy="6" r="1"/>
-            <circle cx="3" cy="9" r="1"/>
-            <circle cx="9" cy="9" r="1"/>
+            <rect x="2" y="2" width="2" height="2"/>
+            <rect x="8" y="2" width="2" height="2"/>
+            <rect x="2" y="5" width="2" height="2"/>
+            <rect x="8" y="5" width="2" height="2"/>
+            <rect x="2" y="8" width="2" height="2"/>
+            <rect x="8" y="8" width="2" height="2"/>
           </svg>
         </div>
       )}
-      <span className="collapsible-title-text">{title}</span>
+      <span className="collapsible-title-text" style={{ fontFamily: 'Roboto Mono, monospace', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>{title}</span>
       <button 
         className="view-mode-toggle-button sticky-view-toggle" 
         onClick={(e) => {
@@ -372,6 +374,7 @@ function StickyCard({
           onViewModeToggle();
         }}
         title="Switch to fullscreen view"
+        style={{ fontFamily: 'Roboto Mono, monospace', fontWeight: 700 }}
       >
         🔳
       </button>
@@ -386,9 +389,9 @@ function StickyCard({
       className={`collapsible ${getPositionClass()} ${getSizeClass()} ${className} ${isOpen ? 'open' : 'closed'} ${isDraggable ? 'draggable-collapsible' : ''} ${isDragging ? 'dragging' : ''}`}
     >
       <div className="collapsible-header" onClick={collapsible ? onToggle : undefined}>
-        <h3 className="collapsible-title">{enhancedTitle}</h3>
+        <h3 className="collapsible-title" style={{ fontFamily: 'Roboto Mono, monospace', fontWeight: 700 }}>{enhancedTitle}</h3>
         {collapsible && (
-          <button className="collapsible-toggle">
+          <button className="collapsible-toggle" style={{ fontFamily: 'Roboto Mono, monospace', fontWeight: 700 }}>
             {isOpen ? '−' : '+'}
           </button>
         )}

@@ -1,3 +1,7 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
 * {
     margin: 0;
     padding: 0;
@@ -2034,24 +2038,25 @@ body {
 /* ==================== BRUTALIST PANEL STYLES ==================== */
 
 .brutalist-panel {
-  background: rgba(25, 42, 85, 0.3);
-  border: 4px solid #ff9500;
-  border-radius: 10px;
+  background: rgba(40, 50, 80, 0.85);
+  border: 2px solid rgba(255, 182, 193, 0.8);
+  border-radius: 16px;
   box-shadow: 
-    0 0 0 2px rgba(25, 42, 85, 0.3),
-    4px 4px 0 #000000;
-  font-family: 'Arial Black', Arial, sans-serif;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+    0 0 0 1px rgba(255, 182, 193, 0.4),
+    0 8px 25px rgba(255, 105, 180, 0.3),
+    0 4px 15px rgba(255, 182, 193, 0.2);
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0.5px;
   position: absolute;
   z-index: 10;
   min-width: min(280px, calc(100vw - 40px));
   max-width: min(400px, calc(100vw - 40px));
   max-height: calc(100vh - 40px);
-  transition: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   transform: none;
-  backdrop-filter: blur(5px);
+  backdrop-filter: blur(10px);
   box-sizing: border-box;
 }
 
@@ -2060,8 +2065,12 @@ body {
 }
 
 .brutalist-panel.dragging {
-  transform: rotate(1deg) scale(1.02);
-  filter: drop-shadow(0 0 10px #ff9500);
+  transform: rotate(0.5deg) scale(1.02);
+  filter: drop-shadow(0 0 15px rgba(255, 105, 180, 0.6));
+  box-shadow: 
+    0 0 0 2px rgba(255, 182, 193, 0.6),
+    0 12px 35px rgba(255, 105, 180, 0.4),
+    0 6px 20px rgba(255, 182, 193, 0.3);
 }
 
 /* Position classes */
@@ -2109,43 +2118,49 @@ body {
 
 /* Header */
 .brutalist-panel-header {
-  background: #ff9500;
+  background: linear-gradient(135deg, rgba(255, 182, 193, 0.15), rgba(255, 105, 180, 0.15));
   color: #FFFFFF;
-  padding: 14px 18px;
+  padding: 16px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
-  border-bottom: 2px solid rgba(25, 42, 85, 0.4);
+  border-bottom: 1px solid rgba(255, 182, 193, 0.3);
   position: relative;
+  border-radius: 14px 14px 0 0;
 }
 
 .brutalist-panel-title {
-  font-size: 15px;
-  font-weight: 800;
+  font-size: 16px;
+  font-weight: 600;
   margin: 0;
-  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.5);
-  letter-spacing: 1px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  letter-spacing: 0.5px;
+  color: rgba(255, 182, 193, 1);
 }
 
 .brutalist-panel-toggle {
-  background: rgba(25, 42, 85, 0.4);
-  color: #FFFFFF;
-  border: 2px solid #ff9500;
-  border-radius: 0;
-  width: 32px;
-  height: 32px;
-  font-size: 16px;
-  font-weight: 700;
+  background: rgba(255, 182, 193, 0.2);
+  color: rgba(255, 182, 193, 1);
+  border: 1px solid rgba(255, 182, 193, 0.4);
+  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   text-shadow: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .brutalist-panel-toggle:hover {
-  background: #ff9500;
+  background: rgba(255, 182, 193, 0.3);
   color: #FFFFFF;
   transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(255, 105, 180, 0.3);
 }
 
 .brutalist-panel-toggle:active {
@@ -2154,12 +2169,12 @@ body {
 
 /* Content */
 .brutalist-panel-content {
-  background: rgba(25, 42, 85, 0.3);
+  background: rgba(40, 50, 80, 0.9);
   color: #FFFFFF;
-  padding: 16px;
+  padding: 20px;
   max-height: calc(100vh - 200px);
   overflow-y: auto;
-  border-top: 2px solid #ff9500;
+  border-radius: 0 0 14px 14px;
   box-sizing: border-box;
 }
 
@@ -2167,21 +2182,27 @@ body {
 .brutalist-draggable-title-container {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .brutalist-drag-handle {
-  padding: 6px;
-  background: rgba(25, 42, 85, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 0;
+  padding: 8px;
+  background: rgba(255, 182, 193, 0.2);
+  border: 1px solid rgba(255, 182, 193, 0.4);
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.brutalist-drag-handle:hover {
+  background: rgba(255, 182, 193, 0.3);
+  transform: scale(1.05);
 }
 
 .brutalist-drag-handle-icon {
-  color: #FFFFFF;
+  color: rgba(255, 182, 193, 1);
 }
 
 .brutalist-draggable-title-text {
@@ -2196,20 +2217,27 @@ body {
 }
 
 .brutalist-section {
-  border: 2px solid #ff9500;
-  background: rgba(0, 0, 0, 0.2);
-  padding: 12px;
-  margin-bottom: 8px;
+  border: 1px solid rgba(255, 182, 193, 0.4);
+  background: rgba(255, 182, 193, 0.08);
+  padding: 16px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.brutalist-section:hover {
+  background: rgba(255, 182, 193, 0.12);
+  border-color: rgba(255, 182, 193, 0.6);
 }
 
 .brutalist-section-title {
-  margin: 0 0 10px 0;
-  font-size: 13px;
-  font-family: 'Courier New', monospace;
-  font-weight: 900;
-  color: #ff9500;
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  font-weight: 600;
+  color: rgba(255, 182, 193, 1);
   text-shadow: none;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
 }
 
 /* Buttons */
@@ -2220,46 +2248,51 @@ body {
 }
 
 .brutalist-btn {
-  padding: 10px 12px;
-  border: 2px solid #ff9500;
-  border-radius: 0;
-  font-weight: 600;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  padding: 12px 16px;
+  border: 1px solid rgba(255, 182, 193, 0.4);
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 13px;
+  text-transform: none;
+  letter-spacing: 0.3px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   text-shadow: none;
+  backdrop-filter: blur(5px);
 }
 
 .brutalist-btn-primary {
-  background: #ff9500;
+  background: linear-gradient(135deg, rgba(255, 182, 193, 0.8), rgba(255, 105, 180, 0.8));
   color: #FFFFFF;
+  border-color: rgba(255, 182, 193, 0.6);
 }
 
 .brutalist-btn-secondary {
-  background: #FFFFFF;
-  color: rgba(25, 42, 85, 1);
+  background: rgba(255, 255, 255, 0.9);
+  color: rgba(40, 50, 80, 1);
+  border-color: rgba(255, 182, 193, 0.4);
 }
 
 .brutalist-btn-danger {
-  background: #dc2626;
+  background: linear-gradient(135deg, rgba(255, 92, 92, 0.8), rgba(220, 38, 38, 0.8));
   color: #FFFFFF;
+  border-color: rgba(255, 92, 92, 0.6);
 }
 
 .brutalist-btn-success {
-  background: #16a34a;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.8), rgba(22, 163, 74, 0.8));
   color: #FFFFFF;
+  border-color: rgba(34, 197, 94, 0.6);
 }
 
 .brutalist-btn:hover {
-  transform: scale(1.03);
-  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 105, 180, 0.3);
 }
 
 .brutalist-btn:active {
-  transform: scale(0.98);
-  box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.3);
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(255, 105, 180, 0.2);
 }
 
 /* Inputs */
@@ -2270,20 +2303,22 @@ body {
 }
 
 .brutalist-input, .brutalist-select {
-  padding: 8px 12px;
-  border: 2px solid #ff9500;
-  border-radius: 0;
-  background: #FFFFFF;
-  color: rgba(25, 42, 85, 1);
-  font-weight: 600;
-  font-size: 12px;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 182, 193, 0.4);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  color: rgba(40, 50, 80, 1);
+  font-weight: 500;
+  font-size: 13px;
   text-transform: none;
   outline: none;
+  transition: all 0.2s ease;
 }
 
 .brutalist-input:focus, .brutalist-select:focus {
-  background: #f8fafc;
-  box-shadow: 0 0 0 2px rgba(25, 42, 85, 0.8);
+  background: #ffffff;
+  border-color: rgba(255, 182, 193, 0.8);
+  box-shadow: 0 0 0 3px rgba(255, 182, 193, 0.2);
 }
 
 /* Toggles */
@@ -2296,12 +2331,17 @@ body {
 .brutalist-checkbox, .brutalist-radio {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   cursor: pointer;
-  font-family: 'Courier New', monospace;
-  font-weight: 700;
-  font-size: 11px;
-  letter-spacing: 0.5px;
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  font-weight: 500;
+  font-size: 13px;
+  letter-spacing: 0.3px;
+  transition: all 0.2s ease;
+}
+
+.brutalist-checkbox:hover, .brutalist-radio:hover {
+  color: rgba(255, 182, 193, 1);
 }
 
 .brutalist-checkbox input, .brutalist-radio input {
@@ -2309,111 +2349,132 @@ body {
 }
 
 .brutalist-checkmark, .brutalist-radiomark {
-  width: 16px;
-  height: 16px;
-  border: 2px solid #ff9500;
-  background: #FFFFFF;
+  width: 18px;
+  height: 18px;
+  border: 1px solid rgba(255, 182, 193, 0.6);
+  background: rgba(255, 255, 255, 0.9);
   position: relative;
+  border-radius: 4px;
+  transition: all 0.2s ease;
 }
 
 .brutalist-radiomark {
   border-radius: 50%;
 }
 
+.brutalist-checkbox input:checked + .brutalist-checkmark {
+  background: rgba(255, 182, 193, 0.8);
+  border-color: rgba(255, 182, 193, 1);
+}
+
+.brutalist-radio input:checked + .brutalist-radiomark {
+  background: rgba(255, 182, 193, 0.8);
+  border-color: rgba(255, 182, 193, 1);
+}
+
 .brutalist-checkbox input:checked + .brutalist-checkmark::after {
   content: '✓';
   position: absolute;
-  top: -1px;
-  left: 1px;
+  top: 1px;
+  left: 3px;
   font-size: 12px;
-  font-weight: 700;
-  color: rgba(25, 42, 85, 1);
+  font-weight: 600;
+  color: #FFFFFF;
 }
 
 .brutalist-radio input:checked + .brutalist-radiomark::after {
   content: '';
   position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 6px;
-  height: 6px;
-  background: rgba(25, 42, 85, 1);
+  top: 4px;
+  left: 4px;
+  width: 8px;
+  height: 8px;
+  background: #FFFFFF;
   border-radius: 50%;
 }
 
 /* Progress Bar */
 .brutalist-progress-bar {
   width: 100%;
-  height: 16px;
-  background: #FFFFFF;
-  border: 2px solid #ff9500;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 182, 193, 0.4);
+  border-radius: 6px;
   position: relative;
   overflow: hidden;
 }
 
 .brutalist-progress-fill {
   height: 100%;
-  background: #ff9500;
-  transition: width 0.3s ease;
+  background: linear-gradient(90deg, rgba(255, 182, 193, 0.8), rgba(255, 105, 180, 0.8));
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  border-radius: 5px;
 }
 
 .brutalist-progress-text {
-  margin-top: 6px;
-  font-size: 11px;
-  font-family: 'Courier New', monospace;
-  font-weight: 700;
+  margin-top: 8px;
+  font-size: 12px;
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  font-weight: 500;
   text-align: center;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
+  color: rgba(255, 182, 193, 1);
 }
 
 /* Alerts */
 .brutalist-alert {
-  padding: 8px 12px;
-  border: 2px solid #ff9500;
-  margin-bottom: 6px;
-  font-family: 'Courier New', monospace;
-  font-weight: 700;
-  font-size: 11px;
-  letter-spacing: 0.5px;
+  padding: 12px 16px;
+  border: 1px solid rgba(255, 182, 193, 0.4);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  font-weight: 500;
+  font-size: 13px;
+  letter-spacing: 0.3px;
   text-shadow: none;
+  backdrop-filter: blur(5px);
 }
 
 .brutalist-alert-info {
-  background: #3b82f6;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(37, 99, 235, 0.8));
   color: #FFFFFF;
+  border-color: rgba(59, 130, 246, 0.6);
 }
 
 .brutalist-alert-warning {
-  background: #f59e0b;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.8), rgba(217, 119, 6, 0.8));
   color: #FFFFFF;
+  border-color: rgba(245, 158, 11, 0.6);
 }
 
 /* Typography */
 .brutalist-text-large {
-  font-size: 16px;
-  font-weight: 700;
-  letter-spacing: 1px;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
   text-shadow: none;
-  margin: 0 0 6px 0;
-  color: #ff9500;
+  margin: 0 0 8px 0;
+  color: rgba(255, 182, 193, 1);
 }
 
 .brutalist-text-normal {
-  font-size: 13px;
-  font-family: 'Courier New', monospace;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  margin: 0 0 4px 0;
+  font-size: 14px;
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  margin: 0 0 6px 0;
+  color: #FFFFFF;
 }
 
 .brutalist-text-small {
-  font-size: 10px;
-  font-family: 'Courier New', monospace;
-  font-weight: 700;
-  letter-spacing: 0.3px;
+  font-size: 12px;
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.2px;
   opacity: 0.8;
   margin: 0;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 /* Color Picker Settings Styles */
@@ -2452,13 +2513,13 @@ body {
 }
 
 .color-value {
-  font-family: 'Courier New', monospace;
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
   font-size: 12px;
-  color: #ff9500;
-  background: rgba(0, 0, 0, 0.3);
-  padding: 4px 8px;
-  border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 182, 193, 1);
+  background: rgba(255, 182, 193, 0.1);
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 182, 193, 0.3);
 }
 
 .color-preview {
@@ -2470,10 +2531,11 @@ body {
 }
 
 .brutalist-preview {
-  font-family: 'Arial Black', Arial, sans-serif;
-  text-transform: uppercase;
-  letter-spacing: 2px;
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  text-transform: none;
+  letter-spacing: 0.5px;
   font-size: 14px;
+  font-weight: 500;
 }
 
 /* ==================== CARD COMPONENT VIEW MODE TOGGLE STYLES ==================== */

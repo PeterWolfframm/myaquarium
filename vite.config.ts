@@ -19,5 +19,8 @@ export default defineConfig({
   },
   esbuild: {
     logOverride: { 'this-is-undefined-in-esm': 'silent' }
+  },
+  css: {
+    postcss: './postcss.config.js'
   }
 });

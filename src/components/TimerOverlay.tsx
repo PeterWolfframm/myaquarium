@@ -90,11 +90,20 @@ function TimerOverlay({ time, mood, onMoodChange, currentSession, onSessionsLoad
       draggablePosition={draggablePosition}
     >
       <div className="timer-content">
-        <div className="mood-controls">
+        <div className="flex gap-2.5 justify-center mb-4">
           {moods.map(({ id, label }) => (
             <button
               key={id}
-              className={`${mood === id ? 'active' : ''} ${switchingMood === id ? 'switching' : ''}`}
+              className={`
+                px-4 py-2 border-none rounded-md text-sm transition-all duration-300 ease-in-out cursor-pointer
+                ${mood === id 
+                  ? 'bg-cyan-400 text-slate-900 font-bold shadow-lg shadow-cyan-400/50' 
+                  : switchingMood === id
+                    ? 'bg-sky-600/60 pointer-events-none opacity-70'
+                    : 'bg-sky-600/20 text-white hover:bg-sky-600 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-sky-600/40'
+                }
+                disabled:cursor-not-allowed
+              `.trim()}
               onClick={() => {
                 setSwitchingMood(id);
                 onMoodChange(id);
