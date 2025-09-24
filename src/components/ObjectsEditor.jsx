@@ -94,8 +94,8 @@ function ObjectsEditor({
     const newGridY = selectedObject.grid_y + delta.y;
 
     try {
-      // Check if the new position is valid using the aquarium's object manager
-      if (aquarium.objectManager && aquarium.objectManager.isGridAreaAvailable(newGridX, newGridY, selectedObject.size || 6, selectedObject.object_id)) {
+      // Check if the new position is within bounds (allow overlapping)
+      if (aquarium.objectManager && aquarium.objectManager.isGridAreaInBounds(newGridX, newGridY, selectedObject.size || 6)) {
         // Move the object in the aquarium
         const objectInAquarium = aquarium.objectManager.objects.get(selectedObject.object_id);
         if (objectInAquarium) {
@@ -127,12 +127,55 @@ function ObjectsEditor({
           console.log(`Moved object ${selectedObject.object_id} to (${newGridX}, ${newGridY})`);
         }
       } else {
-        setError(`Cannot move ${direction} - position is occupied or out of bounds`);
+        setError(`Cannot move ${direction} - position is out of bounds`);
         setTimeout(() => setError(null), 3000);
       }
     } catch (err) {
       console.error('Error moving object:', err);
       setError('Failed to move object');
+      setTimeout(() => setError(null), 3000);
+    }
+  };
+
+  // Layer movement handlers  
+  const moveObjectToLayer = async (direction) => {
+    if (!selectedObject || !aquarium) return;
+
+    try {
+      let updatedObject;
+      
+      if (direction === 'foreground') {
+        // Move to foreground (increase layer)
+        updatedObject = await databaseService.moveObjectToForeground(selectedObject.object_id);
+        if (aquarium.objectManager) {
+          aquarium.objectManager.moveObjectToForeground(selectedObject.object_id);
+        }
+      } else if (direction === 'background') {
+        // Move to background (decrease layer)
+        updatedObject = await databaseService.moveObjectToBackground(selectedObject.object_id);
+        if (aquarium.objectManager) {
+          aquarium.objectManager.moveObjectToBackground(selectedObject.object_id);
+        }
+      }
+
+      if (updatedObject) {
+        // Update local state with new layer
+        setSelectedObject(prev => ({
+          ...prev,
+          layer: updatedObject.layer
+        }));
+        
+        // Refresh placed objects list to show updated layer
+        loadPlacedObjects();
+        
+        console.log(`Moved object ${selectedObject.object_id} to ${direction} (layer ${updatedObject.layer})`);
+      } else {
+        setError(`Failed to move object to ${direction}`);
+        setTimeout(() => setError(null), 3000);
+      }
+    } catch (err) {
+      console.error('Error moving object layer:', err);
+      setError(`Failed to move object to ${direction}`);
       setTimeout(() => setError(null), 3000);
     }
   };
@@ -200,9 +243,10 @@ function ObjectsEditor({
           {/* Placed Objects Section */}
           <div className="placed-objects-section">
             <h4>Placed Objects in Aquarium:</h4>
-            {isLoading ? (
+            {isLoading && (
               <div className="loading-text">Loading objects...</div>
-            ) : placedObjects.length === 0 ? (
+            )}
+            {placedObjects.length === 0 && !isLoading ? (
               <div className="no-objects">
                 No objects placed yet. Drag sprites above onto the aquarium!
               </div>
@@ -233,6 +277,9 @@ function ObjectsEditor({
                       <div className="object-size">
                         Size: {obj.size || 6}x{obj.size || 6}
                       </div>
+                      <div className="object-layer">
+                        Layer: {obj.layer || 0}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -253,6 +300,7 @@ function ObjectsEditor({
                 <div className="positioning-object-details">
                   <div>Position: ({selectedObject.grid_x}, {selectedObject.grid_y})</div>
                   <div>Size: {selectedObject.size || 6}x{selectedObject.size || 6} tiles</div>
+                  <div>Layer: {selectedObject.layer || 0}</div>
                 </div>
               </div>
               
@@ -291,6 +339,29 @@ function ObjectsEditor({
                   >
                     ↓
                   </button>
+                </div>
+              </div>
+
+              <div className="layer-controls">
+                <h5>Layer Controls:</h5>
+                <div className="layer-buttons">
+                  <button 
+                    className="layer-btn layer-background"
+                    onClick={() => moveObjectToLayer('background')}
+                    title="Move to background (layer -1)"
+                  >
+                    ↓ Background
+                  </button>
+                  <button 
+                    className="layer-btn layer-foreground"
+                    onClick={() => moveObjectToLayer('foreground')}
+                    title="Move to foreground (layer +1)"
+                  >
+                    ↑ Foreground
+                  </button>
+                </div>
+                <div className="layer-info">
+                  <small>Layer {selectedObject.layer || 0}: Lower layers render behind higher layers</small>
                 </div>
               </div>
 

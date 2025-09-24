@@ -728,7 +728,7 @@ class DatabaseService {
   
   /**
    * Get all placed objects for the current user
-   * @returns {Promise<Array>} Array of placed objects
+   * @returns {Promise<Array>} Array of placed objects ordered by layer
    */
   async getPlacedObjects() {
     try {
@@ -738,6 +738,7 @@ class DatabaseService {
       const { data, error } = await supabase
         .from('placed_objects')
         .select('*')
+        .order('layer', { ascending: true })
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -760,6 +761,7 @@ class DatabaseService {
    * @param {number} objectData.grid_x - Grid X position
    * @param {number} objectData.grid_y - Grid Y position  
    * @param {number} objectData.size - Size in tiles (default: 6)
+   * @param {number} objectData.layer - Rendering layer (default: 0)
    * @returns {Promise<Object|null>} Saved object data or null if error
    */
   async savePlacedObject(objectData) {
@@ -773,7 +775,8 @@ class DatabaseService {
         sprite_url: objectData.sprite_url,
         grid_x: objectData.grid_x,
         grid_y: objectData.grid_y,
-        size: objectData.size || 6
+        size: objectData.size || 6,
+        layer: objectData.layer || 0
       };
 
       const { data, error } = await supabase
@@ -880,6 +883,86 @@ class DatabaseService {
     } catch (error) {
       console.error('Error in deleteAllPlacedObjects:', error);
       return false;
+    }
+  }
+
+  /**
+   * Move an object to the foreground (increase layer by 1)
+   * @param {string} objectId - Object ID to move
+   * @returns {Promise<Object|null>} Updated object data or null if error
+   */
+  async moveObjectToForeground(objectId) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      // Get current object to know its current layer
+      const { data: currentObj, error: fetchError } = await supabase
+        .from('placed_objects')
+        .select('layer')
+        .eq('object_id', objectId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (fetchError) {
+        console.error('Error fetching current object layer:', fetchError);
+        return null;
+      }
+
+      const newLayer = (currentObj.layer || 0) + 1;
+
+      return await this.updatePlacedObject(objectId, { layer: newLayer });
+    } catch (error) {
+      console.error('Error in moveObjectToForeground:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Move an object to the background (decrease layer by 1, minimum 0)
+   * @param {string} objectId - Object ID to move
+   * @returns {Promise<Object|null>} Updated object data or null if error
+   */
+  async moveObjectToBackground(objectId) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      // Get current object to know its current layer
+      const { data: currentObj, error: fetchError } = await supabase
+        .from('placed_objects')
+        .select('layer')
+        .eq('object_id', objectId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (fetchError) {
+        console.error('Error fetching current object layer:', fetchError);
+        return null;
+      }
+
+      const newLayer = Math.max(0, (currentObj.layer || 0) - 1);
+
+      return await this.updatePlacedObject(objectId, { layer: newLayer });
+    } catch (error) {
+      console.error('Error in moveObjectToBackground:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Set specific layer for an object
+   * @param {string} objectId - Object ID to update
+   * @param {number} layer - New layer value
+   * @returns {Promise<Object|null>} Updated object data or null if error
+   */
+  async setObjectLayer(objectId, layer) {
+    try {
+      const validLayer = Math.max(0, Math.floor(layer));
+      return await this.updatePlacedObject(objectId, { layer: validLayer });
+    } catch (error) {
+      console.error('Error in setObjectLayer:', error);
+      return null;
     }
   }
 }

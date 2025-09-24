@@ -12,6 +12,7 @@ export class AquariumObject {
      * @param {number} objectData.gridX - Grid X position (in tiles)
      * @param {number} objectData.gridY - Grid Y position (in tiles)
      * @param {number} objectData.size - Size multiplier (default: 6 for 6x6 tiles)
+     * @param {number} objectData.layer - Rendering layer (default: 0)
      * @param {number} tileSize - Size of each tile in pixels
      */
     constructor(objectData, tileSize) {
@@ -20,6 +21,7 @@ export class AquariumObject {
         this.gridX = objectData.gridX;
         this.gridY = objectData.gridY;
         this.size = objectData.size || 6; // Default to 6x6 tiles
+        this.layer = objectData.layer || 0; // Default to layer 0
         this.tileSize = tileSize;
         
         // PIXI sprite
@@ -128,6 +130,14 @@ export class AquariumObject {
     }
     
     /**
+     * Update the layer of this object
+     * @param {number} newLayer - New layer value
+     */
+    updateLayer(newLayer) {
+        this.layer = Math.max(0, Math.floor(newLayer));
+    }
+    
+    /**
      * Get object data for database storage
      */
     toData() {
@@ -136,7 +146,8 @@ export class AquariumObject {
             spriteUrl: this.spriteUrl,
             gridX: this.gridX,
             gridY: this.gridY,
-            size: this.size
+            size: this.size,
+            layer: this.layer
         };
     }
 }
@@ -213,6 +224,19 @@ export class ObjectManager {
     }
     
     /**
+     * Check if a grid area is within bounds (allows overlapping)
+     * @param {number} gridX - Starting grid X position
+     * @param {number} gridY - Starting grid Y position  
+     * @param {number} size - Size of the object (6 for 6x6)
+     * @returns {boolean} True if area is within world bounds
+     */
+    isGridAreaInBounds(gridX, gridY, size = 6) {
+        return !(gridX < 0 || gridY < 0 || 
+                gridX + size > this.tilesHorizontal || 
+                gridY + size > this.tilesVertical);
+    }
+    
+    /**
      * Mark grid area as occupied by an object
      * @param {string} objectId - ID of the object
      * @param {number} gridX - Starting grid X position
@@ -245,44 +269,32 @@ export class ObjectManager {
     }
     
     /**
-     * Find the nearest available grid position for placement
+     * Find the nearest valid grid position for placement (allows overlapping)
      * @param {number} worldX - World X coordinate where drop occurred
      * @param {number} worldY - World Y coordinate where drop occurred
      * @param {number} size - Size of object to place
-     * @returns {Object|null} {gridX, gridY} or null if no space available
+     * @returns {Object|null} {gridX, gridY} or null if out of bounds
      */
     findNearestAvailablePosition(worldX, worldY, size = 6) {
         // Convert world coordinates to grid coordinates
         const targetGridX = Math.floor(worldX / this.tileSize);
         const targetGridY = Math.floor(worldY / this.tileSize);
         
-        // Try the exact position first
-        if (this.isGridAreaAvailable(targetGridX, targetGridY, size)) {
+        // Try the exact position first (allow overlapping)
+        if (this.isGridAreaInBounds(targetGridX, targetGridY, size)) {
             return { gridX: targetGridX, gridY: targetGridY };
         }
         
-        // Spiral search for nearest available position
-        const maxRadius = Math.max(this.tilesHorizontal, this.tilesVertical);
+        // If out of bounds, find nearest in-bounds position
+        const clampedGridX = Math.max(0, Math.min(targetGridX, this.tilesHorizontal - size));
+        const clampedGridY = Math.max(0, Math.min(targetGridY, this.tilesVertical - size));
         
-        for (let radius = 1; radius <= maxRadius; radius++) {
-            for (let dx = -radius; dx <= radius; dx++) {
-                for (let dy = -radius; dy <= radius; dy++) {
-                    // Skip if not on the edge of the current radius
-                    if (Math.abs(dx) !== radius && Math.abs(dy) !== radius) {
-                        continue;
-                    }
-                    
-                    const testX = targetGridX + dx;
-                    const testY = targetGridY + dy;
-                    
-                    if (this.isGridAreaAvailable(testX, testY, size)) {
-                        return { gridX: testX, gridY: testY };
-                    }
-                }
-            }
+        // Double-check the clamped position is valid
+        if (this.isGridAreaInBounds(clampedGridX, clampedGridY, size)) {
+            return { gridX: clampedGridX, gridY: clampedGridY };
         }
         
-        return null; // No available space found
+        return null; // This should rarely happen unless the world is too small for the object
     }
     
     /**
@@ -291,9 +303,10 @@ export class ObjectManager {
      * @param {number} worldX - World X coordinate for placement
      * @param {number} worldY - World Y coordinate for placement  
      * @param {number} size - Size of the object (default: 6)
+     * @param {number} layer - Rendering layer (default: 0)
      * @returns {string|null} Object ID if successful, null if failed
      */
-    async addObject(spriteUrl, worldX, worldY, size = 6) {
+    async addObject(spriteUrl, worldX, worldY, size = 6, layer = 0) {
         const position = this.findNearestAvailablePosition(worldX, worldY, size);
         
         if (!position) {
@@ -308,7 +321,8 @@ export class ObjectManager {
             spriteUrl: spriteUrl,
             gridX: position.gridX,
             gridY: position.gridY,
-            size: size
+            size: size,
+            layer: layer
         };
         
         const aquariumObject = new AquariumObject(objectData, this.tileSize);
@@ -318,14 +332,14 @@ export class ObjectManager {
             await new Promise(resolve => setTimeout(resolve, 50));
         }
         
-        // Add to container
-        this.container.addChild(aquariumObject.sprite);
-        
-        // Track the object
+        // Track the object first
         this.objects.set(objectId, aquariumObject);
         this.markGridAreaOccupied(objectId, position.gridX, position.gridY, size);
         
-        console.log(`Object placed at grid (${position.gridX}, ${position.gridY}) with ID: ${objectId}`);
+        // Add to container with proper layer ordering
+        this.addSpriteToContainerInOrder(aquariumObject.sprite, layer);
+        
+        console.log(`Object placed at grid (${position.gridX}, ${position.gridY}) with layer ${layer} and ID: ${objectId}`);
         
         return objectId;
     }
@@ -369,7 +383,10 @@ export class ObjectManager {
         // Clear existing objects
         this.clearAllObjects();
         
-        for (const objectData of objectsData) {
+        // Sort objects by layer (ascending order)
+        const sortedObjectsData = [...objectsData].sort((a, b) => (a.layer || 0) - (b.layer || 0));
+        
+        for (const objectData of sortedObjectsData) {
             const aquariumObject = new AquariumObject(objectData, this.tileSize);
             
             // Wait for sprite to load
@@ -377,7 +394,7 @@ export class ObjectManager {
                 await new Promise(resolve => setTimeout(resolve, 50));
             }
             
-            // Add to container
+            // Add to container (already in layer order)
             this.container.addChild(aquariumObject.sprite);
             
             // Track the object
@@ -385,7 +402,70 @@ export class ObjectManager {
             this.markGridAreaOccupied(objectData.id, objectData.gridX, objectData.gridY, objectData.size);
         }
         
-        console.log(`Loaded ${objectsData.length} objects from data`);
+        console.log(`Loaded ${objectsData.length} objects from data (sorted by layer)`);
+    }
+    
+    /**
+     * Add sprite to container maintaining layer order
+     * @param {PIXI.Sprite} sprite - Sprite to add
+     * @param {number} layer - Layer of the sprite
+     */
+    addSpriteToContainerInOrder(sprite, layer) {
+        // Find the correct index to insert the sprite based on layer
+        let insertIndex = 0;
+        
+        for (const [objectId, aquariumObject] of this.objects) {
+            if (aquariumObject.layer < layer && aquariumObject.sprite && aquariumObject.sprite.parent === this.container) {
+                insertIndex++;
+            }
+        }
+        
+        this.container.addChildAt(sprite, insertIndex);
+    }
+    
+    /**
+     * Update object layer and reorder in container
+     * @param {string} objectId - Object ID to update
+     * @param {number} newLayer - New layer value
+     */
+    updateObjectLayer(objectId, newLayer) {
+        const aquariumObject = this.objects.get(objectId);
+        if (!aquariumObject) return false;
+        
+        // Update the object's layer
+        aquariumObject.updateLayer(newLayer);
+        
+        // Remove sprite from container and re-add in correct order
+        if (aquariumObject.sprite && aquariumObject.sprite.parent === this.container) {
+            this.container.removeChild(aquariumObject.sprite);
+            this.addSpriteToContainerInOrder(aquariumObject.sprite, newLayer);
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Move an object to foreground (increase layer by 1)
+     * @param {string} objectId - Object ID to move
+     */
+    moveObjectToForeground(objectId) {
+        const aquariumObject = this.objects.get(objectId);
+        if (!aquariumObject) return false;
+        
+        const newLayer = aquariumObject.layer + 1;
+        return this.updateObjectLayer(objectId, newLayer);
+    }
+    
+    /**
+     * Move an object to background (decrease layer by 1, minimum 0)
+     * @param {string} objectId - Object ID to move
+     */
+    moveObjectToBackground(objectId) {
+        const aquariumObject = this.objects.get(objectId);
+        if (!aquariumObject) return false;
+        
+        const newLayer = Math.max(0, aquariumObject.layer - 1);
+        return this.updateObjectLayer(objectId, newLayer);
     }
     
     /**

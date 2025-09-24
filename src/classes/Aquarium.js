@@ -1111,7 +1111,8 @@ export class Aquarium {
                     spriteUrl: obj.sprite_url,
                     gridX: obj.grid_x,
                     gridY: obj.grid_y,
-                    size: obj.size || 6
+                    size: obj.size || 6,
+                    layer: obj.layer || 0
                 }));
                 
                 await this.objectManager.loadObjectsFromData(convertedData);
@@ -1148,7 +1149,8 @@ export class Aquarium {
                     sprite_url: objectData.spriteUrl,
                     grid_x: objectData.gridX,
                     grid_y: objectData.gridY,
-                    size: objectData.size
+                    size: objectData.size,
+                    layer: objectData.layer
                 });
                 
                 console.log(`Object placed successfully with ID: ${objectId}`);

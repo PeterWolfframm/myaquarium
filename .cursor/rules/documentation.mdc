@@ -1,0 +1,5 @@
+---
+description: "write the outline of the code changed, including timestamp and model used, to the documentation as a markdown file"
+globs:
+alwaysApply: true
+---
