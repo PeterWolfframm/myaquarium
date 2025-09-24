@@ -2,14 +2,34 @@
  * Validation utilities for the Fish Aquarium application
  */
 
-import { AQUARIUM_CONFIG } from '../constants/index.js';
+import { AQUARIUM_CONFIG } from '../constants/index';
+import type { MoodType, Position } from '../types/global';
+
+interface ValidationResult {
+  isValid: boolean;
+  errors: string[];
+}
+
+interface AquariumConfigInput {
+  tilesHorizontal?: number;
+  tilesVertical?: number;
+  tileSize?: number;
+  defaultVisibleVerticalTiles?: number;
+  targetVerticalTiles?: number;
+  sizeMode?: string;
+}
+
+interface BrowserSupport {
+  webgl: boolean;
+  localStorage: boolean;
+  requestAnimationFrame: boolean;
+  canvas: boolean;
+}
 
 /**
  * Validate aquarium configuration values
- * @param {Object} config - Configuration object to validate
- * @returns {Object} Validation result with isValid boolean and errors array
  */
-export function validateAquariumConfig(config) {
+export function validateAquariumConfig(config: AquariumConfigInput): ValidationResult {
   const errors = [];
   
   // Validate horizontal tiles
@@ -64,21 +84,15 @@ export function validateAquariumConfig(config) {
 
 /**
  * Validate mood value
- * @param {string} mood - Mood to validate
- * @returns {boolean} Whether mood is valid
  */
-export function validateMood(mood) {
+export function validateMood(mood: string): mood is MoodType {
   return ['work', 'pause', 'lunch'].includes(mood);
 }
 
 /**
  * Validate viewport position
- * @param {Object} position - Position object {x, y}
- * @param {number} worldWidth - World width in pixels
- * @param {number} worldHeight - World height in pixels
- * @returns {boolean} Whether position is valid
  */
-export function validateViewportPosition(position, worldWidth, worldHeight) {
+export function validateViewportPosition(position: any, worldWidth: number, worldHeight: number): position is Position {
   return position &&
          typeof position.x === 'number' &&
          typeof position.y === 'number' &&
@@ -90,10 +104,8 @@ export function validateViewportPosition(position, worldWidth, worldHeight) {
 
 /**
  * Validate PIXI application state
- * @param {Object} app - PIXI Application instance
- * @returns {boolean} Whether app is in valid state
  */
-export function validatePixiApp(app) {
+export function validatePixiApp(app: any): boolean {
   return app &&
          app.stage &&
          app.renderer &&
@@ -103,13 +115,8 @@ export function validatePixiApp(app) {
 
 /**
  * Sanitize and validate numeric input
- * @param {*} value - Value to sanitize
- * @param {number} min - Minimum allowed value
- * @param {number} max - Maximum allowed value
- * @param {number} defaultValue - Default value if invalid
- * @returns {number} Sanitized numeric value
  */
-export function sanitizeNumericInput(value, min, max, defaultValue) {
+export function sanitizeNumericInput(value: any, min: number, max: number, defaultValue: number): number {
   const parsed = parseInt(value);
   if (isNaN(parsed) || parsed < min || parsed > max) {
     return defaultValue;
@@ -119,10 +126,8 @@ export function sanitizeNumericInput(value, min, max, defaultValue) {
 
 /**
  * Validate canvas element for PIXI initialization
- * @param {HTMLCanvasElement} canvas - Canvas element to validate
- * @returns {boolean} Whether canvas is valid for PIXI
  */
-export function validateCanvas(canvas) {
+export function validateCanvas(canvas: any): canvas is HTMLCanvasElement {
   return canvas &&
          canvas instanceof HTMLCanvasElement &&
          canvas.parentElement &&
@@ -131,10 +136,9 @@ export function validateCanvas(canvas) {
 
 /**
  * Check if browser supports required features
- * @returns {Object} Support status for various features
  */
-export function checkBrowserSupport() {
-  const support = {
+export function checkBrowserSupport(): BrowserSupport {
+  const support: BrowserSupport = {
     webgl: false,
     localStorage: false,
     requestAnimationFrame: false,

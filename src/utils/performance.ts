@@ -2,19 +2,17 @@
  * Performance optimization utilities for the Fish Aquarium
  */
 
-import { PERFORMANCE } from '../constants/index.js';
+import { PERFORMANCE } from '../constants/index';
+import type { PerformanceSettings } from '../types/global';
 
 /**
  * Throttle function calls to improve performance
- * @param {Function} func - Function to throttle
- * @param {number} delay - Delay in milliseconds
- * @returns {Function} Throttled function
  */
-export function throttle(func, delay) {
-  let timeoutId;
+export function throttle<T extends (...args: any[]) => any>(func: T, delay: number): (...args: Parameters<T>) => void {
+  let timeoutId: NodeJS.Timeout | undefined;
   let lastExecTime = 0;
   
-  return function (...args) {
+  return function (...args: Parameters<T>): void {
     const currentTime = Date.now();
     
     if (currentTime - lastExecTime > delay) {
@@ -32,14 +30,11 @@ export function throttle(func, delay) {
 
 /**
  * Debounce function calls to improve performance
- * @param {Function} func - Function to debounce
- * @param {number} delay - Delay in milliseconds
- * @returns {Function} Debounced function
  */
-export function debounce(func, delay) {
-  let timeoutId;
+export function debounce<T extends (...args: any[]) => any>(func: T, delay: number): (...args: Parameters<T>) => void {
+  let timeoutId: NodeJS.Timeout | undefined;
   
-  return function (...args) {
+  return function (...args: Parameters<T>): void {
     clearTimeout(timeoutId);
     timeoutId = setTimeout(() => func.apply(this, args), delay);
   };
@@ -47,12 +42,8 @@ export function debounce(func, delay) {
 
 /**
  * Calculate optimal entity count based on screen size and performance considerations
- * @param {number} screenWidth - Screen width in pixels
- * @param {number} screenHeight - Screen height in pixels
- * @param {boolean} isMobile - Whether the device is mobile
- * @returns {Object} Optimal counts for fish and bubbles
  */
-export function calculateOptimalEntityCounts(screenWidth, screenHeight, isMobile = false) {
+export function calculateOptimalEntityCounts(screenWidth: number, screenHeight: number, isMobile: boolean = false): { fish: number; bubbles: number } {
   const screenArea = screenWidth * screenHeight;
   const baseArea = 1920 * 1080; // Reference full HD resolution
   const areaRatio = Math.min(screenArea / baseArea, 2); // Cap at 2x reference
@@ -71,50 +62,40 @@ export function calculateOptimalEntityCounts(screenWidth, screenHeight, isMobile
 
 /**
  * Check if device is mobile based on screen width
- * @returns {boolean} Whether the device is considered mobile
  */
-export function isMobileDevice() {
+export function isMobileDevice(): boolean {
   return window.innerWidth <= PERFORMANCE.MOBILE_BREAKPOINT;
 }
 
 /**
  * Get performance-appropriate update interval based on device capabilities
- * @returns {number} Update interval in milliseconds
  */
-export function getOptimalUpdateInterval() {
+export function getOptimalUpdateInterval(): number {
   const isMobile = isMobileDevice();
   return isMobile ? PERFORMANCE.UPDATE_INTERVAL_MS * 1.5 : PERFORMANCE.UPDATE_INTERVAL_MS;
 }
 
 /**
  * Safe bounds checking utility
- * @param {number} value - Value to check
- * @param {number} min - Minimum allowed value
- * @param {number} max - Maximum allowed value
- * @returns {number} Clamped value
  */
-export function clamp(value, min, max) {
+export function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
 
 /**
  * Linear interpolation utility
- * @param {number} start - Start value
- * @param {number} end - End value
- * @param {number} factor - Interpolation factor (0-1)
- * @returns {number} Interpolated value
  */
-export function lerp(start, end, factor) {
+export function lerp(start: number, end: number, factor: number): number {
   return start + (end - start) * clamp(factor, 0, 1);
 }
 
 /**
  * Check if two rectangles intersect (for collision detection)
- * @param {Object} rect1 - First rectangle {x, y, width, height}
- * @param {Object} rect2 - Second rectangle {x, y, width, height}
- * @returns {boolean} Whether rectangles intersect
  */
-export function rectsIntersect(rect1, rect2) {
+export function rectsIntersect(
+  rect1: { x: number; y: number; width: number; height: number },
+  rect2: { x: number; y: number; width: number; height: number }
+): boolean {
   return rect1.x < rect2.x + rect2.width &&
          rect1.x + rect1.width > rect2.x &&
          rect1.y < rect2.y + rect2.height &&
@@ -123,19 +104,14 @@ export function rectsIntersect(rect1, rect2) {
 
 /**
  * Generate a random number within a range
- * @param {number} min - Minimum value
- * @param {number} max - Maximum value
- * @returns {number} Random number within range
  */
-export function randomRange(min, max) {
+export function randomRange(min: number, max: number): number {
   return min + Math.random() * (max - min);
 }
 
 /**
  * Pick a random element from an array
- * @param {Array} array - Array to pick from
- * @returns {*} Random element from array
  */
-export function randomChoice(array) {
+export function randomChoice<T>(array: T[]): T {
   return array[Math.floor(Math.random() * array.length)];
 }

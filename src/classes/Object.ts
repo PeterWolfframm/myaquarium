@@ -1,21 +1,31 @@
 import * as PIXI from 'pixi.js';
+import type { AquariumObjectData, PIXISprite } from '../types/global';
 
 /**
  * Represents a single object placed in the aquarium
  */
 export class AquariumObject {
+    // Object identification and configuration
+    public id: string;
+    public spriteUrl: string;
+    public gridX: number;
+    public gridY: number;
+    public size: number;
+    public layer: number;
+    public tileSize: number;
+
+    // World position (calculated from grid position)
+    public worldX: number;
+    public worldY: number;
+
+    // PIXI sprite
+    public sprite: PIXISprite | null;
+    public isLoaded: boolean;
+
     /**
      * Create a new aquarium object
-     * @param {Object} objectData - Object configuration
-     * @param {string} objectData.id - Unique identifier  
-     * @param {string} objectData.spriteUrl - URL of the sprite image
-     * @param {number} objectData.gridX - Grid X position (in tiles)
-     * @param {number} objectData.gridY - Grid Y position (in tiles)
-     * @param {number} objectData.size - Size multiplier (default: 6 for 6x6 tiles)
-     * @param {number} objectData.layer - Rendering layer (default: 0)
-     * @param {number} tileSize - Size of each tile in pixels
      */
-    constructor(objectData, tileSize) {
+    constructor(objectData: AquariumObjectData, tileSize: number) {
         this.id = objectData.id;
         this.spriteUrl = objectData.spriteUrl;
         this.gridX = objectData.gridX;
@@ -38,7 +48,7 @@ export class AquariumObject {
     /**
      * Initialize the PIXI sprite for this object
      */
-    async initializeSprite() {
+    async initializeSprite(): Promise<void> {
         try {
             const texture = await PIXI.Assets.load(this.spriteUrl);
             
@@ -78,7 +88,7 @@ export class AquariumObject {
     /**
      * Create a fallback sprite if image loading fails
      */
-    createFallbackSprite() {
+    createFallbackSprite(): void {
         const graphics = new PIXI.Graphics();
         
         // Create a simple colored cube as fallback

@@ -1,20 +1,58 @@
 import * as PIXI from 'pixi.js';
-import { FISH_CONFIG, COLORS, MOODS } from '../constants/index.js';
-import { randomRange, randomChoice, clamp, calculateOptimalEntityCounts, isMobileDevice } from '../utils/performance.js';
-import { useFishStore } from '../stores/fishStore.js';
+import { FISH_CONFIG, COLORS, MOODS } from '../constants/index';
+import { randomRange, randomChoice, clamp, calculateOptimalEntityCounts, isMobileDevice } from '../utils/performance';
+import { useFishStore } from '../stores/fishStore';
+import type { FishData, SafeZone, MoodType, PIXISprite } from '../types/global';
 
 /**
  * Individual fish entity with swimming behavior and animation
  */
 export class Fish {
+    // World dimensions
+    public worldWidth: number;
+    public worldHeight: number;
+    public safeZone: SafeZone;
+
+    // Fish identification and properties
+    public id: string | null;
+    public name: string | null;
+    public spriteUrl: string;
+    public color: number;
+    public size: number;
+
+    // Movement properties
+    public baseSpeed: number;
+    public currentSpeed: number;
+    public direction: 1 | -1;
+    public targetY: number;
+    public verticalSpeed: number;
+    public driftInterval: number;
+
+    // Animation properties
+    public animationSpeed: number;
+    public frameCount: number;
+    public currentFrame: number;
+
+    // State properties
+    public lastDriftTime: number;
+    public mood: MoodType;
+    public moodEffectActive: boolean;
+    public moodEffectStartTime: number;
+
+    // PIXI.js objects
+    public container: PIXI.Container;
+    public sprite: PIXISprite | null;
+    public isLoaded: boolean;
+
+    // Animation states
+    public isEating: boolean;
+    public isSleeping: boolean;
+    public isMoving: boolean;
+
     /**
      * Create a new fish instance
-     * @param {number} worldWidth - World width in pixels
-     * @param {number} worldHeight - World height in pixels
-     * @param {Object} safeZone - Safe zone boundaries {x, y, width, height}
-     * @param {Object} fishData - Optional data from database to restore fish state
      */
-    constructor(worldWidth, worldHeight, safeZone, fishData = null) {
+    constructor(worldWidth: number, worldHeight: number, safeZone: SafeZone, fishData: FishData | null = null) {
         this.worldWidth = worldWidth;
         this.worldHeight = worldHeight;
         this.safeZone = safeZone;

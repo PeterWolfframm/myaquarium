@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'preact/hooks';
-import Collapsible from './Collapsible.jsx';
-import ObjectsSpriteGallery from './ObjectsSpriteGallery.jsx';
-import { databaseService } from '../services/database.js';
+import Collapsible from './Collapsible';
+import ObjectsSpriteGallery from './ObjectsSpriteGallery';
+import { databaseService } from '../services/database';
 
 function ObjectsEditor({ 
   isOpen, 

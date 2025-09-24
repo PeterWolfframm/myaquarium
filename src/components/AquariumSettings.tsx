@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'preact/hooks';
-import { useAquariumStore } from '../stores/aquariumStore.js';
-import Modal from './Modal.jsx';
+import { useAquariumStore } from '../stores/aquariumStore';
+import Modal from './Modal';
 
 function AquariumSettings({ isVisible, onClose, aquarium }) {
   const {

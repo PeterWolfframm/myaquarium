@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'preact/hooks';
-import { useFishStore } from '../stores/fishStore.js';
-import { useAquariumStore } from '../stores/aquariumStore.js';
-import Modal from './Modal.jsx';
-import SpriteGallery from './SpriteGallery.jsx';
-import { FISH_CONFIG } from '../constants/index.js';
+import { useFishStore } from '../stores/fishStore';
+import { useAquariumStore } from '../stores/aquariumStore';
+import Modal from './Modal';
+import SpriteGallery from './SpriteGallery';
+import { FISH_CONFIG } from '../constants/index';
 
 function FishEditor({ isVisible, onClose }) {
   const { 

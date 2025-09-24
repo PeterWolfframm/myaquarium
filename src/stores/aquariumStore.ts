@@ -1,13 +1,14 @@
 import { create } from 'zustand';
-import { AQUARIUM_CONFIG } from '../constants/index.js';
-import { validateAquariumConfig, sanitizeNumericInput } from '../utils/validation.js';
-import { databaseService } from '../services/database.js';
+import { AQUARIUM_CONFIG } from '../constants/index';
+import { validateAquariumConfig, sanitizeNumericInput } from '../utils/validation';
+import { databaseService } from '../services/database';
+import type { AquariumStoreState, AquariumStoreActions } from '../types/global';
 
 /**
  * Zustand store for aquarium configuration and state management
  * Uses fixed 64px tile system as requested
  */
-export const useAquariumStore = create((set, get) => ({
+export const useAquariumStore = create<AquariumStoreState & AquariumStoreActions>((set, get) => ({
       // Aquarium configuration with fixed 64px tiles
       tilesHorizontal: AQUARIUM_CONFIG.DEFAULT_TILES_HORIZONTAL,
       tilesVertical: AQUARIUM_CONFIG.DEFAULT_TILES_VERTICAL,

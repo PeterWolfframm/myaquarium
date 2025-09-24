@@ -1,4 +1,13 @@
-import { supabase, TABLES } from '../config/supabase.js';
+import { supabase, TABLES } from '../config/supabase';
+import type { 
+  FishData, 
+  AquariumObjectData, 
+  AquariumSettings, 
+  TimerSession, 
+  SpriteData, 
+  MoodType,
+  DatabaseError 
+} from '../types/global';
 
 /**
  * Database service for handling all Supabase operations

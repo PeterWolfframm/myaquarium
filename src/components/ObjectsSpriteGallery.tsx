@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'preact/hooks';
 import { useDraggable } from '@dnd-kit/core';
-import { databaseService } from '../services/database.js';
+import { databaseService } from '../services/database';
 
 // Draggable sprite item component
 function DraggableSpriteItem({ sprite, isSelected, onSelect, selectedSize = 6 }) {

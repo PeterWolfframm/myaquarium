@@ -1,11 +1,12 @@
 import { create } from 'zustand';
-import { databaseService } from '../services/database.js';
-import { COLORS, FISH_CONFIG } from '../constants/index.js';
+import { databaseService } from '../services/database';
+import { COLORS, FISH_CONFIG } from '../constants/index';
+import type { FishStoreState, FishStoreActions, FishData, SafeZone } from '../types/global';
 
 /**
  * Zustand store for fish data management with Supabase integration
  */
-export const useFishStore = create((set, get) => ({
+export const useFishStore = create<FishStoreState & FishStoreActions>((set, get) => ({
   // Fish data state
   fish: [],
   isLoading: false,

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'preact/hooks';
-import { databaseService } from '../services/database.js';
-import Collapsible from './Collapsible.jsx';
+import { databaseService } from '../services/database';
+import Collapsible from './Collapsible';
 
 function TimerOverlay({ time, mood, onMoodChange, currentSession, onSessionsLoaded, isOpen, onToggle, isDraggable = false, draggableId = null, draggablePosition = null }) {
   const [recentSessions, setRecentSessions] = useState([]);

@@ -1,17 +1,26 @@
 import * as PIXI from 'pixi.js';
-import { BUBBLE_CONFIG, COLORS, PERFORMANCE } from '../constants/index.js';
-import { randomRange } from '../utils/performance.js';
+import { BUBBLE_CONFIG, COLORS, PERFORMANCE } from '../constants/index';
+import { randomRange } from '../utils/performance';
 
 /**
  * Individual bubble entity with floating animation
  */
 export class Bubble {
+    public worldWidth: number;
+    public worldHeight: number;
+    public speed: number;
+    public wobble: number;
+    public wobbleSpeed: number;
+    public wobbleOffset: number;
+    public size: number;
+    public opacity: number;
+    public sprite: PIXI.Graphics;
+    public initialX: number;
+
     /**
      * Create a new bubble instance
-     * @param {number} worldWidth - World width in pixels
-     * @param {number} worldHeight - World height in pixels
      */
-    constructor(worldWidth, worldHeight) {
+    constructor(worldWidth: number, worldHeight: number) {
         this.worldWidth = worldWidth;
         this.worldHeight = worldHeight;
         
@@ -32,7 +41,7 @@ export class Bubble {
     /**
      * Create the bubble sprite with graphics
      */
-    createSprite() {
+    createSprite(): void {
         this.sprite = new PIXI.Graphics();
         
         // Disable interactivity to prevent PIXI event errors
@@ -45,7 +54,7 @@ export class Bubble {
     /**
      * Update bubble graphics with current properties
      */
-    updateGraphics() {
+    updateGraphics(): void {
         this.sprite.clear();
         
         // Draw bubble with gradient effect
@@ -60,7 +69,7 @@ export class Bubble {
     /**
      * Respawn the bubble at the bottom of the screen
      */
-    respawn() {
+    respawn(): void {
         this.sprite.x = Math.random() * this.worldWidth;
         this.sprite.y = this.worldHeight + this.size;
         this.initialX = this.sprite.x;
@@ -68,9 +77,8 @@ export class Bubble {
     
     /**
      * Update bubble position and animation
-     * @param {number} deltaTime - Time since last update in milliseconds
      */
-    update(deltaTime) {
+    update(deltaTime: number): void {
         // Move upward
         this.sprite.y -= this.speed * deltaTime * 0.1;
         
@@ -89,13 +97,16 @@ export class Bubble {
  * Manages all bubble entities in the aquarium
  */
 export class BubbleManager {
+    public container: PIXI.Container;
+    public worldWidth: number;
+    public worldHeight: number;
+    public bubbles: Bubble[];
+    public enabled: boolean;
+
     /**
      * Create a new bubble manager
-     * @param {PIXI.Container} container - PIXI container for bubble sprites
-     * @param {number} worldWidth - World width in pixels
-     * @param {number} worldHeight - World height in pixels
      */
-    constructor(container, worldWidth, worldHeight) {
+    constructor(container: PIXI.Container, worldWidth: number, worldHeight: number) {
         this.container = container;
         this.worldWidth = worldWidth;
         this.worldHeight = worldHeight;

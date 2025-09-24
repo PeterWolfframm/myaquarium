@@ -1,5 +1,5 @@
-import { useAquariumStore } from '../stores/aquariumStore.js';
-import Collapsible from './Collapsible.jsx';
+import { useAquariumStore } from '../stores/aquariumStore';
+import Collapsible from './Collapsible';
 
 function DataPanel({ visibleCubes, fishInfo, viewportPosition, tileDimensions, zoomInfo, aquarium, isOpen, onToggle, isDraggable = false, draggableId = null, draggablePosition = null }) {
   const { showGrid, toggleGrid } = useAquariumStore();

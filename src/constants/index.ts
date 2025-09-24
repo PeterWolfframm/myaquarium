@@ -2,8 +2,18 @@
  * Application-wide constants for the Fish Aquarium project
  */
 
+import type {
+  AquariumConfig,
+  PerformanceConfig,
+  FishConfig,
+  BubbleConfig,
+  MoodConfig,
+  ColorConfig,
+  UIConfig
+} from '../types/global';
+
 // Aquarium Configuration - Fixed 64px Tile System
-export const AQUARIUM_CONFIG = {
+export const AQUARIUM_CONFIG: AquariumConfig = {
   DEFAULT_TILES_HORIZONTAL: 100,
   DEFAULT_TILES_VERTICAL: 50,
   TILE_SIZE: 64, // Fixed 64px tiles as requested
@@ -11,10 +21,10 @@ export const AQUARIUM_CONFIG = {
   MAX_TILES_HORIZONTAL: 1000,
   MIN_TILES_VERTICAL: 10,
   MAX_TILES_VERTICAL: 500
-};
+} as const;
 
 // Performance Constants
-export const PERFORMANCE = {
+export const PERFORMANCE: PerformanceConfig = {
   TARGET_FPS: 60,
   UPDATE_INTERVAL_MS: 100,
   ANIMATION_FRAME_TIME_MS: 16.67, // ~60fps
@@ -22,10 +32,10 @@ export const PERFORMANCE = {
   MIN_BUBBLES: 10,
   MAX_BUBBLES: 50,
   MOBILE_BREAKPOINT: 768
-};
+} as const;
 
 // Fish Configuration
-export const FISH_CONFIG = {
+export const FISH_CONFIG: FishConfig = {
   MIN_FISH_COUNT: 20,
   MAX_FISH_COUNT: 60,
   BASE_SPEED_MIN: 0.5,
@@ -40,10 +50,10 @@ export const FISH_CONFIG = {
   DEFAULT_SPRITE_URL: new URL('../sprites/shark.png', import.meta.url).href, // Default to shark sprite for offline compatibility
   BOUNDARY_MARGIN: 30,
   VERTICAL_MARGIN: 50
-};
+} as const;
 
 // Bubble Configuration
-export const BUBBLE_CONFIG = {
+export const BUBBLE_CONFIG: BubbleConfig = {
   SIZE_MIN: 3,
   SIZE_MAX: 7,
   OPACITY_MIN: 0.3,
@@ -54,10 +64,10 @@ export const BUBBLE_CONFIG = {
   WOBBLE_SPEED_MIN: 0.02,
   WOBBLE_SPEED_MAX: 0.04,
   WOBBLE_AMPLITUDE: 20
-};
+} as const;
 
 // Mood System
-export const MOODS = {
+export const MOODS: MoodConfig = {
   WORK: {
     id: 'work',
     label: 'Work',
@@ -73,10 +83,10 @@ export const MOODS = {
     label: 'Lunch',
     speedMultiplier: 2.0
   }
-};
+} as const;
 
 // Colors
-export const COLORS = {
+export const COLORS: ColorConfig = {
   BACKGROUND: 0x001133,
   OCEAN_GRADIENT_START: 0x004466,
   OCEAN_GRADIENT_END: 0x001133,
@@ -92,10 +102,10 @@ export const COLORS = {
   FISH_COLORS: [0x4CAF50, 0x2196F3, 0xFF9800, 0xE91E63, 0x9C27B0, 0x00BCD4],
   EYE_WHITE: 0xFFFFFF,
   EYE_BLACK: 0x000000
-};
+} as const;
 
 // UI Configuration
-export const UI_CONFIG = {
+export const UI_CONFIG: UIConfig = {
   SAFE_ZONE: {
     WIDTH: 400,
     HEIGHT: 150,
@@ -113,7 +123,7 @@ export const UI_CONFIG = {
   ROCK_SPACING: 500,
   ROCK_SIZE_MIN: 20,
   ROCK_SIZE_MAX: 50
-};
+} as const;
 
 // Navigation Controls
 export const NAVIGATION = {
@@ -122,12 +132,12 @@ export const NAVIGATION = {
   MIN_ZOOM_SCALE: 0.1, // Minimum zoom (will be calculated to show all vertical tiles)
   MAX_ZOOM_SCALE: 4.0, // Maximum zoom
   CLAMP_UNDERFLOW: 'center'
-};
+} as const;
 
 // Local Storage Keys
 export const STORAGE_KEYS = {
   AQUARIUM_SETTINGS: 'aquarium-settings'
-};
+} as const;
 
 // Keyboard Controls
 export const KEYBOARD = {
@@ -135,4 +145,4 @@ export const KEYBOARD = {
   ZOOM_IN: ['+', '='],
   ZOOM_OUT: ['-'],
   ARROW_KEYS: ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown']
-};
+} as const;

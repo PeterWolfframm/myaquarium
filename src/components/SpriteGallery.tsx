@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'preact/hooks';
-import { databaseService } from '../services/database.js';
-import { FISH_CONFIG } from '../constants/index.js';
+import { databaseService } from '../services/database';
+import { FISH_CONFIG } from '../constants/index';
 
 function SpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadComplete, onAddRandomFish, isCreatingFish = false }) {
   const [availableSprites, setAvailableSprites] = useState([]);

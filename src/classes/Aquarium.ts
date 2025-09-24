@@ -1,11 +1,11 @@
 import * as PIXI from 'pixi.js';
 import { Viewport } from 'pixi-viewport';
-import { FishManager } from './Fish.js';
-import { BubbleManager } from './Bubble.js';
-import { ObjectManager } from './Object.js';
-import { useAquariumStore } from '../stores/aquariumStore.js';
-import { AQUARIUM_CONFIG, NAVIGATION, UI_CONFIG, COLORS } from '../constants/index.js';
-import { databaseService } from '../services/database.js';
+import { FishManager } from './Fish';
+import { BubbleManager } from './Bubble';
+import { ObjectManager } from './Object';
+import { useAquariumStore } from '../stores/aquariumStore';
+import { AQUARIUM_CONFIG, NAVIGATION, UI_CONFIG, COLORS } from '../constants/index';
+import { databaseService } from '../services/database';
 
 export class Aquarium {
     constructor(canvasElement) {

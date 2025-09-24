@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'preact/hooks';
 import { useDroppable, useDndContext } from '@dnd-kit/core';
-import { Aquarium } from '../classes/Aquarium.js';
-import { useAquariumStore } from '../stores/aquariumStore.js';
+import { Aquarium } from '../classes/Aquarium';
+import { useAquariumStore } from '../stores/aquariumStore';
 
 function AquariumContainer({ mood, onAquariumReady }) {
   const canvasRef = useRef(null);

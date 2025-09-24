@@ -6,40 +6,50 @@ import FishEditor from './components/FishEditor';
 import ObjectsEditor from './components/ObjectsEditor';
 import DataPanel from './components/DataPanel';
 import DragAndDropProvider from './components/DragAndDropProvider';
-import { useAquariumStore } from './stores/aquariumStore.js';
-import { useFishStore } from './stores/fishStore.js';
-import { databaseService } from './services/database.js';
+import { useAquariumStore } from './stores/aquariumStore';
+import { useFishStore } from './stores/fishStore';
+import { databaseService } from './services/database';
+import type { 
+  MoodType, 
+  TimerSession, 
+  FishInfo, 
+  ViewportPosition, 
+  TileDimensions, 
+  ZoomInfo, 
+  PanelPositions, 
+  Position 
+} from './types/global';
 
-function App() {
-  const [mood, setMood] = useState('work');
-  const [time, setTime] = useState('00:00');
-  const [currentSession, setCurrentSession] = useState(null);
-  const [sessionStartTime, setSessionStartTime] = useState(null);
-  const [visibleCubes, setVisibleCubes] = useState(0);
-  const [fishInfo, setFishInfo] = useState({ horizontalCount: 0, verticalCount: 0, total: 0 });
-  const [viewportPosition, setViewportPosition] = useState({ 
+function App(): JSX.Element {
+  const [mood, setMood] = useState<MoodType>('work');
+  const [time, setTime] = useState<string>('00:00');
+  const [currentSession, setCurrentSession] = useState<TimerSession | null>(null);
+  const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
+  const [visibleCubes, setVisibleCubes] = useState<number>(0);
+  const [fishInfo, setFishInfo] = useState<FishInfo>({ horizontalCount: 0, verticalCount: 0, total: 0 });
+  const [viewportPosition, setViewportPosition] = useState<ViewportPosition>({ 
     currentX: 0, currentY: 0, maxX: 0, maxY: 0, 
     percentageX: 0, percentageY: 0, tileX: 0, tileY: 0 
   });
-  const [tileDimensions, setTileDimensions] = useState({ 
+  const [tileDimensions, setTileDimensions] = useState<TileDimensions>({ 
     horizontalTiles: 0, verticalTiles: 0, totalTiles: 0 
   });
-  const [zoomInfo, setZoomInfo] = useState({
+  const [zoomInfo, setZoomInfo] = useState<ZoomInfo>({
     currentZoom: 1.0,
     zoomPercentage: 100,
     visibleVerticalTiles: 0,
     minZoom: 0.1,
     maxZoom: 4.0
   });
-  const [aquariumRef, setAquariumRef] = useState(null);
-  const [showSettings, setShowSettings] = useState(false);
-  const [showFishEditor, setShowFishEditor] = useState(false);
-  const [showObjectsManager, setShowObjectsManager] = useState(false);
-  const [showTimer, setShowTimer] = useState(true);
-  const [showStats, setShowStats] = useState(true);
+  const [aquariumRef, setAquariumRef] = useState<any>(null); // TODO: Type Aquarium class properly
+  const [showSettings, setShowSettings] = useState<boolean>(false);
+  const [showFishEditor, setShowFishEditor] = useState<boolean>(false);
+  const [showObjectsManager, setShowObjectsManager] = useState<boolean>(false);
+  const [showTimer, setShowTimer] = useState<boolean>(true);
+  const [showStats, setShowStats] = useState<boolean>(true);
   
   // Panel positions for drag and drop
-  const [panelPositions, setPanelPositions] = useState(() => {
+  const [panelPositions, setPanelPositions] = useState<PanelPositions>(() => {
     try {
       const saved = localStorage.getItem('aquarium-panel-positions');
       return saved ? JSON.parse(saved) : {
@@ -57,7 +67,7 @@ function App() {
   });
 
   // Handle panel position changes
-  const handlePositionChange = (panelId, newPosition) => {
+  const handlePositionChange = (panelId: string, newPosition: Position): void => {
     const updatedPositions = {
       ...panelPositions,
       [panelId]: newPosition
@@ -80,7 +90,14 @@ function App() {
 
   // Handle object drops on aquarium
   useEffect(() => {
-    const handleObjectDrop = async (event) => {
+    const handleObjectDrop = async (event: CustomEvent<{
+      spriteUrl: string;
+      spriteName: string;
+      selectedSize: number;
+      screenX: number;
+      screenY: number;
+      useGridPlacement: boolean;
+    }>) => {
       const { spriteUrl, spriteName, selectedSize, screenX, screenY, useGridPlacement } = event.detail;
       
       if (aquariumRef) {
@@ -178,14 +195,14 @@ function App() {
   }, [initializeAquariumStore, initializeFishStore]);
 
   // Initialize time tracking
-  const initializeTimeTracking = async () => {
+  const initializeTimeTracking = async (): Promise<void> => {
     try {
       // Check if there's an active session
       const activeSession = await databaseService.getCurrentTimeTrackingSession();
       if (activeSession) {
         setCurrentSession(activeSession);
         setSessionStartTime(new Date(activeSession.start_time));
-        setMood(activeSession.mood);
+        setMood(activeSession.mood as MoodType);
       } else {
         // Start a new session with default mood
         await startNewSession('work');
@@ -198,7 +215,7 @@ function App() {
   };
 
   // Start a new time tracking session
-  const startNewSession = async (newMood) => {
+  const startNewSession = async (newMood: MoodType): Promise<void> => {
     try {
       const session = await databaseService.startTimeTrackingSession(newMood);
       if (session) {
@@ -259,7 +276,7 @@ function App() {
     return () => clearInterval(interval);
   }, [aquariumRef]);
 
-  const handleMoodChange = async (newMood) => {
+  const handleMoodChange = async (newMood: MoodType): Promise<void> => {
     if (newMood === mood) return; // No change needed
     
     // Update UI immediately for responsiveness
@@ -285,46 +302,44 @@ function App() {
     } catch (error) {
       console.error('Error switching mood:', error);
       // Try to recover by creating a local session state
-      const localSession = {
+      const localSession: TimerSession = {
         id: `temp-${Date.now()}`,
         mood: newMood,
-        start_time: new Date().toISOString(),
-        is_active: true
+        start_time: new Date().toISOString()
       };
       setCurrentSession(localSession);
     }
   };
 
-  const handleAquariumReady = (aquarium) => {
+  const handleAquariumReady = (aquarium: any): void => { // TODO: Type Aquarium class properly
     setAquariumRef(aquarium);
   };
   
-  const toggleSettings = () => {
+  const toggleSettings = (): void => {
     setShowSettings(!showSettings);
   };
   
-  const closeSettings = () => {
+  const closeSettings = (): void => {
     setShowSettings(false);
   };
 
-  const toggleFishEditor = () => {
+  const toggleFishEditor = (): void => {
     setShowFishEditor(!showFishEditor);
   };
   
-  const closeFishEditor = () => {
+  const closeFishEditor = (): void => {
     setShowFishEditor(false);
   };
 
-
-  const toggleTimer = () => {
+  const toggleTimer = (): void => {
     setShowTimer(!showTimer);
   };
 
-  const toggleStats = () => {
+  const toggleStats = (): void => {
     setShowStats(!showStats);
   };
 
-  const toggleObjectsManager = () => {
+  const toggleObjectsManager = (): void => {
     setShowObjectsManager(!showObjectsManager);
   };
 
