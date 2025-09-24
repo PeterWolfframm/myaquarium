@@ -282,18 +282,18 @@ function FishEditor({
       draggablePosition={draggablePosition}
     >
       {syncError && (
-        <div className="error-message">
+        <div className="section-interactive bg-red-500/20 border-red-500/50 text-red-300 p-3 mb-4 rounded flex justify-between items-center">
           Error: {syncError}
-          <button onClick={clearSyncError}>×</button>
+          <button className="text-red-300 hover:text-white ml-3" onClick={clearSyncError}>×</button>
         </div>
       )}
       
-      <div className="fish-editor-content">
-          <div className="fish-list">
-            <div className="fish-list-header">
-              <h3>Your Fish ({fish.length})</h3>
+      <div className="card-content-stats space-y-6">
+          <div className="section-primary">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-section-title">Your Fish ({fish.length})</h3>
               <button 
-                className="create-fish-button"
+                className="btn-primary"
                 onClick={handleStartCreating}
                 disabled={isSyncing}
               >
@@ -301,35 +301,38 @@ function FishEditor({
               </button>
             </div>
             {isLoading ? (
-              <div className="loading">Loading fish...</div>
+              <div className="loading-state">Loading fish...</div>
             ) : (
-              <div className="fish-grid">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {fish.map((fishData) => (
                   <div 
                     key={fishData.id} 
-                    className={`fish-item ${selectedFish?.id === fishData.id ? 'selected' : ''} ${isSyncing ? 'syncing' : ''}`}
+                    className={`section-interactive p-3 cursor-pointer relative ${selectedFish?.id === fishData.id ? 'border-primary-500 bg-primary-500/20' : ''} ${isSyncing ? 'opacity-70 animate-pulse' : ''}`}
                     onClick={() => handleFishSelect(fishData)}
                   >
-                    <div 
-                      className="fish-color-preview" 
-                      style={{ backgroundColor: `#${fishData.color}` }}
-                    ></div>
-                    <div className="fish-info">
-                      <div className="fish-name">{fishData.name || 'Unnamed'}</div>
-                      <div className="fish-color">#{fishData.color}</div>
-                      <div className="fish-size">Size: {(fishData.size || 1.0).toFixed(1)}x</div>
-                      <div className="fish-sprite-indicator">🖼️ {((fishData.spriteUrl || fishData.sprite_url) === FISH_CONFIG.DEFAULT_SPRITE_URL) ? 'Default Sprite' : 'Custom Sprite'}</div>
+                    <div className="flex items-center gap-3">
+                      <div 
+                        className="w-8 h-8 rounded-full border-2 border-white/30 flex-shrink-0" 
+                        style={{ backgroundColor: `#${fishData.color}` }}
+                      ></div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-value text-sm font-bold truncate">{fishData.name || 'Unnamed'}</div>
+                        <div className="text-mono-small">#{fishData.color}</div>
+                        <div className="text-mono-small">Size: {(fishData.size || 1.0).toFixed(1)}x</div>
+                        <div className="text-xs text-primary-300">🖼️ {((fishData.spriteUrl || fishData.sprite_url) === FISH_CONFIG.DEFAULT_SPRITE_URL) ? 'Default' : 'Custom'}</div>
+                      </div>
+                      <button 
+                        className="absolute top-2 right-2 w-6 h-6 bg-red-500/20 hover:bg-red-500/40 text-red-400 hover:text-red-300 rounded border border-red-500/30 flex items-center justify-center text-xs transition-all duration-200"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteFish(fishData.id);
+                        }}
+                        disabled={isSyncing}
+                        title="Delete fish"
+                      >
+                        🗑️
+                      </button>
                     </div>
-                    <button 
-                      className="delete-fish-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteFish(fishData.id);
-                      }}
-                      disabled={isSyncing}
-                    >
-                      🗑️
-                    </button>
                   </div>
                 ))}
               </div>
@@ -337,207 +340,217 @@ function FishEditor({
           </div>
 
           {isCreating && (
-            <div className="fish-creator-form">
-              <h3>Create New Fish</h3>
+            <div className="section-secondary">
+              <h3 className="text-section-title">Create New Fish</h3>
               
-              <div className="form-group">
-                <label>Name:</label>
-                <input
-                  type="text"
-                  value={newFishName}
-                  onChange={(e) => setNewFishName(e.target.value)}
-                  placeholder="Enter fish name"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Color:</label>
-                <div className="color-input-group">
-                  <input
-                    type="color"
-                    value={`#${newFishColor}`}
-                    onChange={(e) => setNewFishColor(e.target.value.replace('#', ''))}
-                  />
+              <div className="section-content space-y-4">
+                <label className="text-label block">
+                  Name:
                   <input
                     type="text"
-                    value={newFishColor}
-                    onChange={(e) => setNewFishColor(e.target.value.replace('#', ''))}
-                    placeholder="FF0000"
-                    maxLength={6}
+                    value={newFishName}
+                    onChange={(e) => setNewFishName(e.target.value)}
+                    placeholder="Enter fish name"
+                    className="input-primary mt-2 w-full"
                   />
-                </div>
-              </div>
+                </label>
 
-              <div className="form-group">
-                <label>Preset Colors:</label>
-                <div className="color-presets">
-                  {presetColors.map((color) => (
-                    <button
-                      key={color}
-                      className="color-preset"
-                      style={{ backgroundColor: `#${color}` }}
-                      onClick={() => setNewFishColor(color)}
-                      title={`#${color}`}
+                <div>
+                  <label className="text-label block mb-3">Color:</label>
+                  <div className="flex items-center gap-3 mb-3">
+                    <input
+                      type="color"
+                      value={`#${newFishColor}`}
+                      onChange={(e) => setNewFishColor(e.target.value.replace('#', ''))}
+                      className="w-12 h-8 border-2 border-primary-400/50 rounded cursor-pointer"
                     />
-                  ))}
+                    <input
+                      type="text"
+                      value={newFishColor}
+                      onChange={(e) => setNewFishColor(e.target.value.replace('#', ''))}
+                      placeholder="FF0000"
+                      maxLength={6}
+                      className="input-primary flex-1"
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <div className="form-group">
-                <label>Size:</label>
-                <div className="size-input-group">
-                  <input
-                    type="range"
-                    min="0.1"
-                    max="3.0"
-                    step="0.1"
-                    value={newFishSize}
-                    onChange={(e) => setNewFishSize(parseFloat(e.target.value))}
-                    className="size-slider"
-                  />
-                  <input
-                    type="number"
-                    min="0.1"
-                    max="3.0"
-                    step="0.1"
-                    value={newFishSize}
-                    onChange={(e) => setNewFishSize(parseFloat(e.target.value) || 1.0)}
-                    className="size-number-input"
-                  />
-                  <span className="size-label">{newFishSize.toFixed(1)}x</span>
+                <div>
+                  <label className="text-label block mb-3">Preset Colors:</label>
+                  <div className="grid grid-cols-8 gap-2">
+                    {presetColors.map((color) => (
+                      <button
+                        key={color}
+                        className="w-8 h-8 rounded border-2 border-white/30 hover:border-primary-400 hover:scale-110 transition-all duration-200"
+                        style={{ backgroundColor: `#${color}` }}
+                        onClick={() => setNewFishColor(color)}
+                        title={`#${color}`}
+                      />
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              <div className="form-group">
-                <label>Sprite:</label>
-                <SpriteGallery
-                  selectedSpriteUrl={newFishSpriteUrl}
-                  onSpriteSelect={setNewFishSpriteUrl}
-                  onUploadComplete={(result) => {
-                    console.log('Sprite uploaded:', result);
-                  }}
-                  onAddRandomFish={handleAddRandomFish}
-                  isCreatingFish={isSyncing}
-                />
-              </div>
+                <div>
+                  <label className="text-label block mb-3">Size:</label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="range"
+                      min="0.1"
+                      max="3.0"
+                      step="0.1"
+                      value={newFishSize}
+                      onChange={(e) => setNewFishSize(parseFloat(e.target.value))}
+                      className="flex-1"
+                    />
+                    <input
+                      type="number"
+                      min="0.1"
+                      max="3.0"
+                      step="0.1"
+                      value={newFishSize}
+                      onChange={(e) => setNewFishSize(parseFloat(e.target.value) || 1.0)}
+                      className="w-16 px-2 py-1 text-sm border border-primary-400/50 bg-slate-800/50 text-white rounded"
+                    />
+                    <span className="text-mono-small min-w-[35px] text-center">{newFishSize.toFixed(1)}x</span>
+                  </div>
+                </div>
 
-              <div className="form-actions">
-                <button 
-                  className="save-button" 
-                  onClick={handleCreateFish}
-                  disabled={isSyncing}
-                >
-                  {isSyncing ? 'Creating...' : 'Create Fish'}
-                </button>
-                <button 
-                  className="cancel-button" 
-                  onClick={handleCancelCreation}
-                >
-                  Cancel
-                </button>
+                <div>
+                  <label className="text-label block mb-3">Sprite:</label>
+                  <SpriteGallery
+                    selectedSpriteUrl={newFishSpriteUrl}
+                    onSpriteSelect={setNewFishSpriteUrl}
+                    onUploadComplete={(result) => {
+                      console.log('Sprite uploaded:', result);
+                    }}
+                    onAddRandomFish={handleAddRandomFish}
+                    isCreatingFish={isSyncing}
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <button 
+                    className="btn-primary flex-1" 
+                    onClick={handleCreateFish}
+                    disabled={isSyncing}
+                  >
+                    {isSyncing ? 'Creating...' : 'Create Fish'}
+                  </button>
+                  <button 
+                    className="btn-secondary flex-1" 
+                    onClick={handleCancelCreation}
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             </div>
           )}
 
           {selectedFish && (
-            <div className="fish-editor-form">
-              <h3>Edit {selectedFish.name || 'Fish'}</h3>
+            <div className="section-secondary">
+              <h3 className="text-section-title">Edit {selectedFish.name || 'Fish'}</h3>
               
-              <div className="form-group">
-                <label>Name:</label>
-                <input
-                  type="text"
-                  value={editingName}
-                  onChange={(e) => setEditingName(e.target.value)}
-                  placeholder="Enter fish name"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Color:</label>
-                <div className="color-input-group">
-                  <input
-                    type="color"
-                    value={`#${editingColor}`}
-                    onChange={(e) => setEditingColor(e.target.value.replace('#', ''))}
-                  />
+              <div className="section-content space-y-4">
+                <label className="text-label block">
+                  Name:
                   <input
                     type="text"
-                    value={editingColor}
-                    onChange={(e) => setEditingColor(e.target.value.replace('#', ''))}
-                    placeholder="FF0000"
-                    maxLength={6}
+                    value={editingName}
+                    onChange={(e) => setEditingName(e.target.value)}
+                    placeholder="Enter fish name"
+                    className="input-primary mt-2 w-full"
                   />
-                </div>
-              </div>
+                </label>
 
-              <div className="form-group">
-                <label>Preset Colors:</label>
-                <div className="color-presets">
-                  {presetColors.map((color) => (
-                    <button
-                      key={color}
-                      className="color-preset"
-                      style={{ backgroundColor: `#${color}` }}
-                      onClick={() => setEditingColor(color)}
-                      title={`#${color}`}
+                <div>
+                  <label className="text-label block mb-3">Color:</label>
+                  <div className="flex items-center gap-3 mb-3">
+                    <input
+                      type="color"
+                      value={`#${editingColor}`}
+                      onChange={(e) => setEditingColor(e.target.value.replace('#', ''))}
+                      className="w-12 h-8 border-2 border-primary-400/50 rounded cursor-pointer"
                     />
-                  ))}
+                    <input
+                      type="text"
+                      value={editingColor}
+                      onChange={(e) => setEditingColor(e.target.value.replace('#', ''))}
+                      placeholder="FF0000"
+                      maxLength={6}
+                      className="input-primary flex-1"
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <div className="form-group">
-                <label>Size:</label>
-                <div className="size-input-group">
-                  <input
-                    type="range"
-                    min="0.1"
-                    max="3.0"
-                    step="0.1"
-                    value={editingSize}
-                    onChange={(e) => setEditingSize(parseFloat(e.target.value))}
-                    className="size-slider"
-                  />
-                  <input
-                    type="number"
-                    min="0.1"
-                    max="3.0"
-                    step="0.1"
-                    value={editingSize}
-                    onChange={(e) => setEditingSize(parseFloat(e.target.value) || 1.0)}
-                    className="size-number-input"
-                  />
-                  <span className="size-label">{editingSize.toFixed(1)}x</span>
+                <div>
+                  <label className="text-label block mb-3">Preset Colors:</label>
+                  <div className="grid grid-cols-8 gap-2">
+                    {presetColors.map((color) => (
+                      <button
+                        key={color}
+                        className="w-8 h-8 rounded border-2 border-white/30 hover:border-primary-400 hover:scale-110 transition-all duration-200"
+                        style={{ backgroundColor: `#${color}` }}
+                        onClick={() => setEditingColor(color)}
+                        title={`#${color}`}
+                      />
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              <div className="form-group">
-                <label>Sprite:</label>
-                <SpriteGallery
-                  selectedSpriteUrl={editingSpriteUrl}
-                  onSpriteSelect={setEditingSpriteUrl}
-                  onUploadComplete={(result) => {
-                    console.log('Sprite uploaded:', result);
-                  }}
-                  onAddRandomFish={handleAddRandomFish}
-                  isCreatingFish={isSyncing}
-                />
-              </div>
+                <div>
+                  <label className="text-label block mb-3">Size:</label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="range"
+                      min="0.1"
+                      max="3.0"
+                      step="0.1"
+                      value={editingSize}
+                      onChange={(e) => setEditingSize(parseFloat(e.target.value))}
+                      className="flex-1"
+                    />
+                    <input
+                      type="number"
+                      min="0.1"
+                      max="3.0"
+                      step="0.1"
+                      value={editingSize}
+                      onChange={(e) => setEditingSize(parseFloat(e.target.value) || 1.0)}
+                      className="w-16 px-2 py-1 text-sm border border-primary-400/50 bg-slate-800/50 text-white rounded"
+                    />
+                    <span className="text-mono-small min-w-[35px] text-center">{editingSize.toFixed(1)}x</span>
+                  </div>
+                </div>
 
-              <div className="form-actions">
-                <button 
-                  className="save-button" 
-                  onClick={handleSaveChanges}
-                  disabled={isSyncing}
-                >
-                  {isSyncing ? 'Saving...' : 'Save Changes'}
-                </button>
-                <button 
-                  className="cancel-button" 
-                  onClick={handleCancelEdit}
-                >
-                  Cancel
-                </button>
+                <div>
+                  <label className="text-label block mb-3">Sprite:</label>
+                  <SpriteGallery
+                    selectedSpriteUrl={editingSpriteUrl}
+                    onSpriteSelect={setEditingSpriteUrl}
+                    onUploadComplete={(result) => {
+                      console.log('Sprite uploaded:', result);
+                    }}
+                    onAddRandomFish={handleAddRandomFish}
+                    isCreatingFish={isSyncing}
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <button 
+                    className="btn-primary flex-1" 
+                    onClick={handleSaveChanges}
+                    disabled={isSyncing}
+                  >
+                    {isSyncing ? 'Saving...' : 'Save Changes'}
+                  </button>
+                  <button 
+                    className="btn-secondary flex-1" 
+                    onClick={handleCancelEdit}
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             </div>
           )}

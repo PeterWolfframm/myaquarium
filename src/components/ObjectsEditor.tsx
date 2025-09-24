@@ -281,39 +281,43 @@ function ObjectsEditor({
       draggablePosition={draggablePosition}
     >
       {error && (
-        <div className="error-message">
+        <div className="section-interactive bg-red-500/20 border-red-500/50 text-red-300 p-3 mb-4 rounded flex justify-between items-center">
           Error: {error}
-          <button onClick={() => setError(null)}>×</button>
+          <button className="text-red-300 hover:text-white ml-3" onClick={() => setError(null)}>×</button>
         </div>
       )}
       
-      <div className="objects-editor-content">
-        <div className="objects-header">
-          <h3>Object Sprites</h3>
-          <p>Upload and manage object sprites for your aquarium. Only name input is required for uploads.</p>
+      <div className="card-content-stats space-y-6">
+        <div className="section-primary">
+          <h3 className="text-section-title">Object Sprites</h3>
+          <p className="text-sm text-slate-300 text-center">Upload and manage object sprites for your aquarium. Only name input is required for uploads.</p>
         </div>
 
         {/* Size Selector */}
-        <div className="size-selector-section">
-          <h4>Object Size:</h4>
-          <div className="size-selector">
-            {[6, 7, 8, 9, 10, 12].map(size => (
-              <button
-                key={size}
-                className={`size-option ${selectedSize === size ? 'selected' : ''}`}
-                onClick={() => setSelectedSize(size)}
-                title={`${size}x${size} tiles`}
-              >
-                {size}x{size}
-              </button>
-            ))}
-          </div>
-          <div className="size-info">
-            <small>Selected size: {selectedSize}x{selectedSize} tiles ({selectedSize * 64}x{selectedSize * 64} pixels)</small>
+        <div className="section-secondary">
+          <h4 className="text-section-title">Object Size</h4>
+          <div className="section-content space-y-3">
+            <div className="flex flex-wrap gap-2 justify-center">
+              {[6, 7, 8, 9, 10, 12].map(size => (
+                <button
+                  key={size}
+                  className={`px-4 py-2 border-2 font-bold text-sm transition-all duration-200 ${
+                    selectedSize === size 
+                      ? 'bg-primary-500 text-white border-primary-600 shadow-lg shadow-primary-500/50 scale-105' 
+                      : 'bg-slate-800 text-primary-300 border-primary-400/50 hover:bg-primary-600 hover:text-white hover:border-primary-500 hover:scale-105'
+                  }`}
+                  onClick={() => setSelectedSize(size)}
+                  title={`${size}x${size} tiles`}
+                >
+                  {size}x{size}
+                </button>
+              ))}
+            </div>
+            <p className="text-mono-small text-center">Selected size: {selectedSize}x{selectedSize} tiles ({selectedSize * 64}x{selectedSize * 64} pixels)</p>
           </div>
         </div>
 
-        <div className="objects-main">
+        <div className="section-secondary">
           <ObjectsSpriteGallery
             selectedSpriteUrl={selectedSprite}
             onSpriteSelect={handleSpriteSelect}
@@ -321,193 +325,44 @@ function ObjectsEditor({
             onError={setError}
             selectedSize={selectedSize}
           />
+        </div>
 
-          {/* Placed Objects Section */}
-          <div className="placed-objects-section">
-            <h4>Placed Objects in Aquarium:</h4>
-            {isLoading && (
-              <div className="loading-text">Loading objects...</div>
-            )}
-            {placedObjects.length === 0 && !isLoading ? (
-              <div className="no-objects">
-                No objects placed yet. Drag sprites above onto the aquarium!
-              </div>
-            ) : (
-              <div className="placed-objects-list">
+        {/* Placed Objects Section */}
+        <div className="section-secondary">
+          <h4 className="text-section-title">Placed Objects in Aquarium</h4>
+          {isLoading && (
+            <div className="loading-state">Loading objects...</div>
+          )}
+          {placedObjects.length === 0 && !isLoading ? (
+            <div className="empty-state">
+              No objects placed yet. Drag sprites above onto the aquarium!
+            </div>
+          ) : (
+            <div className="section-content">
+              <div className="grid grid-cols-1 gap-3 max-h-48 overflow-y-auto">
                 {placedObjects.map((obj) => (
                   <div 
                     key={obj.object_id}
-                    className={`placed-object-item ${selectedObject?.object_id === obj.object_id ? 'selected' : ''}`}
+                    className={`section-interactive p-3 cursor-pointer ${selectedObject?.object_id === obj.object_id ? 'border-primary-500 bg-primary-500/20' : ''}`}
                     onClick={() => handleObjectSelect(obj)}
                   >
-                    <img 
-                      src={obj.sprite_url} 
-                      alt="Placed object"
-                      className="placed-object-thumb"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'block';
-                      }}
-                    />
-                    <div className="placed-object-error" style={{ display: 'none' }}>
-                      Failed to load
-                    </div>
-                    <div className="placed-object-info">
-                      <div className="object-position">
-                        Grid: ({obj.grid_x}, {obj.grid_y})
+                    <div className="flex items-center gap-3">
+                      <img 
+                        src={obj.sprite_url} 
+                        alt="Placed object"
+                        className="w-12 h-12 object-cover rounded border border-white/20 flex-shrink-0"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'block';
+                        }}
+                      />
+                      <div className="text-xs text-red-400 hidden">
+                        Failed to load
                       </div>
-                      <div className="object-size">
-                        Size: {obj.size || 6}x{obj.size || 6}
-                      </div>
-                      <div className="object-layer">
-                        Layer: {obj.layer || 0}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Object Positioning Controls */}
-          {selectedObject && (
-            <div className="object-positioning-controls">
-              <h4>Position Selected Object:</h4>
-              <div className="object-info-display">
-                <img 
-                  src={selectedObject.sprite_url} 
-                  alt="Selected object"
-                  className="positioning-object-preview"
-                />
-                <div className="positioning-object-details">
-                  <div>Position: ({selectedObject.grid_x}, {selectedObject.grid_y})</div>
-                  <div>Size: {selectedObject.size || 6}x{selectedObject.size || 6} tiles</div>
-                  <div>Layer: {selectedObject.layer || 0}</div>
-                </div>
-              </div>
-              
-              <div className="movement-controls">
-                <div className="movement-grid">
-                  <button 
-                    className="move-btn move-up"
-                    onClick={() => moveObject('up')}
-                    title="Move up one tile"
-                  >
-                    ↑
-                  </button>
-                  <button 
-                    className="move-btn move-left"
-                    onClick={() => moveObject('left')}
-                    title="Move left one tile"
-                  >
-                    ←
-                  </button>
-                  <div className="move-center">
-                    <span className="position-display">
-                      {selectedObject.grid_x}, {selectedObject.grid_y}
-                    </span>
-                  </div>
-                  <button 
-                    className="move-btn move-right"
-                    onClick={() => moveObject('right')}
-                    title="Move right one tile"
-                  >
-                    →
-                  </button>
-                  <button 
-                    className="move-btn move-down"
-                    onClick={() => moveObject('down')}
-                    title="Move down one tile"
-                  >
-                    ↓
-                  </button>
-                </div>
-              </div>
-
-              <div className="layer-controls">
-                <h5>Layer Controls:</h5>
-                <div className="layer-buttons">
-                  <button 
-                    className="layer-btn layer-background"
-                    onClick={() => moveObjectToLayer('background')}
-                    title="Move to background (layer -1)"
-                  >
-                    ↓ Background
-                  </button>
-                  <button 
-                    className="layer-btn layer-foreground"
-                    onClick={() => moveObjectToLayer('foreground')}
-                    title="Move to foreground (layer +1)"
-                  >
-                    ↑ Foreground
-                  </button>
-                </div>
-                <div className="layer-info">
-                  <small>Layer {selectedObject.layer || 0}: Lower layers render behind higher layers</small>
-                </div>
-              </div>
-
-              <div className="object-actions">
-                <button 
-                  className="clear-object-selection-btn"
-                  onClick={handleClearObjectSelection}
-                >
-                  Clear Selection
-                </button>
-                <button 
-                  className="delete-object-btn"
-                  onClick={deleteObject}
-                >
-                  Delete Object
-                </button>
-              </div>
-            </div>
-          )}
-
-          {selectedSprite && (
-            <div className="selected-sprite-info">
-              <h4>Selected Object Sprite:</h4>
-              <div className="sprite-preview-large">
-                <img 
-                  src={selectedSprite} 
-                  alt="Selected object sprite" 
-                  className="object-sprite-preview"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                    e.target.nextSibling.style.display = 'block';
-                  }}
-                />
-                <div className="sprite-error" style={{ display: 'none' }}>
-                  Failed to load image
-                </div>
-              </div>
-              <div className="sprite-url">
-                <small>{selectedSprite}</small>
-              </div>
-              <button 
-                className="remove-selection-btn"
-                onClick={handleRemoveSelection}
-              >
-                Clear Selection
-              </button>
-            </div>
-          )}
-
-          {uploadHistory.length > 0 && (
-            <div className="upload-history">
-              <h4>Recent Uploads:</h4>
-              <div className="upload-history-list">
-                {uploadHistory.slice(-5).reverse().map((upload, index) => (
-                  <div key={index} className="upload-history-item">
-                    <img 
-                      src={upload.url} 
-                      alt={upload.fileName}
-                      className="history-sprite-thumb"
-                    />
-                    <div className="upload-info">
-                      <div className="upload-name">{upload.fileName}</div>
-                      <div className="upload-time">
-                        {upload.uploadedAt.toLocaleTimeString()}
+                      <div className="flex-1 text-sm">
+                        <div className="text-value">Grid: ({obj.grid_x}, {obj.grid_y})</div>
+                        <div className="text-mono-small">Size: {obj.size || 6}x{obj.size || 6}</div>
+                        <div className="text-mono-small">Layer: {obj.layer || 0}</div>
                       </div>
                     </div>
                   </div>
@@ -516,6 +371,159 @@ function ObjectsEditor({
             </div>
           )}
         </div>
+
+        {/* Object Positioning Controls */}
+        {selectedObject && (
+          <div className="section-primary">
+            <h4 className="text-section-title">Position Selected Object</h4>
+            <div className="section-content space-y-4">
+              <div className="flex items-center gap-4 p-3 bg-slate-800/50 rounded border border-primary-400/30">
+                <img 
+                  src={selectedObject.sprite_url} 
+                  alt="Selected object"
+                  className="w-16 h-16 object-cover rounded border-2 border-primary-400"
+                />
+                <div className="flex-1 space-y-1">
+                  <div className="text-value">Position: ({selectedObject.grid_x}, {selectedObject.grid_y})</div>
+                  <div className="text-mono-small">Size: {selectedObject.size || 6}x{selectedObject.size || 6} tiles</div>
+                  <div className="text-mono-small">Layer: {selectedObject.layer || 0}</div>
+                </div>
+              </div>
+              
+              <div className="flex justify-center">
+                <div className="grid grid-cols-3 grid-rows-3 gap-1 w-32 h-32">
+                  <div></div>
+                  <button 
+                    className="btn-primary flex items-center justify-center text-lg font-bold hover:-translate-y-1"
+                    onClick={() => moveObject('up')}
+                    title="Move up one tile"
+                  >
+                    ↑
+                  </button>
+                  <div></div>
+                  <button 
+                    className="btn-primary flex items-center justify-center text-lg font-bold hover:-translate-x-1"
+                    onClick={() => moveObject('left')}
+                    title="Move left one tile"
+                  >
+                    ←
+                  </button>
+                  <div className="flex items-center justify-center bg-slate-800/50 border border-primary-400/30 rounded">
+                    <span className="text-mono-small text-primary-400 font-bold">
+                      {selectedObject.grid_x}, {selectedObject.grid_y}
+                    </span>
+                  </div>
+                  <button 
+                    className="btn-primary flex items-center justify-center text-lg font-bold hover:translate-x-1"
+                    onClick={() => moveObject('right')}
+                    title="Move right one tile"
+                  >
+                    →
+                  </button>
+                  <div></div>
+                  <button 
+                    className="btn-primary flex items-center justify-center text-lg font-bold hover:translate-y-1"
+                    onClick={() => moveObject('down')}
+                    title="Move down one tile"
+                  >
+                    ↓
+                  </button>
+                  <div></div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <h5 className="text-label-large text-center">Layer Controls</h5>
+                <div className="flex gap-3">
+                  <button 
+                    className="btn-secondary flex-1"
+                    onClick={() => moveObjectToLayer('background')}
+                    title="Move to background (layer -1)"
+                  >
+                    ↓ Background
+                  </button>
+                  <button 
+                    className="btn-secondary flex-1"
+                    onClick={() => moveObjectToLayer('foreground')}
+                    title="Move to foreground (layer +1)"
+                  >
+                    ↑ Foreground
+                  </button>
+                </div>
+                <p className="text-mono-small text-center">Layer {selectedObject.layer || 0}: Lower layers render behind higher layers</p>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button 
+                  className="btn-secondary flex-1"
+                  onClick={handleClearObjectSelection}
+                >
+                  Clear Selection
+                </button>
+                <button 
+                  className="btn-secondary flex-1 bg-red-500/20 border-red-500/50 text-red-400 hover:bg-red-500/40 hover:text-red-300"
+                  onClick={deleteObject}
+                >
+                  Delete Object
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {selectedSprite && (
+          <div className="section-tertiary">
+            <h4 className="text-section-title">Selected Object Sprite</h4>
+            <div className="section-content space-y-3">
+              <div className="flex justify-center">
+                <img 
+                  src={selectedSprite} 
+                  alt="Selected object sprite" 
+                  className="w-20 h-20 object-cover rounded border-2 border-primary-400"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'block';
+                  }}
+                />
+                <div className="text-xs text-red-400 hidden">
+                  Failed to load image
+                </div>
+              </div>
+              <p className="text-mono-small text-center break-all">{selectedSprite}</p>
+              <button 
+                className="btn-secondary w-full"
+                onClick={handleRemoveSelection}
+              >
+                Clear Selection
+              </button>
+            </div>
+          </div>
+        )}
+
+        {uploadHistory.length > 0 && (
+          <div className="section-tertiary">
+            <h4 className="text-section-title">Recent Uploads</h4>
+            <div className="section-content">
+              <div className="grid grid-cols-1 gap-2 max-h-32 overflow-y-auto">
+                {uploadHistory.slice(-5).reverse().map((upload, index) => (
+                  <div key={index} className="flex items-center gap-3 p-2 bg-slate-800/30 rounded border border-primary-400/20">
+                    <img 
+                      src={upload.url} 
+                      alt={upload.fileName}
+                      className="w-8 h-8 object-cover rounded border border-white/20"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-value text-xs truncate">{upload.fileName}</div>
+                      <div className="text-mono-small">
+                        {upload.uploadedAt.toLocaleTimeString()}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </CardComponent>
   );

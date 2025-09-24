@@ -138,62 +138,76 @@ function AquariumSettings({
       isDraggable={isDraggable}
       draggablePosition={draggablePosition}
     >
-      <div className="settings-content">
-        <div className="setting-group">
-          <h3>Current Zoom Status</h3>
-          <div className="zoom-status">
-            <div className="zoom-info-row">
-              <span>Current Zoom:</span>
-              <span className="zoom-value">{zoomInfo.currentZoom}x ({zoomInfo.zoomPercentage}%)</span>
+      <div className="card-content-stats space-y-6">
+        {/* Current Zoom Status */}
+        <div className="section-primary">
+          <h3 className="text-section-title">Current Zoom Status</h3>
+          <div className="grid-stats">
+            <div className="section-content">
+              <div className="grid-data-columns">
+                <span className="text-label">Current Zoom:</span>
+                <span className="text-value">{zoomInfo.currentZoom}x ({zoomInfo.zoomPercentage}%)</span>
+              </div>
             </div>
-            <div className="zoom-info-row">
-              <span>Visible Vertical Tiles:</span>
-              <span className="zoom-value">{zoomInfo.visibleVerticalTiles}</span>
+            <div className="section-content">
+              <div className="grid-data-columns">
+                <span className="text-label">Visible V-Tiles:</span>
+                <span className="text-value">{zoomInfo.visibleVerticalTiles}</span>
+              </div>
             </div>
-            <div className="zoom-info-row">
-              <span>Zoom Range:</span>
-              <span className="zoom-value">{minZoom || 0.1}x - {maxZoom || 4.0}x</span>
+            <div className="section-content">
+              <div className="grid-data-columns">
+                <span className="text-label">Zoom Range:</span>
+                <span className="text-value">{minZoom || 0.1}x - {maxZoom || 4.0}x</span>
+              </div>
             </div>
-            <button className="reset-zoom-button" onClick={handleResetToDefaultZoom}>
-              Reset to Default Zoom
+          </div>
+          <button 
+            className="btn-action mt-4"
+            onClick={handleResetToDefaultZoom}
+          >
+            Reset to Default Zoom
+          </button>
+        </div>
+
+        {/* Zoom Boundaries */}
+        <div className="section-secondary">
+          <h3 className="text-section-title">Zoom Boundaries</h3>
+          <div className="grid-stats mb-4">
+            <div className="section-content">
+              <div className="grid-data-columns">
+                <span className="text-label">Custom Min Zoom:</span>
+                <span className="text-value">{minZoom ? `${minZoom}x` : 'Not Set'}</span>
+              </div>
+            </div>
+            <div className="section-content">
+              <div className="grid-data-columns">
+                <span className="text-label">Custom Max Zoom:</span>
+                <span className="text-value">{maxZoom ? `${maxZoom}x` : 'Not Set'}</span>
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-col gap-2 mb-4">
+            <button className="btn-secondary" onClick={handleCaptureMinZoom}>
+              Capture Min Zoom
+            </button>
+            <button className="btn-secondary" onClick={handleCaptureMaxZoom}>
+              Capture Max Zoom
+            </button>
+            <button className="btn-secondary" onClick={handleClearZoomBoundaries}>
+              Clear Boundaries
             </button>
           </div>
-        </div>
-
-        <div className="setting-group">
-          <h3>Zoom Boundaries</h3>
-          <div className="zoom-boundaries">
-            <div className="zoom-boundary-status">
-              <div className="zoom-info-row">
-                <span>Custom Min Zoom:</span>
-                <span className="zoom-value">{minZoom ? `${minZoom}x` : 'Not Set'}</span>
-              </div>
-              <div className="zoom-info-row">
-                <span>Custom Max Zoom:</span>
-                <span className="zoom-value">{maxZoom ? `${maxZoom}x` : 'Not Set'}</span>
-              </div>
-            </div>
-            <div className="zoom-boundary-controls">
-              <button className="capture-zoom-button capture-min" onClick={handleCaptureMinZoom}>
-                Capture Min Zoom
-              </button>
-              <button className="capture-zoom-button capture-max" onClick={handleCaptureMaxZoom}>
-                Capture Max Zoom
-              </button>
-              <button className="clear-boundaries-button" onClick={handleClearZoomBoundaries}>
-                Clear Boundaries
-              </button>
-            </div>
-            <div className="info-text">
-              <p>Set your current zoom level as the minimum or maximum boundary. Once set, you won't be able to zoom beyond these limits.</p>
-            </div>
+          <div className="section-content">
+            <p className="text-sm text-slate-300">Set your current zoom level as the minimum or maximum boundary. Once set, you won't be able to zoom beyond these limits.</p>
           </div>
         </div>
 
-        <div className="setting-group">
-          <h3>Default Zoom Level</h3>
-          <div className="input-group">
-            <label>
+        {/* Default Zoom Level */}
+        <div className="section-secondary">
+          <h3 className="text-section-title">Default Zoom Level</h3>
+          <div className="section-content space-y-3">
+            <label className="text-label block">
               Default Visible Vertical Tiles:
               <input
                 type="number"
@@ -201,18 +215,18 @@ function AquariumSettings({
                 max="50"
                 value={localValues.defaultVisibleVerticalTiles}
                 onChange={(e) => updateLocalValue('defaultVisibleVerticalTiles', parseInt((e.target as HTMLInputElement)?.value) || 0)}
+                className="input-primary mt-2 w-full"
               />
             </label>
-          </div>
-          <div className="info-text">
-            <p>Controls how many tiles you see vertically when the app opens. Currently: {localValues.defaultVisibleVerticalTiles} tiles. Higher values = more tiles visible (smaller zoom).</p>
+            <p className="text-sm text-slate-300">Controls how many tiles you see vertically when the app opens. Currently: {localValues.defaultVisibleVerticalTiles} tiles. Higher values = more tiles visible (smaller zoom).</p>
           </div>
         </div>
         
-        <div className="setting-group">
-          <h3>Aquarium Size (Fixed 64px Tiles)</h3>
-          <div className="input-group">
-            <label>
+        {/* Aquarium Size */}
+        <div className="section-secondary">
+          <h3 className="text-section-title">Aquarium Size (Fixed 64px Tiles)</h3>
+          <div className="section-content space-y-4">
+            <label className="text-label block">
               Horizontal Tiles:
               <input
                 type="number"
@@ -220,11 +234,10 @@ function AquariumSettings({
                 max="1000"
                 value={localValues.tilesHorizontal}
                 onChange={(e) => updateLocalValue('tilesHorizontal', parseInt((e.target as HTMLInputElement)?.value) || 0)}
+                className="input-primary mt-2 w-full"
               />
             </label>
-          </div>
-          <div className="input-group">
-            <label>
+            <label className="text-label block">
               Vertical Tiles:
               <input
                 type="number"
@@ -232,65 +245,61 @@ function AquariumSettings({
                 max="500"
                 value={localValues.tilesVertical}
                 onChange={(e) => updateLocalValue('tilesVertical', parseInt((e.target as HTMLInputElement)?.value) || 0)}
+                className="input-primary mt-2 w-full"
               />
             </label>
-          </div>
-          <div className="info-text">
-            <p>Each tile is exactly 64 pixels. The aquarium size is defined by the number of tiles.</p>
+            <p className="text-sm text-slate-300">Each tile is exactly 64 pixels. The aquarium size is defined by the number of tiles.</p>
           </div>
         </div>
 
-        <div className="setting-group preview">
-          <h3>Preview</h3>
-          <div className="preview-info">
-            <p>World Size: {localValues.tilesHorizontal} × {localValues.tilesVertical} tiles</p>
-            <p>World Dimensions: {localValues.tilesHorizontal * 64} × {localValues.tilesVertical * 64} pixels</p>
-            <p>Default Visible: {localValues.defaultVisibleVerticalTiles} vertical tiles on app start</p>
-            <p>Tile Size: 64px (fixed)</p>
+        {/* Preview */}
+        <div className="section-tertiary">
+          <h3 className="text-section-title">Preview</h3>
+          <div className="section-content space-y-2">
+            <p className="text-sm text-slate-300">World Size: <span className="text-value">{localValues.tilesHorizontal} × {localValues.tilesVertical}</span> tiles</p>
+            <p className="text-sm text-slate-300">World Dimensions: <span className="text-value">{localValues.tilesHorizontal * 64} × {localValues.tilesVertical * 64}</span> pixels</p>
+            <p className="text-sm text-slate-300">Default Visible: <span className="text-value">{localValues.defaultVisibleVerticalTiles}</span> vertical tiles on app start</p>
+            <p className="text-sm text-slate-300">Tile Size: <span className="text-value">64px</span> (fixed)</p>
           </div>
         </div>
 
-        <div className="setting-group">
-          <h3>Brutalist Panel Colors</h3>
-          <div className="brutalist-color-settings">
-            <div className="input-group">
-              <label>
-                Primary Color (Background):
-                <div className="color-input-container">
-                  <input
-                    type="color"
-                    value={brutalistPrimaryColor}
-                    onChange={(e) => setBrutalistPrimaryColor((e.target as HTMLInputElement)?.value)}
-                    className="color-picker"
-                  />
-                  <span className="color-value">{brutalistPrimaryColor}</span>
-                </div>
-              </label>
-            </div>
-            <div className="input-group">
-              <label>
-                Secondary Color (Border/Accent):
-                <div className="color-input-container">
-                  <input
-                    type="color"
-                    value={brutalistSecondaryColor}
-                    onChange={(e) => setBrutalistSecondaryColor((e.target as HTMLInputElement)?.value)}
-                    className="color-picker"
-                  />
-                  <span className="color-value">{brutalistSecondaryColor}</span>
-                </div>
-              </label>
-            </div>
-            <div className="color-preview">
+        {/* Brutalist Panel Colors */}
+        <div className="section-secondary">
+          <h3 className="text-section-title">Brutalist Panel Colors</h3>
+          <div className="section-content space-y-4">
+            <label className="text-label block">
+              Primary Color (Background):
+              <div className="flex items-center gap-3 mt-2">
+                <input
+                  type="color"
+                  value={brutalistPrimaryColor}
+                  onChange={(e) => setBrutalistPrimaryColor((e.target as HTMLInputElement)?.value)}
+                  className="w-12 h-8 border-2 border-primary-400/50 rounded cursor-pointer"
+                />
+                <span className="text-mono-small bg-slate-800/50 px-3 py-1 rounded border border-primary-400/30">{brutalistPrimaryColor}</span>
+              </div>
+            </label>
+            <label className="text-label block">
+              Secondary Color (Border/Accent):
+              <div className="flex items-center gap-3 mt-2">
+                <input
+                  type="color"
+                  value={brutalistSecondaryColor}
+                  onChange={(e) => setBrutalistSecondaryColor((e.target as HTMLInputElement)?.value)}
+                  className="w-12 h-8 border-2 border-primary-400/50 rounded cursor-pointer"
+                />
+                <span className="text-mono-small bg-slate-800/50 px-3 py-1 rounded border border-primary-400/30">{brutalistSecondaryColor}</span>
+              </div>
+            </label>
+            <div className="section-content">
               <div 
-                className="brutalist-preview" 
+                className="text-center py-4 px-6 font-black text-white" 
                 style={{
                   '--brutalist-primary': brutalistPrimaryColor,
                   '--brutalist-secondary': brutalistSecondaryColor,
                   background: 'var(--brutalist-primary)',
                   border: '4px solid var(--brutalist-secondary)',
                   borderRadius: '0',
-                  padding: '10px',
                   color: '#FFFFFF',
                   fontWeight: 'bold',
                   textAlign: 'center',
@@ -301,26 +310,35 @@ function AquariumSettings({
                 BRUTALIST PREVIEW
               </div>
             </div>
-            <div className="info-text">
-              <p>Customize the colors for the brutalist UI panel. Changes apply immediately to the panel styling.</p>
-            </div>
+            <p className="text-sm text-slate-300">Customize the colors for the brutalist UI panel. Changes apply immediately to the panel styling.</p>
           </div>
         </div>
 
-        <div className="setting-group">
-          <h3>Navigation Controls</h3>
-          <div className="controls-info">
-            <p><strong>Arrow Keys:</strong> Move around the aquarium (5 tiles per press)</p>
-            <p><strong>+ / =:</strong> Zoom in</p>
-            <p><strong>-:</strong> Zoom out</p>
-            <p><strong>B:</strong> Toggle bubbles visibility</p>
+        {/* Navigation Controls */}
+        <div className="section-tertiary">
+          <h3 className="text-section-title">Navigation Controls</h3>
+          <div className="section-content space-y-2">
+            <p className="text-sm text-slate-300"><span className="text-label-large">Arrow Keys:</span> Move around the aquarium (5 tiles per press)</p>
+            <p className="text-sm text-slate-300"><span className="text-label-large">+ / =:</span> Zoom in</p>
+            <p className="text-sm text-slate-300"><span className="text-label-large">-:</span> Zoom out</p>
+            <p className="text-sm text-slate-300"><span className="text-label-large">B:</span> Toggle bubbles visibility</p>
           </div>
         </div>
       </div>
 
-      <div className="settings-actions">
-        <button className="reset-button" onClick={handleReset}>Reset</button>
-        <button className="apply-button" onClick={handleApply}>Apply</button>
+      <div className="flex gap-4 justify-end pt-6 border-t-4 border-primary-400/50">
+        <button 
+          className="px-8 py-3 bg-slate-700 hover:bg-slate-600 text-white font-black uppercase tracking-wider border-4 border-slate-500 hover:border-slate-400 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg active:scale-95 transform"
+          onClick={handleReset}
+        >
+          Reset
+        </button>
+        <button 
+          className="px-8 py-3 bg-primary-600 hover:bg-primary-500 text-white font-black uppercase tracking-wider border-4 border-primary-500 hover:border-primary-400 transition-all duration-200 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary-500/40 active:scale-95 transform"
+          onClick={handleApply}
+        >
+          Apply
+        </button>
       </div>
     </CardComponent>
   );

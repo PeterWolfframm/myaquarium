@@ -24,55 +24,68 @@ function DataPanel({ visibleCubes, fishInfo, viewportPosition, tileDimensions, z
       isDraggable={isDraggable}
       draggablePosition={draggablePosition}
     >
-      <div className="data-section">
-        <div className="zoom-section">
-          <div className="zoom-info">
-            <div className="zoom-line">
-              <span className="zoom-label">Zoom:</span>
-              <span className="zoom-value">{zoomInfo?.currentZoom || 1.0}x ({zoomInfo?.zoomPercentage || 100}%)</span>
+      <div className="card-content-stats">
+        {/* Zoom Section */}
+        <div className="section-primary">
+          <div className="space-y-2 mb-4">
+            <div className="grid-data-columns">
+              <span className="text-label">Zoom:</span>
+              <span className="text-value">{zoomInfo?.currentZoom || 1.0}x ({zoomInfo?.zoomPercentage || 100}%)</span>
             </div>
-            <div className="zoom-line">
-              <span className="zoom-label">Visible V-Tiles:</span>
-              <span className="zoom-value">{zoomInfo?.visibleVerticalTiles || 0}</span>
+            <div className="grid-data-columns">
+              <span className="text-label">V-Tiles:</span>
+              <span className="text-value">{zoomInfo?.visibleVerticalTiles || 0}</span>
             </div>
-            <div className="zoom-line">
-              <span className="zoom-label">Range:</span>
-              <span className="zoom-value">{zoomInfo?.minZoom || 0.1}x - {zoomInfo?.maxZoom || 4.0}x</span>
+            <div className="grid-data-columns">
+              <span className="text-label">Range:</span>
+              <span className="text-value">{zoomInfo?.minZoom || 0.1}x - {zoomInfo?.maxZoom || 4.0}x</span>
             </div>
           </div>
-          <button className="reset-zoom-compact-button" onClick={handleResetToDefaultZoom}>
+          <button 
+            className="btn-action"
+            onClick={handleResetToDefaultZoom}
+          >
             Reset Zoom
           </button>
         </div>
         
-        <div className="cube-counter">
-          Visible Cubes: {visibleCubes || 0}
-        </div>
-        <div className="tile-dimensions">
-          <div className="tile-counts">
-            Tiles - H: {tileDimensions?.horizontalTiles || 0} | V: {tileDimensions?.verticalTiles || 0} | Total: {tileDimensions?.totalTiles || 0}
+        {/* Stats Grid */}
+        <div className="grid-stats">
+          <div className="section-secondary">
+            <div className="text-label">
+              Visible Cubes: <span className="text-value">{visibleCubes || 0}</span>
+            </div>
+          </div>
+          
+          <div className="section-secondary">
+            <div className="text-label">
+              Tiles: <span className="text-value">H:{tileDimensions?.horizontalTiles || 0} | V:{tileDimensions?.verticalTiles || 0} | T:{tileDimensions?.totalTiles || 0}</span>
+            </div>
+          </div>
+          
+          <div className="section-secondary">
+            <div className="text-label">
+              Fish: <span className="text-value">H:{fishInfo?.horizontalCount || 0} | V:{fishInfo?.verticalCount || 0} | T:{fishInfo?.total || 0}</span>
+            </div>
+          </div>
+          
+          <div className="section-secondary">
+            <div className="text-label text-xs">
+              Position: <span className="text-value">({viewportPosition?.tileX || 0}, {viewportPosition?.tileY || 0}) | {viewportPosition?.percentageX || 0}%H, {viewportPosition?.percentageY || 0}%V</span>
+            </div>
           </div>
         </div>
-        <div className="fish-info">
-          <div className="fish-counts">
-            Fish - H: {fishInfo?.horizontalCount || 0} | V: {fishInfo?.verticalCount || 0} | Total: {fishInfo?.total || 0}
-          </div>
-        </div>
-        <div className="viewport-info">
-          <div className="viewport-position">
-            Position: Tile ({viewportPosition?.tileX || 0}, {viewportPosition?.tileY || 0}) | 
-            {viewportPosition?.percentageX || 0}% H, {viewportPosition?.percentageY || 0}% V
-          </div>
-        </div>
-        <div className="grid-toggle">
-          <label className="grid-toggle-label">
+        
+        {/* Grid Toggle */}
+        <div className="section-secondary">
+          <label className="flex items-center gap-3 cursor-pointer">
             <input 
               type="checkbox" 
               checked={showGrid} 
               onChange={toggleGrid}
-              className="grid-toggle-checkbox"
+              className="checkbox-primary"
             />
-            <span className="grid-toggle-text">Show Grid</span>
+            <span className="text-label select-none">Show Grid</span>
           </label>
         </div>
       </div>

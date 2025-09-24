@@ -58,95 +58,6 @@ body {
     50% { transform: translateY(-10px); }
 }
 
-/* Modal Component Styles */
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.8);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    backdrop-filter: blur(5px);
-    padding: 20px;
-    box-sizing: border-box;
-}
-
-.modal-panel {
-    background: rgba(0, 17, 34, 0.95);
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    border-radius: 15px;
-    padding: 0;
-    max-height: calc(100vh - 40px);
-    max-width: calc(100vw - 40px);
-    overflow: hidden;
-    position: relative;
-    box-sizing: border-box;
-}
-
-.modal-small {
-    min-width: min(300px, calc(100vw - 40px));
-    max-width: min(500px, calc(100vw - 40px));
-    width: 90%;
-}
-
-.modal-medium {
-    min-width: min(400px, calc(100vw - 40px));
-    max-width: min(600px, calc(100vw - 40px));
-    width: 90%;
-}
-
-.modal-large {
-    min-width: min(600px, calc(100vw - 40px));
-    max-width: min(900px, calc(100vw - 40px));
-    width: 90%;
-}
-
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px 25px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(0, 34, 68, 0.7);
-}
-
-.modal-title {
-    margin: 0;
-    color: #ffffff;
-    font-size: 1.2em;
-    font-weight: bold;
-}
-
-.modal-close-button {
-    background: none;
-    border: none;
-    color: #ffffff;
-    font-size: 1.5em;
-    cursor: pointer;
-    padding: 0;
-    width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    transition: background-color 0.2s ease;
-}
-
-.modal-close-button:hover {
-    background: rgba(255, 255, 255, 0.1);
-}
-
-.modal-content {
-    padding: 20px 25px;
-    max-height: calc(100vh - 160px);
-    overflow-y: auto;
-    box-sizing: border-box;
-}
 
 .fish-editor-panel {
     background: rgba(0, 17, 51, 0.95);
@@ -532,121 +443,6 @@ body {
     image-rendering: crisp-edges;
 }
 
-/* Collapsible Component Styles */
-.collapsible {
-    position: absolute;
-    z-index: 10;
-    background: rgba(0, 0, 0, 0.7);
-    border-radius: 10px;
-    backdrop-filter: blur(5px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    transition: all 0.3s ease;
-    max-width: calc(100vw - 40px);
-    max-height: calc(100vh - 40px);
-    box-sizing: border-box;
-}
-
-.collapsible-top-left {
-    top: 20px;
-    left: 20px;
-    right: auto;
-    bottom: auto;
-}
-
-.collapsible-top-right {
-    top: 70px;
-    right: 20px;
-    left: auto;
-    bottom: auto;
-}
-
-.collapsible-center {
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    right: auto;
-    bottom: auto;
-    max-width: calc(100vw - 40px);
-}
-
-.collapsible-small {
-    min-width: min(200px, calc(100vw - 40px));
-    max-width: calc(100vw - 40px);
-}
-
-.collapsible-medium {
-    min-width: min(250px, calc(100vw - 40px));
-    max-width: calc(100vw - 40px);
-}
-
-.collapsible-large {
-    min-width: min(350px, calc(100vw - 40px));
-    max-width: calc(100vw - 40px);
-}
-
-.collapsible-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 20px;
-    cursor: pointer;
-    user-select: none;
-    transition: background-color 0.2s ease;
-}
-
-.collapsible-header:hover {
-    background: rgba(255, 255, 255, 0.05);
-}
-
-.collapsible-title {
-    margin: 0;
-    color: #ffffff;
-    font-size: 1em;
-    font-weight: bold;
-}
-
-.collapsible-toggle {
-    background: none;
-    border: none;
-    color: #ffffff;
-    font-size: 1.2em;
-    cursor: pointer;
-    padding: 0;
-    width: 20px;
-    height: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 3px;
-    transition: background-color 0.2s ease;
-}
-
-.collapsible-toggle:hover {
-    background: rgba(255, 255, 255, 0.1);
-}
-
-.collapsible-content {
-    padding: 0 20px 15px 20px;
-    animation: slideDown 0.3s ease;
-    max-height: calc(100vh - 120px);
-    overflow-y: auto;
-    box-sizing: border-box;
-}
-
-.collapsible.closed {
-    opacity: 0.8;
-}
-
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
 
 .timer {
     font-size: 2em;
@@ -1364,79 +1160,6 @@ body {
 
 /* Drag and Drop Styles */
 
-.draggable-title-container {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-}
-
-.drag-handle {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    border-radius: 4px;
-    background: rgba(255, 255, 255, 0.1);
-    transition: all 0.2s ease;
-    cursor: grab;
-    opacity: 0.7;
-    flex-shrink: 0;
-}
-
-.drag-handle:hover {
-    background: rgba(255, 255, 255, 0.2);
-    opacity: 1;
-    transform: scale(1.1);
-}
-
-.drag-handle:active {
-    cursor: grabbing;
-    background: rgba(255, 255, 255, 0.3);
-    transform: scale(0.95);
-}
-
-.drag-handle-icon {
-    color: #ffffff;
-    opacity: 0.8;
-    transition: opacity 0.2s ease;
-}
-
-.drag-handle:hover .drag-handle-icon {
-    opacity: 1;
-}
-
-.draggable-title-text {
-    flex: 1;
-}
-
-.drag-overlay-item {
-    pointer-events: none;
-    transform-origin: top left;
-}
-
-/* Base styles for draggable collapsibles */
-.collapsible.draggable-collapsible {
-    transition: all 0.2s ease;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-/* Enhanced visual feedback during drag */
-.collapsible.draggable-collapsible.dragging {
-    transform: rotate(2deg);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
-    background: rgba(0, 68, 102, 0.95);
-    backdrop-filter: blur(10px);
-    border: 2px solid rgba(0, 204, 255, 0.5);
-    z-index: 1000 !important;
-}
-
-.collapsible.draggable-collapsible.dragging .drag-handle {
-    background: rgba(0, 204, 255, 0.4);
-    border: 1px solid rgba(0, 204, 255, 0.6);
-}
 
 /* Sprite Gallery Styles */
 .sprite-gallery {
@@ -2035,6 +1758,256 @@ body {
   padding: 20px;
 }
 
+/* ==================== DESIGN SYSTEM UTILITIES ==================== */
+
+/* ========== SECTION CONTAINERS ========== */
+.section-primary {
+  @apply border-2 border-primary-400/60 bg-slate-800/50 p-4 transform hover:scale-[1.02] transition-all duration-200;
+}
+
+.section-secondary {
+  @apply bg-slate-800/70 border-2 border-primary-400/40 p-3 hover:bg-slate-700/70 hover:border-primary-400/70 transition-all duration-200 transform hover:scale-[1.02];
+}
+
+.section-tertiary {
+  @apply bg-slate-900/50 border-2 border-primary-400/50 p-4 rounded-none;
+}
+
+.section-content {
+  @apply bg-slate-900/20 border border-primary-400/30 p-2;
+}
+
+.section-interactive {
+  @apply bg-slate-800/70 border border-primary-400/30 hover:bg-slate-700/70 hover:border-primary-400/60 transition-all duration-200 transform hover:scale-[1.02] hover:-translate-y-0.5;
+}
+
+/* ========== BUTTONS ========== */
+.btn-primary {
+  @apply px-6 py-3 border-2 font-black text-sm uppercase tracking-wider transition-all duration-200 ease-out cursor-pointer transform;
+  @apply bg-primary-500 text-white border-primary-600 shadow-lg shadow-primary-500/50;
+  @apply hover:bg-primary-600 hover:text-white hover:border-primary-500 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary-500/40 hover:scale-105 hover:-rotate-1;
+  @apply active:scale-95;
+}
+
+.btn-secondary {
+  @apply px-6 py-3 border-2 font-black text-sm uppercase tracking-wider transition-all duration-200 ease-out cursor-pointer transform;
+  @apply bg-slate-800 text-primary-300 border-primary-400/50;
+  @apply hover:bg-primary-600 hover:text-white hover:border-primary-500 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary-500/40 hover:scale-105 hover:-rotate-1;
+  @apply active:scale-95;
+}
+
+.btn-mood {
+  @apply px-6 py-3 border-2 font-black text-sm uppercase tracking-wider transition-all duration-200 ease-out cursor-pointer transform;
+  @apply bg-slate-800 text-primary-300 border-primary-400/50;
+  @apply hover:bg-primary-600 hover:text-white hover:border-primary-500 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary-500/40 hover:scale-105 hover:-rotate-1;
+  @apply active:scale-95;
+}
+
+.btn-mood.active {
+  @apply bg-primary-500 text-white border-primary-600 shadow-lg shadow-primary-500/50 scale-105 rotate-1;
+}
+
+.btn-mood.switching {
+  @apply bg-primary-300/60 border-primary-400/60 text-primary-900 pointer-events-none opacity-70;
+}
+
+.btn-action {
+  @apply w-full px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white font-black uppercase tracking-wider border-2 border-primary-500 hover:border-primary-400 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary-500/40 active:scale-95 transform;
+}
+
+/* ========== TYPOGRAPHY ========== */
+.text-label {
+  @apply text-primary-300 font-black text-sm uppercase tracking-wider;
+}
+
+.text-label-large {
+  @apply text-primary-300 font-black text-base uppercase tracking-wider;
+}
+
+.text-value {
+  @apply text-white font-black;
+}
+
+.text-section-title {
+  @apply text-primary-300 font-black text-base uppercase tracking-wider mb-4 text-center border-b-2 border-primary-400/30 pb-2;
+}
+
+.text-mono-small {
+  @apply text-primary-300 font-mono text-sm text-center;
+}
+
+.text-duration {
+  @apply text-primary-400 font-black text-sm text-right;
+}
+
+/* ========== GRID LAYOUTS ========== */
+.grid-stats {
+  @apply grid grid-cols-1 gap-3;
+}
+
+.grid-session {
+  @apply grid grid-cols-3 gap-3 p-3;
+}
+
+.grid-data-columns {
+  @apply flex justify-between items-center text-sm;
+}
+
+/* ========== INTERACTIVE ELEMENTS ========== */
+.checkbox-primary {
+  @apply w-5 h-5 accent-primary-500 rounded border-2 border-primary-400;
+}
+
+.input-primary {
+  @apply bg-slate-800/70 border-2 border-primary-400/40 p-4 hover:bg-slate-700/70 hover:border-primary-400/70 transition-all duration-200;
+}
+
+/* ========== SPECIAL EFFECTS ========== */
+.hover-lift {
+  @apply transition-all duration-200 transform hover:scale-[1.02] hover:-translate-y-0.5;
+}
+
+.hover-glow {
+  @apply transition-all duration-200 hover:shadow-lg hover:shadow-primary-500/40;
+}
+
+.loading-state {
+  @apply text-center text-primary-400 font-bold italic py-4;
+}
+
+.empty-state {
+  @apply text-center text-slate-400 font-bold italic py-4 border border-slate-600/50 bg-slate-800/30;
+}
+
+/* ========== CARD CONTENT PATTERNS ========== */
+.card-content-base {
+  @apply p-2 bg-slate-900/20 border border-primary-400/30;
+}
+
+.card-content-stats {
+  @apply p-4 bg-slate-900/20 border border-primary-400/30 space-y-4;
+}
+
+.card-content-timer {
+  @apply p-2 bg-slate-900/20 border border-primary-400/30;
+}
+
+/* ========== ENHANCED INTERACTIVE ELEMENTS ========== */
+.btn-danger {
+  @apply px-6 py-3 border-2 font-black text-sm uppercase tracking-wider transition-all duration-200 ease-out cursor-pointer transform;
+  @apply bg-red-500/20 text-red-400 border-red-500/50;
+  @apply hover:bg-red-500/40 hover:text-red-300 hover:border-red-500/70 hover:-translate-y-1 hover:shadow-xl hover:shadow-red-500/40 hover:scale-105 hover:-rotate-1;
+  @apply active:scale-95;
+}
+
+.btn-success {
+  @apply px-6 py-3 border-2 font-black text-sm uppercase tracking-wider transition-all duration-200 ease-out cursor-pointer transform;
+  @apply bg-green-500/20 text-green-400 border-green-500/50;
+  @apply hover:bg-green-500/40 hover:text-green-300 hover:border-green-500/70 hover:-translate-y-1 hover:shadow-xl hover:shadow-green-500/40 hover:scale-105 hover:-rotate-1;
+  @apply active:scale-95;
+}
+
+.btn-warning {
+  @apply px-6 py-3 border-2 font-black text-sm uppercase tracking-wider transition-all duration-200 ease-out cursor-pointer transform;
+  @apply bg-yellow-500/20 text-yellow-400 border-yellow-500/50;
+  @apply hover:bg-yellow-500/40 hover:text-yellow-300 hover:border-yellow-500/70 hover:-translate-y-1 hover:shadow-xl hover:shadow-yellow-500/40 hover:scale-105 hover:-rotate-1;
+  @apply active:scale-95;
+}
+
+/* ========== FORM ENHANCEMENTS ========== */
+.form-section {
+  @apply bg-slate-800/70 border-2 border-primary-400/40 p-4 space-y-4 hover:bg-slate-700/70 hover:border-primary-400/70 transition-all duration-200 transform hover:scale-[1.02];
+}
+
+.form-field {
+  @apply space-y-2;
+}
+
+.form-label-enhanced {
+  @apply text-primary-300 font-black text-sm uppercase tracking-wider block mb-2;
+}
+
+.form-input-enhanced {
+  @apply w-full bg-slate-800/70 border-2 border-primary-400/40 p-3 text-white hover:bg-slate-700/70 hover:border-primary-400/70 focus:border-primary-400 focus:outline-none transition-all duration-200;
+}
+
+/* ========== IMAGE GALLERY ENHANCEMENTS ========== */
+.gallery-item {
+  @apply bg-slate-800/70 border-2 border-primary-400/30 p-3 cursor-pointer transition-all duration-200 transform hover:scale-[1.02] hover:-translate-y-0.5 hover:bg-slate-700/70 hover:border-primary-400/60;
+}
+
+.gallery-item.selected {
+  @apply border-primary-500 bg-primary-500/20 shadow-lg shadow-primary-500/40 scale-105;
+}
+
+.gallery-thumbnail {
+  @apply w-full h-16 object-cover rounded border-2 border-white/20 hover:border-primary-400/50 transition-all duration-200;
+}
+
+/* ========== STATUS INDICATORS ========== */
+.status-online {
+  @apply bg-green-500/20 text-green-400 border-green-500/50 px-2 py-1 rounded text-xs font-bold uppercase tracking-wide;
+}
+
+.status-offline {
+  @apply bg-red-500/20 text-red-400 border-red-500/50 px-2 py-1 rounded text-xs font-bold uppercase tracking-wide;
+}
+
+.status-loading {
+  @apply bg-yellow-500/20 text-yellow-400 border-yellow-500/50 px-2 py-1 rounded text-xs font-bold uppercase tracking-wide animate-pulse;
+}
+
+.status-syncing {
+  @apply bg-blue-500/20 text-blue-400 border-blue-500/50 px-2 py-1 rounded text-xs font-bold uppercase tracking-wide animate-pulse;
+}
+
+/* ========== PROGRESSIVE DISCLOSURE ========== */
+.collapsible-enhanced {
+  @apply overflow-hidden transition-all duration-300 ease-in-out;
+}
+
+.collapsible-enhanced.collapsed {
+  @apply max-h-0 opacity-0;
+}
+
+.collapsible-enhanced.expanded {
+  @apply max-h-screen opacity-100;
+}
+
+/* ========== DATA VISUALIZATION ========== */
+.progress-bar-enhanced {
+  @apply w-full h-3 bg-slate-800 border-2 border-primary-400/30 rounded-full overflow-hidden;
+}
+
+.progress-fill-enhanced {
+  @apply h-full bg-gradient-to-r from-primary-500 to-primary-400 transition-all duration-500 ease-out;
+}
+
+.metric-card {
+  @apply bg-slate-800/70 border-2 border-primary-400/40 p-4 text-center hover:bg-slate-700/70 hover:border-primary-400/70 transition-all duration-200 transform hover:scale-[1.02];
+}
+
+.metric-value {
+  @apply text-2xl font-black text-primary-300 block;
+}
+
+.metric-label {
+  @apply text-sm text-slate-400 uppercase tracking-wider font-bold;
+}
+
+/* ========== SESSION ITEM PATTERNS ========== */
+.session-item-base {
+  @apply bg-slate-800/70 border border-primary-400/30 hover:bg-slate-700/70 hover:border-primary-400/60 transition-all duration-200 transform hover:scale-[1.02] hover:-translate-y-0.5;
+}
+
+.session-mood-display {
+  @apply text-white font-bold flex items-center gap-2 text-sm;
+}
+
+.session-mood-text {
+  @apply uppercase tracking-wide;
+}
+
 /* ==================== BRUTALIST PANEL STYLES ==================== */
 
 .brutalist-panel {
@@ -2538,77 +2511,3 @@ body {
   font-weight: 500;
 }
 
-/* ==================== CARD COMPONENT VIEW MODE TOGGLE STYLES ==================== */
-
-.view-mode-toggle-button {
-  background: rgba(0, 200, 255, 0.2);
-  border: 1px solid rgba(0, 200, 255, 0.3);
-  color: #00ccff;
-  border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  margin-left: auto;
-  flex-shrink: 0;
-}
-
-.view-mode-toggle-button:hover {
-  background: rgba(0, 200, 255, 0.3);
-  border-color: rgba(0, 200, 255, 0.5);
-  transform: scale(1.05);
-}
-
-.view-mode-toggle-button:active {
-  transform: scale(0.95);
-}
-
-/* Specific styles for sticky mode toggle */
-.sticky-view-toggle {
-  padding: 2px 6px;
-  font-size: 10px;
-  margin-left: 8px;
-}
-
-/* Modal header actions container */
-.modal-header-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* Enhanced collapsible title container */
-.collapsible-title-container {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-  min-width: 0;
-}
-
-.collapsible-title-text {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Drag handle positioning in new layout */
-.collapsible-title-container .drag-handle {
-  flex-shrink: 0;
-  order: -1;
-}
-
-/* Responsive view mode toggles */
-@media (max-width: 768px) {
-  .view-mode-toggle-button {
-    padding: 3px 6px;
-    font-size: 11px;
-  }
-  
-  .sticky-view-toggle {
-    padding: 2px 4px;
-    font-size: 9px;
-  }
-}

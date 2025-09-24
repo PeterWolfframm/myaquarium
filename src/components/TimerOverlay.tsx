@@ -2,10 +2,41 @@ import { useState, useEffect } from 'preact/hooks';
 import { databaseService } from '../services/database';
 import CardComponent from './CardComponent';
 
-function TimerOverlay({ time, mood, onMoodChange, currentSession, onSessionsLoaded, isOpen, onToggle, isDraggable = false, draggableId = null, draggablePosition = null }) {
-  const [recentSessions, setRecentSessions] = useState([]);
+interface TimerSession {
+  id: string;
+  mood: string;
+  start_time: string;
+  duration_seconds?: number;
+}
+
+interface TimerOverlayProps {
+  time: string;
+  mood: string;
+  onMoodChange: (mood: string) => void;
+  currentSession: TimerSession | null;
+  onSessionsLoaded?: (sessions: TimerSession[]) => void;
+  isOpen: boolean;
+  onToggle: () => void;
+  isDraggable?: boolean;
+  draggableId?: string | null;
+  draggablePosition?: { x: number; y: number } | null;
+}
+
+function TimerOverlay({ 
+  time, 
+  mood, 
+  onMoodChange, 
+  currentSession, 
+  onSessionsLoaded, 
+  isOpen, 
+  onToggle, 
+  isDraggable = false, 
+  draggableId = null, 
+  draggablePosition = null 
+}: TimerOverlayProps) {
+  const [recentSessions, setRecentSessions] = useState<TimerSession[]>([]);
   const [loading, setLoading] = useState(false);
-  const [switchingMood, setSwitchingMood] = useState(null);
+  const [switchingMood, setSwitchingMood] = useState<string | null>(null);
 
   const moods = [
     { id: 'work', label: 'Work' },
@@ -49,7 +80,7 @@ function TimerOverlay({ time, mood, onMoodChange, currentSession, onSessionsLoad
     }
   };
 
-  const formatDuration = (durationSeconds) => {
+  const formatDuration = (durationSeconds: number | undefined) => {
     if (!durationSeconds) return '0m';
     
     const hours = Math.floor(durationSeconds / 3600);
@@ -61,12 +92,12 @@ function TimerOverlay({ time, mood, onMoodChange, currentSession, onSessionsLoad
     return `${minutes}m`;
   };
 
-  const formatSessionTime = (startTime) => {
+  const formatSessionTime = (startTime: string) => {
     const date = new Date(startTime);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  const getMoodIcon = (moodId) => {
+  const getMoodIcon = (moodId: string) => {
     switch (moodId) {
       case 'work': return '💼';
       case 'pause': return '⏸️';
@@ -89,21 +120,12 @@ function TimerOverlay({ time, mood, onMoodChange, currentSession, onSessionsLoad
       isDraggable={isDraggable}
       draggablePosition={draggablePosition}
     >
-      <div className="timer-content">
-        <div className="flex gap-2.5 justify-center mb-4">
+      <div className="card-content-timer">
+        <div className="flex gap-3 justify-center mb-6">
           {moods.map(({ id, label }) => (
             <button
               key={id}
-              className={`
-                px-4 py-2 border-none rounded-md text-sm transition-all duration-300 ease-in-out cursor-pointer
-                ${mood === id 
-                  ? 'bg-cyan-400 text-slate-900 font-bold shadow-lg shadow-cyan-400/50' 
-                  : switchingMood === id
-                    ? 'bg-sky-600/60 pointer-events-none opacity-70'
-                    : 'bg-sky-600/20 text-white hover:bg-sky-600 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-sky-600/40'
-                }
-                disabled:cursor-not-allowed
-              `.trim()}
+              className={`btn-mood ${mood === id ? 'active' : ''} ${switchingMood === id ? 'switching' : ''} disabled:cursor-not-allowed`}
               onClick={() => {
                 setSwitchingMood(id);
                 onMoodChange(id);
@@ -118,28 +140,33 @@ function TimerOverlay({ time, mood, onMoodChange, currentSession, onSessionsLoad
         </div>
         
         {/* Recent Sessions */}
-        <div className="recent-sessions">
-          <h4>Recent Sessions</h4>
+        <div className="section-tertiary">
+          <h4 className="text-section-title">
+            Recent Sessions
+          </h4>
           {loading ? (
-            <div className="session-loading">Loading...</div>
+            <div className="loading-state">Loading...</div>
           ) : recentSessions.length > 0 ? (
-            <div className="sessions-list">
+            <div className="flex flex-col gap-2">
               {recentSessions.map((session, index) => (
-                <div key={session.id} className="session-item">
-                  <span className="session-mood">
-                    {getMoodIcon(session.mood)} {session.mood}
+                <div key={session.id} className="grid-session session-item-base">
+                  <span className="session-mood-display">
+                    <span className="text-lg">{getMoodIcon(session.mood)}</span>
+                    <span className="session-mood-text">{session.mood}</span>
                   </span>
-                  <span className="session-time">
+                  <span className="text-mono-small">
                     {formatSessionTime(session.start_time)}
                   </span>
-                  <span className="session-duration">
+                  <span className="text-duration">
                     {formatDuration(session.duration_seconds)}
                   </span>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="no-sessions">No recent sessions</div>
+            <div className="empty-state">
+              No recent sessions
+            </div>
           )}
         </div>
       </div>

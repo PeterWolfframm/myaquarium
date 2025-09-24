@@ -24,6 +24,21 @@ module.exports = {
           950: '#2e1065',
         },
       },
+      animation: {
+        'slideDown': 'slideDown 0.3s ease-out',
+      },
+      keyframes: {
+        slideDown: {
+          'from': {
+            opacity: '0',
+            transform: 'translateY(-10px)',
+          },
+          'to': {
+            opacity: '1', 
+            transform: 'translateY(0)',
+          },
+        },
+      },
     },
   },
   plugins: [],
