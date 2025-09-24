@@ -3,6 +3,7 @@ import AquariumContainer from './components/AquariumContainer';
 import TimerOverlay from './components/TimerOverlay';
 import AquariumSettings from './components/AquariumSettings';
 import FishEditor from './components/FishEditor';
+import ObjectsEditor from './components/ObjectsEditor';
 import DataPanel from './components/DataPanel';
 import DragAndDropProvider from './components/DragAndDropProvider';
 import { useAquariumStore } from './stores/aquariumStore.js';
@@ -33,6 +34,7 @@ function App() {
   const [aquariumRef, setAquariumRef] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showFishEditor, setShowFishEditor] = useState(false);
+  const [showObjectsEditor, setShowObjectsEditor] = useState(false);
   const [showTimer, setShowTimer] = useState(true);
   const [showStats, setShowStats] = useState(true);
   
@@ -256,6 +258,14 @@ function App() {
     setShowFishEditor(false);
   };
 
+  const toggleObjectsEditor = () => {
+    setShowObjectsEditor(!showObjectsEditor);
+  };
+  
+  const closeObjectsEditor = () => {
+    setShowObjectsEditor(false);
+  };
+
   const toggleTimer = () => {
     setShowTimer(!showTimer);
   };
@@ -291,6 +301,9 @@ function App() {
           </button>
           <button className="control-button fish-editor-button" onClick={toggleFishEditor}>
             🐠 Edit Fish
+          </button>
+          <button className="control-button objects-editor-button" onClick={toggleObjectsEditor}>
+            🎨 Objects
           </button>
         </div>
 
@@ -332,6 +345,10 @@ function App() {
         <FishEditor 
           isVisible={showFishEditor}
           onClose={closeFishEditor}
+        />
+        <ObjectsEditor 
+          isVisible={showObjectsEditor}
+          onClose={closeObjectsEditor}
         />
       </div>
     </DragAndDropProvider>
