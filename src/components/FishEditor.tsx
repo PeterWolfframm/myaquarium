@@ -289,11 +289,11 @@ function FishEditor({
       )}
       
       <div className="card-content-stats space-y-6">
-          <div className="section-primary">
+          <div className="border-2 border-primary-400/60 bg-slate-800/50 p-4 transform hover:scale-[1.02] transition-all duration-200">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-section-title">Your Fish ({fish.length})</h3>
+              <h3 className="text-primary-300 font-black text-base uppercase tracking-wider mb-4 text-center border-b-2 border-primary-400/30 pb-2">Your Fish ({fish.length})</h3>
               <button 
-                className="btn-primary"
+                className="px-6 py-3 border-2 font-black text-sm uppercase tracking-wider transition-all duration-200 ease-out cursor-pointer transform bg-primary-500 text-white border-primary-600 shadow-lg shadow-primary-500/50 hover:bg-primary-600 hover:text-white hover:border-primary-500 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary-500/40 hover:scale-105 hover:-rotate-1 active:scale-95"
                 onClick={handleStartCreating}
                 disabled={isSyncing}
               >
@@ -301,7 +301,7 @@ function FishEditor({
               </button>
             </div>
             {isLoading ? (
-              <div className="loading-state">Loading fish...</div>
+              <div className="text-center text-primary-400 font-bold italic py-4">Loading fish...</div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {fish.map((fishData) => (
@@ -311,15 +311,18 @@ function FishEditor({
                     onClick={() => handleFishSelect(fishData)}
                   >
                     <div className="flex items-center gap-3">
-                      <div 
-                        className="w-8 h-8 rounded-full border-2 border-white/30 flex-shrink-0" 
-                        style={{ backgroundColor: `#${fishData.color}` }}
-                      ></div>
+                      <img 
+                        src={fishData.spriteUrl || fishData.sprite_url || FISH_CONFIG.DEFAULT_SPRITE_URL}
+                        alt={fishData.name || 'Fish sprite'}
+                        className="w-8 h-8 object-cover rounded border-2 border-white/30 flex-shrink-0"
+                        onError={(e) => {
+                          e.target.src = FISH_CONFIG.DEFAULT_SPRITE_URL;
+                        }}
+                      />
                       <div className="flex-1 min-w-0">
-                        <div className="text-value text-sm font-bold truncate">{fishData.name || 'Unnamed'}</div>
+                        <div className="text-white font-black text-sm font-bold truncate">{fishData.name || 'Unnamed'}</div>
                         <div className="text-mono-small">#{fishData.color}</div>
                         <div className="text-mono-small">Size: {(fishData.size || 1.0).toFixed(1)}x</div>
-                        <div className="text-xs text-primary-300">🖼️ {((fishData.spriteUrl || fishData.sprite_url) === FISH_CONFIG.DEFAULT_SPRITE_URL) ? 'Default' : 'Custom'}</div>
                       </div>
                       <button 
                         className="absolute top-2 right-2 w-6 h-6 bg-red-500/20 hover:bg-red-500/40 text-red-400 hover:text-red-300 rounded border border-red-500/30 flex items-center justify-center text-xs transition-all duration-200"
@@ -340,11 +343,11 @@ function FishEditor({
           </div>
 
           {isCreating && (
-            <div className="section-secondary">
-              <h3 className="text-section-title">Create New Fish</h3>
+            <div className="bg-slate-800/70 border-2 border-primary-400/40 p-3 hover:bg-slate-700/70 hover:border-primary-400/70 transition-all duration-200 transform hover:scale-[1.02]">
+              <h3 className="text-primary-300 font-black text-base uppercase tracking-wider mb-4 text-center border-b-2 border-primary-400/30 pb-2">Create New Fish</h3>
               
               <div className="section-content space-y-4">
-                <label className="text-label block">
+                <label className="text-primary-300 font-black text-sm uppercase tracking-wider block">
                   Name:
                   <input
                     type="text"
@@ -355,8 +358,9 @@ function FishEditor({
                   />
                 </label>
 
+                {/* Color picking functionality commented out - everything is sprites now
                 <div>
-                  <label className="text-label block mb-3">Color:</label>
+                  <label className="text-primary-300 font-black text-sm uppercase tracking-wider block mb-3">Color:</label>
                   <div className="flex items-center gap-3 mb-3">
                     <input
                       type="color"
@@ -376,7 +380,7 @@ function FishEditor({
                 </div>
 
                 <div>
-                  <label className="text-label block mb-3">Preset Colors:</label>
+                  <label className="text-primary-300 font-black text-sm uppercase tracking-wider block mb-3">Preset Colors:</label>
                   <div className="grid grid-cols-8 gap-2">
                     {presetColors.map((color) => (
                       <button
@@ -389,9 +393,10 @@ function FishEditor({
                     ))}
                   </div>
                 </div>
+                */}
 
                 <div>
-                  <label className="text-label block mb-3">Size:</label>
+                  <label className="text-primary-300 font-black text-sm uppercase tracking-wider block mb-3">Size:</label>
                   <div className="flex items-center gap-3">
                     <input
                       type="range"
@@ -416,7 +421,7 @@ function FishEditor({
                 </div>
 
                 <div>
-                  <label className="text-label block mb-3">Sprite:</label>
+                  <label className="text-primary-300 font-black text-sm uppercase tracking-wider block mb-3">Sprite:</label>
                   <SpriteGallery
                     selectedSpriteUrl={newFishSpriteUrl}
                     onSpriteSelect={setNewFishSpriteUrl}
@@ -430,14 +435,14 @@ function FishEditor({
 
                 <div className="flex gap-3 pt-4">
                   <button 
-                    className="btn-primary flex-1" 
+                    className="px-6 py-3 border-2 font-black text-sm uppercase tracking-wider transition-all duration-200 ease-out cursor-pointer transform bg-primary-500 text-white border-primary-600 shadow-lg shadow-primary-500/50 hover:bg-primary-600 hover:text-white hover:border-primary-500 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary-500/40 hover:scale-105 hover:-rotate-1 active:scale-95 flex-1" 
                     onClick={handleCreateFish}
                     disabled={isSyncing}
                   >
                     {isSyncing ? 'Creating...' : 'Create Fish'}
                   </button>
                   <button 
-                    className="btn-secondary flex-1" 
+                    className="px-6 py-3 border-2 font-black text-sm uppercase tracking-wider transition-all duration-200 ease-out cursor-pointer transform bg-slate-800 text-primary-300 border-primary-400/50 hover:bg-primary-600 hover:text-white hover:border-primary-500 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary-500/40 hover:scale-105 hover:-rotate-1 active:scale-95 flex-1" 
                     onClick={handleCancelCreation}
                   >
                     Cancel
@@ -448,11 +453,11 @@ function FishEditor({
           )}
 
           {selectedFish && (
-            <div className="section-secondary">
-              <h3 className="text-section-title">Edit {selectedFish.name || 'Fish'}</h3>
+            <div className="bg-slate-800/70 border-2 border-primary-400/40 p-3 hover:bg-slate-700/70 hover:border-primary-400/70 transition-all duration-200 transform hover:scale-[1.02]">
+              <h3 className="text-primary-300 font-black text-base uppercase tracking-wider mb-4 text-center border-b-2 border-primary-400/30 pb-2">Edit {selectedFish.name || 'Fish'}</h3>
               
               <div className="section-content space-y-4">
-                <label className="text-label block">
+                <label className="text-primary-300 font-black text-sm uppercase tracking-wider block">
                   Name:
                   <input
                     type="text"
@@ -463,8 +468,9 @@ function FishEditor({
                   />
                 </label>
 
+                {/* Color picking functionality commented out - everything is sprites now
                 <div>
-                  <label className="text-label block mb-3">Color:</label>
+                  <label className="text-primary-300 font-black text-sm uppercase tracking-wider block mb-3">Color:</label>
                   <div className="flex items-center gap-3 mb-3">
                     <input
                       type="color"
@@ -484,7 +490,7 @@ function FishEditor({
                 </div>
 
                 <div>
-                  <label className="text-label block mb-3">Preset Colors:</label>
+                  <label className="text-primary-300 font-black text-sm uppercase tracking-wider block mb-3">Preset Colors:</label>
                   <div className="grid grid-cols-8 gap-2">
                     {presetColors.map((color) => (
                       <button
@@ -497,9 +503,10 @@ function FishEditor({
                     ))}
                   </div>
                 </div>
+                */}
 
                 <div>
-                  <label className="text-label block mb-3">Size:</label>
+                  <label className="text-primary-300 font-black text-sm uppercase tracking-wider block mb-3">Size:</label>
                   <div className="flex items-center gap-3">
                     <input
                       type="range"
@@ -524,7 +531,7 @@ function FishEditor({
                 </div>
 
                 <div>
-                  <label className="text-label block mb-3">Sprite:</label>
+                  <label className="text-primary-300 font-black text-sm uppercase tracking-wider block mb-3">Sprite:</label>
                   <SpriteGallery
                     selectedSpriteUrl={editingSpriteUrl}
                     onSpriteSelect={setEditingSpriteUrl}
@@ -538,14 +545,14 @@ function FishEditor({
 
                 <div className="flex gap-3 pt-4">
                   <button 
-                    className="btn-primary flex-1" 
+                    className="px-6 py-3 border-2 font-black text-sm uppercase tracking-wider transition-all duration-200 ease-out cursor-pointer transform bg-primary-500 text-white border-primary-600 shadow-lg shadow-primary-500/50 hover:bg-primary-600 hover:text-white hover:border-primary-500 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary-500/40 hover:scale-105 hover:-rotate-1 active:scale-95 flex-1" 
                     onClick={handleSaveChanges}
                     disabled={isSyncing}
                   >
                     {isSyncing ? 'Saving...' : 'Save Changes'}
                   </button>
                   <button 
-                    className="btn-secondary flex-1" 
+                    className="px-6 py-3 border-2 font-black text-sm uppercase tracking-wider transition-all duration-200 ease-out cursor-pointer transform bg-slate-800 text-primary-300 border-primary-400/50 hover:bg-primary-600 hover:text-white hover:border-primary-500 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary-500/40 hover:scale-105 hover:-rotate-1 active:scale-95 flex-1" 
                     onClick={handleCancelEdit}
                   >
                     Cancel

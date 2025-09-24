@@ -117,7 +117,7 @@ body {
     cursor: pointer;
     font-weight: 500;
     font-size: 14px;
-    transition: all 0.2s ease;
+    transition: all 0.1s ease;
 }
 
 .create-fish-button:hover {
@@ -141,7 +141,7 @@ body {
     cursor: pointer;
     font-size: 14px;
     font-weight: 500;
-    transition: all 0.3s ease;
+    transition: all 0.15s ease;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
@@ -167,12 +167,12 @@ body {
 .fish-item {
     display: flex;
     align-items: center;
-    padding: 10px;
+    padding: 6px;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
+    border-radius: 6px;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.1s ease;
     position: relative;
     transform: translateY(0);
 }
@@ -180,7 +180,8 @@ body {
 .fish-item:hover {
     background: rgba(255, 255, 255, 0.1);
     border-color: #00ccff;
-    transform: translateY(-2px);
+    transform: translateY(-1px);
+    box-shadow: 2px 2px 8px rgba(138, 43, 226, 0.6), 0 0 0 1px rgba(138, 43, 226, 0.3);
 }
 
 .fish-item.selected {
@@ -370,7 +371,7 @@ body {
     border-radius: 6px;
     font-weight: bold;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.15s ease;
     transform: translateY(0);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
@@ -466,7 +467,7 @@ body {
     color: white;
     cursor: pointer;
     font-size: 0.9em;
-    transition: all 0.3s ease;
+    transition: all 0.15s ease;
     border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
@@ -790,7 +791,7 @@ body {
     cursor: pointer;
     font-size: 0.9em;
     margin-top: 10px;
-    transition: all 0.3s ease;
+    transition: all 0.15s ease;
 }
 
 .reset-zoom-button:hover {
@@ -825,7 +826,7 @@ body {
     border-radius: 6px;
     cursor: pointer;
     font-size: 0.9em;
-    transition: all 0.3s ease;
+    transition: all 0.15s ease;
 }
 
 .capture-zoom-button.capture-min {
@@ -854,7 +855,7 @@ body {
     border-radius: 6px;
     cursor: pointer;
     font-size: 0.9em;
-    transition: all 0.3s ease;
+    transition: all 0.15s ease;
 }
 
 .clear-boundaries-button:hover {
@@ -921,7 +922,7 @@ body {
     cursor: pointer;
     font-size: 0.8em;
     width: 100%;
-    transition: all 0.3s ease;
+    transition: all 0.15s ease;
 }
 
 .reset-zoom-compact-button:hover {
@@ -1025,7 +1026,7 @@ body {
     border-radius: 6px;
     font-size: 1em;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.1s;
     font-weight: 500;
 }
 
@@ -1052,11 +1053,11 @@ body {
 /* Control Buttons Container */
 .control-buttons {
     position: absolute;
-    top: 20px;
-    right: 20px;
+    top: 15px;
+    right: 15px;
     z-index: 15;
     display: flex;
-    gap: 10px;
+    gap: 6px;
     flex-direction: row;
 }
 
@@ -1067,51 +1068,25 @@ body {
 
 /* Base Control Button Styles */
 .control-button {
-    background: rgba(0, 0, 0, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 6px;
-    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    padding: 6px 10px;
     cursor: pointer;
-    font-size: 0.9em;
-    backdrop-filter: blur(5px);
-    transition: all 0.2s ease;
+    font-size: 0.8em;
+    backdrop-filter: blur(8px);
+    transition: all 0.1s ease;
+    color: #ffffff;
+    font-weight: 500;
 }
 
-/* Individual Button Colors */
-.timer-button {
-    color: #ffa500;
-}
-
-.timer-button:hover {
-    background: rgba(255, 165, 0, 0.2);
-    border-color: #ffa500;
-}
-
-.stats-button {
-    color: #9370db;
-}
-
-.stats-button:hover {
-    background: rgba(147, 112, 219, 0.2);
-    border-color: #9370db;
-}
-
-.settings-button {
-    color: #00ccff;
-}
-
-.settings-button:hover {
-    background: rgba(0, 204, 255, 0.2);
-    border-color: #00ccff;
-}
-
-.fish-editor-button {
-    color: #ff9900;
-}
-
-.fish-editor-button:hover {
-    background: rgba(255, 153, 0, 0.2);
-    border-color: #ff9900;
+/* Unified Button Hover Styles with Violet Shadow */
+.control-button:hover {
+    background: rgba(0, 0, 0, 1);
+    border-color: rgba(138, 43, 226, 0.5);
+    transform: translateY(-1px);
+    box-shadow: 2px 2px 12px rgba(138, 43, 226, 0.8), 0 0 0 1px rgba(138, 43, 226, 0.4);
+    color: #ffffff;
 }
 
 /* Legacy data panel styles for content */
@@ -1140,7 +1115,7 @@ body {
     justify-content: center;
     gap: 8px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.1s ease;
 }
 
 .grid-toggle-label:hover {
@@ -1767,26 +1742,34 @@ body {
 /* ==================== BRUTALIST PANEL STYLES ==================== */
 
 .brutalist-panel {
-  background: rgba(40, 50, 80, 0.85);
-  border: 2px solid rgba(255, 182, 193, 0.8);
-  border-radius: 16px;
+  background: rgba(40, 50, 80, 0.9);
+  border: 1px solid rgba(255, 182, 193, 0.6);
+  border-radius: 12px;
   box-shadow: 
-    0 0 0 1px rgba(255, 182, 193, 0.4),
-    0 8px 25px rgba(255, 105, 180, 0.3),
-    0 4px 15px rgba(255, 182, 193, 0.2);
+    0 0 0 1px rgba(255, 182, 193, 0.3),
+    0 4px 15px rgba(255, 105, 180, 0.2),
+    0 2px 8px rgba(255, 182, 193, 0.15);
   font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
   font-weight: 500;
   text-transform: none;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
   position: absolute;
   z-index: 10;
-  min-width: min(280px, calc(100vw - 40px));
-  max-width: min(400px, calc(100vw - 40px));
-  max-height: calc(100vh - 40px);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: min(240px, calc(100vw - 30px));
+  max-width: min(350px, calc(100vw - 30px));
+  max-height: calc(100vh - 30px);
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   transform: none;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(8px);
   box-sizing: border-box;
+}
+
+.brutalist-panel:hover {
+  box-shadow: 
+    0 0 0 1px rgba(255, 182, 193, 0.4),
+    2px 2px 20px rgba(138, 43, 226, 0.8),
+    0 0 0 2px rgba(138, 43, 226, 0.3);
+  border-color: rgba(138, 43, 226, 0.6);
 }
 
 .brutalist-panel.draggable-brutalist-panel {
@@ -1849,14 +1832,14 @@ body {
 .brutalist-panel-header {
   background: linear-gradient(135deg, rgba(255, 182, 193, 0.15), rgba(255, 105, 180, 0.15));
   color: #FFFFFF;
-  padding: 16px 20px;
+  padding: 12px 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
   border-bottom: 1px solid rgba(255, 182, 193, 0.3);
   position: relative;
-  border-radius: 14px 14px 0 0;
+  border-radius: 11px 11px 0 0;
 }
 
 .brutalist-panel-title {
@@ -1900,10 +1883,10 @@ body {
 .brutalist-panel-content {
   background: rgba(40, 50, 80, 0.9);
   color: #FFFFFF;
-  padding: 20px;
-  max-height: calc(100vh - 200px);
+  padding: 14px;
+  max-height: calc(100vh - 150px);
   overflow-y: auto;
-  border-radius: 0 0 14px 14px;
+  border-radius: 0 0 11px 11px;
   box-sizing: border-box;
 }
 

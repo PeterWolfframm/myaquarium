@@ -222,24 +222,21 @@ function FullscreenCard({
 
   const getSizeClass = () => {
     switch (size) {
-      case 'small': return 'min-w-[min(300px,calc(100vw-40px))] max-w-[min(500px,calc(100vw-40px))] w-[90%]';
-      case 'large': return 'min-w-[min(600px,calc(100vw-40px))] max-w-[min(900px,calc(100vw-40px))] w-[90%]';
+      case 'small': return 'min-w-[min(280px,calc(100vw-30px))] max-w-[min(450px,calc(100vw-30px))] w-[85%]';
+      case 'large': return 'min-w-[min(550px,calc(100vw-30px))] max-w-[min(800px,calc(100vw-30px))] w-[85%]';
       case 'medium':
-      default: return 'min-w-[min(400px,calc(100vw-40px))] max-w-[min(600px,calc(100vw-40px))] w-[90%]';
+      default: return 'min-w-[min(350px,calc(100vw-30px))] max-w-[min(550px,calc(100vw-30px))] w-[85%]';
     }
   };
 
   return (
     <div 
-      className="fixed top-0 left-0 w-screen h-screen bg-black/80 flex justify-center items-center z-[1000] backdrop-blur-sm p-5 box-border"
+      className="fixed top-0 left-0 w-screen h-screen bg-black/80 flex justify-center items-center z-[1000] backdrop-blur-sm p-4 box-border"
       onClick={handleOverlayClick}
     >
-      <div className={`bg-slate-900/95 border-2 border-white/20 rounded-2xl p-0 max-h-[calc(100vh-40px)] max-w-[calc(100vw-40px)] overflow-hidden relative box-border ${getSizeClass()} ${className}`}>
-        <div className="flex justify-between items-center px-6 py-5 border-b border-white/10 bg-slate-800/70 rounded-t-2xl">
-          <h2 
-            className="text-white text-xl font-bold m-0 font-mono uppercase tracking-wider"
-            style={{ fontFamily: 'Roboto Mono, monospace', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}
-          >
+      <div className={`bg-slate-900/95 border-2 border-white/20 rounded-xl p-0 max-h-[calc(100vh-30px)] max-w-[calc(100vw-30px)] overflow-hidden relative box-border hover:shadow-[2px_2px_20px_rgba(138,43,226,0.8),0_0_0_2px_rgba(138,43,226,0.4)] hover:border-[rgba(138,43,226,0.6)] transition-all duration-150 ${getSizeClass()} ${className}`}>
+        <div className="flex justify-between items-center px-5 py-4 border-b border-white/10 bg-slate-800/70 rounded-t-xl">
+          <h2 className="text-white text-xl font-bold m-0 font-mono uppercase tracking-wider">
             {title}
           </h2>
           <div className="flex items-center gap-2">
@@ -247,15 +244,13 @@ function FullscreenCard({
               className="bg-primary-500/20 border border-primary-500/30 text-primary-400 rounded px-2 py-1 text-xs cursor-pointer transition-all duration-200 hover:bg-primary-500/30 hover:border-primary-500/50 hover:scale-105 active:scale-95 font-mono font-bold"
               onClick={onViewModeToggle}
               title="Switch to sticky view"
-              style={{ fontFamily: 'Roboto Mono, monospace', fontWeight: 700 }}
             >
               📌
             </button>
             {closable && (
               <button 
                 className="bg-transparent border-none text-white text-2xl cursor-pointer p-0 w-8 h-8 flex items-center justify-center rounded-full transition-colors duration-200 hover:bg-white/10 font-mono font-bold"
-                onClick={onToggle} 
-                style={{ fontFamily: 'Roboto Mono, monospace', fontWeight: 700 }}
+                onClick={onToggle}
               >
                 ×
               </button>
@@ -263,7 +258,7 @@ function FullscreenCard({
           </div>
         </div>
         
-        <div className="px-6 py-5 max-h-[calc(100vh-160px)] overflow-y-auto box-border">
+        <div className="px-5 py-4 max-h-[calc(100vh-130px)] overflow-y-auto box-border">
           {children}
         </div>
       </div>
@@ -335,10 +330,10 @@ function StickyCard({
 
   const getSizeClass = () => {
     switch (size) {
-      case 'small': return 'min-w-[min(200px,calc(100vw-40px))] max-w-[calc(100vw-40px)]';
-      case 'large': return 'min-w-[min(350px,calc(100vw-40px))] max-w-[calc(100vw-40px)]';
+      case 'small': return 'min-w-[min(180px,calc(100vw-30px))] max-w-[calc(100vw-30px)]';
+      case 'large': return 'min-w-[min(300px,calc(100vw-30px))] max-w-[calc(100vw-30px)]';
       case 'medium':
-      default: return 'min-w-[min(250px,calc(100vw-40px))] max-w-[calc(100vw-40px)]';
+      default: return 'min-w-[min(220px,calc(100vw-30px))] max-w-[calc(100vw-30px)]';
     }
   };
 
@@ -358,18 +353,16 @@ function StickyCard({
     <div className="flex items-center gap-2 flex-1 min-w-0">
       {isDraggable && (
         <div 
-          className="flex items-center justify-center w-5 h-5 rounded bg-white/10 transition-all duration-200 cursor-grab opacity-70 flex-shrink-0 hover:bg-white/20 hover:opacity-100 hover:scale-110 active:cursor-grabbing active:bg-white/30 active:scale-95"
+          className={`flex items-center justify-center w-5 h-5 rounded bg-white/10 transition-all duration-200 opacity-70 flex-shrink-0 hover:bg-white/20 hover:opacity-100 hover:scale-110 active:bg-white/30 active:scale-95 ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
           {...attributes}
           {...listeners}
-          style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
         >
           <svg 
             width="12" 
             height="12" 
             viewBox="0 0 12 12" 
             fill="currentColor"
-            className="text-white opacity-80 transition-opacity duration-200 hover:opacity-100"
-            style={{ filter: 'contrast(2) brightness(0.8)' }}
+            className="text-white opacity-80 transition-opacity duration-200 hover:opacity-100 contrast-200 brightness-75"
           >
             <rect x="2" y="2" width="2" height="2"/>
             <rect x="8" y="2" width="2" height="2"/>
@@ -381,8 +374,7 @@ function StickyCard({
         </div>
       )}
       <span 
-        className="flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-mono font-bold uppercase tracking-wider" 
-        style={{ fontFamily: 'Roboto Mono, monospace', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}
+        className="flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-mono font-bold uppercase tracking-wider"
       >
         {title}
       </span>
@@ -393,7 +385,6 @@ function StickyCard({
           onViewModeToggle();
         }}
         title="Switch to fullscreen view"
-        style={{ fontFamily: 'Roboto Mono, monospace', fontWeight: 700 }}
       >
         🔳
       </button>
@@ -405,22 +396,20 @@ function StickyCard({
       ref={isDraggable ? setNodeRef : null}
       style={containerStyle}
       data-draggable-id={componentId}
-      className={`absolute z-10 bg-black/70 rounded-xl backdrop-blur-sm border border-white/20 transition-all duration-300 max-w-[calc(100vw-40px)] max-h-[calc(100vh-40px)] box-border ${getPositionClass()} ${getSizeClass()} ${className} ${isOpen ? 'opacity-100' : 'opacity-80'} ${isDraggable ? 'rounded-3xl shadow-[0_4px_12px_rgba(0,0,0,0.3)] transition-all duration-200' : ''} ${isDragging ? 'rotate-1 shadow-[0_8px_25px_rgba(0,0,0,0.5)] bg-slate-700/95 backdrop-blur-[10px] border-primary-500/50 border-2 z-[1000]' : ''}`}
+      className={`absolute z-10 bg-black/80 rounded-lg backdrop-blur-sm border border-white/20 transition-all duration-150 max-w-[calc(100vw-30px)] max-h-[calc(100vh-30px)] box-border hover:shadow-[2px_2px_15px_rgba(138,43,226,0.8),0_0_0_1px_rgba(138,43,226,0.4)] hover:border-[rgba(138,43,226,0.6)] ${getPositionClass()} ${getSizeClass()} ${className} ${isOpen ? 'opacity-100' : 'opacity-85'} ${isDraggable ? 'rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.3)] transition-all duration-100' : ''} ${isDragging ? 'rotate-0.5 shadow-[0_6px_20px_rgba(0,0,0,0.5)] bg-slate-700/95 backdrop-blur-[8px] border-primary-500/50 border-2 z-[1000]' : ''}`}
     >
       <div 
-        className="flex justify-between items-center px-5 py-3 cursor-pointer select-none transition-colors duration-200 hover:bg-white/5"
+        className="flex justify-between items-center px-4 py-2 cursor-pointer select-none transition-colors duration-100 hover:bg-white/5"
         onClick={collapsible ? onToggle : undefined}
       >
         <h3 
           className="m-0 text-white text-base font-bold font-mono"
-          style={{ fontFamily: 'Roboto Mono, monospace', fontWeight: 700 }}
         >
           {enhancedTitle}
         </h3>
         {collapsible && (
           <button 
             className="bg-transparent border-none text-white text-xl cursor-pointer p-0 w-5 h-5 flex items-center justify-center rounded transition-colors duration-200 hover:bg-white/10 font-mono font-bold"
-            style={{ fontFamily: 'Roboto Mono, monospace', fontWeight: 700 }}
           >
             {isOpen ? '−' : '+'}
           </button>
@@ -428,7 +417,7 @@ function StickyCard({
       </div>
       
       {isOpen && (
-        <div className="px-5 pb-4 animate-slideDown max-h-[calc(100vh-120px)] overflow-y-auto box-border">
+        <div className="px-4 pb-3 animate-slideDown max-h-[calc(100vh-100px)] overflow-y-auto box-border">
           {children}
         </div>
       )}

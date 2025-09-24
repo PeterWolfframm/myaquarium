@@ -102,15 +102,15 @@ function SpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadComplete, on
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <h4 className="text-section-title">Fish Sprites</h4>
-        <div className="loading-state">Loading sprites...</div>
+        <h4 className="text-primary-300 font-black text-base uppercase tracking-wider mb-4 text-center border-b-2 border-primary-400/30 pb-2">Fish Sprites</h4>
+        <div className="text-center text-primary-400 font-bold italic py-4">Loading sprites...</div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <h4 className="text-section-title">Fish Sprites</h4>
+      <h4 className="text-primary-300 font-black text-base uppercase tracking-wider mb-4 text-center border-b-2 border-primary-400/30 pb-2">Fish Sprites</h4>
       
       {error && (
         <div className="bg-red-500/20 border border-red-400/50 text-red-400 p-3 rounded-lg flex items-center justify-between">
@@ -125,7 +125,7 @@ function SpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadComplete, on
       )}
 
       {/* Upload Section */}
-      <div className="section-secondary">
+      <div className="bg-slate-800/70 border-2 border-primary-400/40 p-3 hover:bg-slate-700/70 hover:border-primary-400/70 transition-all duration-200 transform hover:scale-[1.02]">
         <div className="section-content">
           <label className={`inline-flex items-center justify-center px-4 py-2 rounded-lg border transition-all duration-200 cursor-pointer ${
             uploading || !isOnline
@@ -153,8 +153,8 @@ function SpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadComplete, on
 
       {/* Current Selection */}
       {selectedSpriteUrl && (
-        <div className="section-secondary">
-          <h5 className="text-section-title mb-3">Current Sprite:</h5>
+        <div className="bg-slate-800/70 border-2 border-primary-400/40 p-3 hover:bg-slate-700/70 hover:border-primary-400/70 transition-all duration-200 transform hover:scale-[1.02]">
+          <h5 className="text-primary-300 font-black text-base uppercase tracking-wider mb-4 text-center border-b-2 border-primary-400/30 pb-2 mb-3">Current Sprite:</h5>
           <div className="section-content">
             <div className="section-interactive border-primary-500 bg-primary-500/20 p-4 relative">
               <div className="flex items-center gap-4">
@@ -171,7 +171,7 @@ function SpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadComplete, on
                   Failed to load image
                 </div>
                 <div className="flex-1">
-                  <div className="text-value">Selected sprite</div>
+                  <div className="text-white font-black">Selected sprite</div>
                   <div className="text-mono-small">Ready for new fish</div>
                 </div>
                 <button 
@@ -188,8 +188,8 @@ function SpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadComplete, on
       )}
 
       {/* Available Sprites */}
-      <div className="section-secondary">
-        <h5 className="text-section-title mb-3">Available Sprites:</h5>
+      <div className="bg-slate-800/70 border-2 border-primary-400/40 p-3 hover:bg-slate-700/70 hover:border-primary-400/70 transition-all duration-200 transform hover:scale-[1.02]">
+        <h5 className="text-primary-300 font-black text-base uppercase tracking-wider mb-4 text-center border-b-2 border-primary-400/30 pb-2 mb-3">Available Sprites:</h5>
         <div className="section-content">
           {!isOnline ? (
             // When offline, only show shark sprite
@@ -221,7 +221,7 @@ function SpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadComplete, on
               </div>
             </div>
           ) : availableSprites.length === 0 ? (
-            <div className="empty-state">
+            <div className="text-center text-slate-400 font-bold italic py-4 border border-slate-600/50 bg-slate-800/30">
               No sprites available. Upload your first sprite!
             </div>
           ) : (
@@ -260,8 +260,8 @@ function SpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadComplete, on
       </div>
 
       {/* Default Option */}
-      <div className="section-secondary">
-        <h5 className="text-section-title mb-3">Default:</h5>
+      <div className="bg-slate-800/70 border-2 border-primary-400/40 p-3 hover:bg-slate-700/70 hover:border-primary-400/70 transition-all duration-200 transform hover:scale-[1.02]">
+        <h5 className="text-primary-300 font-black text-base uppercase tracking-wider mb-4 text-center border-b-2 border-primary-400/30 pb-2 mb-3">Default:</h5>
         <div className="section-content">
           {!isOnline ? (
             // When offline, default is also shark
@@ -276,7 +276,7 @@ function SpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadComplete, on
               <div className="flex items-center gap-3">
                 <div className="text-2xl">🦈</div>
                 <div>
-                  <div className="text-value">Shark (offline default)</div>
+                  <div className="text-white font-black">Shark (offline default)</div>
                   <div className="text-mono-small">Built-in sprite for offline use</div>
                 </div>
               </div>
@@ -293,7 +293,7 @@ function SpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadComplete, on
               <div className="flex items-center gap-3">
                 <div className="text-2xl">🐠</div>
                 <div>
-                  <div className="text-value">Default Fish Sprite</div>
+                  <div className="text-white font-black">Default Fish Sprite</div>
                   <div className="text-mono-small">Standard aquarium fish</div>
                 </div>
               </div>
