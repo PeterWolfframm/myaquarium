@@ -192,6 +192,10 @@ export class ObjectManager {
         this.isBlinking = false;
         this.clickCallback = null; // Callback for when an object is clicked
         
+        // Store original appearance for restoration
+        this.originalTint = null;
+        this.originalAlpha = null;
+        
         this.initializeGrid();
         
         console.log(`ObjectManager initialized for ${tilesHorizontal}x${tilesVertical} grid`);
@@ -610,6 +614,11 @@ export class ObjectManager {
         const aquariumObject = this.objects.get(objectId);
         if (!aquariumObject || !aquariumObject.sprite) return;
         
+        // Store original appearance before starting to blink
+        this.originalTint = aquariumObject.sprite.tint;
+        this.originalAlpha = aquariumObject.sprite.alpha;
+        console.log(`📸 Storing original appearance: tint=0x${this.originalTint.toString(16)}, alpha=${this.originalAlpha}`);
+        
         this.selectedObjectId = objectId;
         this.selectedObject = aquariumObject;
         this.startBlinking();
@@ -621,9 +630,10 @@ export class ObjectManager {
      * Clear object selection and stop blinking
      */
     clearSelection() {
+        console.log('🛑 ObjectManager clearing selection and stopping blinking...');
+        this.stopBlinking(); // Stop blinking first to restore original appearance
         this.selectedObjectId = null;
         this.selectedObject = null;
-        this.stopBlinking();
     }
     
     // Outline methods removed - now using sprite blinking instead
@@ -665,18 +675,29 @@ export class ObjectManager {
      * Stop blinking animation and restore sprite to normal appearance
      */
     stopBlinking() {
+        console.log('⏹️ Stopping blinking animation...');
         this.isBlinking = false;
         if (this.blinkTicker) {
             clearInterval(this.blinkTicker);
             this.blinkTicker = null;
+            console.log('✅ Blink ticker cleared');
         }
         
-        // Restore sprite to normal appearance
+        // Restore sprite to original appearance
         if (this.selectedObject && this.selectedObject.sprite) {
-            this.selectedObject.sprite.alpha = 1.0;
-            this.selectedObject.sprite.tint = 0xffffff; // Reset to white (normal)
-            console.log(`Stopped blinking for object: ${this.selectedObject.id}`);
+            // Use stored original values, or fallback to default if not stored
+            const restoreTint = this.originalTint !== null ? this.originalTint : 0xffffff;
+            const restoreAlpha = this.originalAlpha !== null ? this.originalAlpha : 1.0;
+            
+            this.selectedObject.sprite.tint = restoreTint;
+            this.selectedObject.sprite.alpha = restoreAlpha;
+            
+            console.log(`✅ Stopped blinking for object: ${this.selectedObject.id} - restored to original appearance (tint=0x${restoreTint.toString(16)}, alpha=${restoreAlpha})`);
         }
+        
+        // Clear stored original values
+        this.originalTint = null;
+        this.originalAlpha = null;
     }
     
     /**

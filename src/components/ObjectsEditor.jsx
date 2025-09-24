@@ -62,6 +62,9 @@ function ObjectsEditor({
       loadPlacedObjects();
     } else {
       // Clear selection when closing
+      console.log('🔒 Objects Editor closing - clearing all selections and stopping blinking');
+      setSelectedObject(null);
+      setSelectedSprite(null);
       if (aquarium) {
         aquarium.clearObjectSelection();
       }

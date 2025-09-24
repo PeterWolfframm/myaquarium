@@ -1,0 +1,5 @@
+---
+description: "only add debugging in the form of console log statements when explicitely asked to"
+globs:
+alwaysApply: true
+---

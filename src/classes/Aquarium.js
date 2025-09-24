@@ -1373,6 +1373,7 @@ export class Aquarium {
      */
     clearObjectSelection() {
         if (this.objectManager) {
+            console.log('🧹 Aquarium clearing object selection...');
             this.objectManager.clearSelection();
         }
     }
