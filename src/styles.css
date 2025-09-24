@@ -2446,3 +2446,78 @@ body {
   letter-spacing: 2px;
   font-size: 14px;
 }
+
+/* ==================== CARD COMPONENT VIEW MODE TOGGLE STYLES ==================== */
+
+.view-mode-toggle-button {
+  background: rgba(0, 200, 255, 0.2);
+  border: 1px solid rgba(0, 200, 255, 0.3);
+  color: #00ccff;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.view-mode-toggle-button:hover {
+  background: rgba(0, 200, 255, 0.3);
+  border-color: rgba(0, 200, 255, 0.5);
+  transform: scale(1.05);
+}
+
+.view-mode-toggle-button:active {
+  transform: scale(0.95);
+}
+
+/* Specific styles for sticky mode toggle */
+.sticky-view-toggle {
+  padding: 2px 6px;
+  font-size: 10px;
+  margin-left: 8px;
+}
+
+/* Modal header actions container */
+.modal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Enhanced collapsible title container */
+.collapsible-title-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.collapsible-title-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Drag handle positioning in new layout */
+.collapsible-title-container .drag-handle {
+  flex-shrink: 0;
+  order: -1;
+}
+
+/* Responsive view mode toggles */
+@media (max-width: 768px) {
+  .view-mode-toggle-button {
+    padding: 3px 6px;
+    font-size: 11px;
+  }
+  
+  .sticky-view-toggle {
+    padding: 2px 4px;
+    font-size: 9px;
+  }
+}

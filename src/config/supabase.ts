@@ -11,5 +11,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 export const TABLES = {
   AQUARIUM_SETTINGS: 'aquarium_settings',
   FISH: 'fish',
-  TIME_TRACKING_SESSIONS: 'time_tracking_sessions'
+  TIME_TRACKING_SESSIONS: 'time_tracking_sessions',
+  UI_SETTINGS: 'ui_settings',
+  COMPONENT_PREFERENCES: 'component_preferences'
 };

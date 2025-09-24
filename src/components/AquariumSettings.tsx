@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'preact/hooks';
 import { useAquariumStore } from '../stores/aquariumStore';
 import { useUIStore } from '../stores/uiStore';
-import Modal from './Modal';
+import CardComponent from './CardComponent';
 
-function AquariumSettings({ isVisible, onClose, aquarium }) {
+function AquariumSettings({ isVisible, onClose, aquarium }: { isVisible: boolean; onClose: () => void; aquarium: any }) {
+  // Map the props to CardComponent interface
+  const isOpen = isVisible;
+  const onToggle = () => onClose();
   const {
     tilesHorizontal,
     tilesVertical,
@@ -64,13 +67,13 @@ function AquariumSettings({ isVisible, onClose, aquarium }) {
     }
   }, [isVisible, aquarium]);
 
-  if (!isVisible) return null;
+  // Remove early return - CardComponent handles visibility
 
   const handleApply = () => {
     setTilesHorizontal(localValues.tilesHorizontal);
     setTilesVertical(localValues.tilesVertical);
     setDefaultVisibleVerticalTiles(localValues.defaultVisibleVerticalTiles);
-    onClose();
+    onToggle(); // Close the settings
   };
 
   const handleReset = () => {
@@ -81,7 +84,7 @@ function AquariumSettings({ isVisible, onClose, aquarium }) {
     });
   };
 
-  const updateLocalValue = (key, value) => {
+  const updateLocalValue = (key: string, value: any) => {
     setLocalValues(prev => ({ ...prev, [key]: value }));
   };
 
@@ -111,10 +114,12 @@ function AquariumSettings({ isVisible, onClose, aquarium }) {
   };
 
   return (
-    <Modal 
-      isVisible={isVisible} 
-      onClose={onClose} 
+    <CardComponent 
       title="Aquarium Settings"
+      componentId="settings"
+      isOpen={isOpen}
+      onToggle={onToggle}
+      defaultViewMode="fullscreen"
       size="medium"
       className="settings-modal"
     >
@@ -132,7 +137,7 @@ function AquariumSettings({ isVisible, onClose, aquarium }) {
             </div>
             <div className="zoom-info-row">
               <span>Zoom Range:</span>
-              <span className="zoom-value">{zoomInfo.minZoom}x - {zoomInfo.maxZoom}x</span>
+              <span className="zoom-value">{minZoom || 0.1}x - {maxZoom || 4.0}x</span>
             </div>
             <button className="reset-zoom-button" onClick={handleResetToDefaultZoom}>
               Reset to Default Zoom
@@ -180,7 +185,7 @@ function AquariumSettings({ isVisible, onClose, aquarium }) {
                 min="5"
                 max="50"
                 value={localValues.defaultVisibleVerticalTiles}
-                onChange={(e) => updateLocalValue('defaultVisibleVerticalTiles', parseInt(e.target.value) || 0)}
+                onChange={(e) => updateLocalValue('defaultVisibleVerticalTiles', parseInt((e.target as HTMLInputElement)?.value) || 0)}
               />
             </label>
           </div>
@@ -199,7 +204,7 @@ function AquariumSettings({ isVisible, onClose, aquarium }) {
                 min="10"
                 max="1000"
                 value={localValues.tilesHorizontal}
-                onChange={(e) => updateLocalValue('tilesHorizontal', parseInt(e.target.value) || 0)}
+                onChange={(e) => updateLocalValue('tilesHorizontal', parseInt((e.target as HTMLInputElement)?.value) || 0)}
               />
             </label>
           </div>
@@ -211,7 +216,7 @@ function AquariumSettings({ isVisible, onClose, aquarium }) {
                 min="10"
                 max="500"
                 value={localValues.tilesVertical}
-                onChange={(e) => updateLocalValue('tilesVertical', parseInt(e.target.value) || 0)}
+                onChange={(e) => updateLocalValue('tilesVertical', parseInt((e.target as HTMLInputElement)?.value) || 0)}
               />
             </label>
           </div>
@@ -240,7 +245,7 @@ function AquariumSettings({ isVisible, onClose, aquarium }) {
                   <input
                     type="color"
                     value={brutalistPrimaryColor}
-                    onChange={(e) => setBrutalistPrimaryColor(e.target.value)}
+                    onChange={(e) => setBrutalistPrimaryColor((e.target as HTMLInputElement)?.value)}
                     className="color-picker"
                   />
                   <span className="color-value">{brutalistPrimaryColor}</span>
@@ -254,7 +259,7 @@ function AquariumSettings({ isVisible, onClose, aquarium }) {
                   <input
                     type="color"
                     value={brutalistSecondaryColor}
-                    onChange={(e) => setBrutalistSecondaryColor(e.target.value)}
+                    onChange={(e) => setBrutalistSecondaryColor((e.target as HTMLInputElement)?.value)}
                     className="color-picker"
                   />
                   <span className="color-value">{brutalistSecondaryColor}</span>
@@ -302,7 +307,7 @@ function AquariumSettings({ isVisible, onClose, aquarium }) {
         <button className="reset-button" onClick={handleReset}>Reset</button>
         <button className="apply-button" onClick={handleApply}>Apply</button>
       </div>
-    </Modal>
+    </CardComponent>
   );
 }
 

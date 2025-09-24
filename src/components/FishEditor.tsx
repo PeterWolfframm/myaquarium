@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'preact/hooks';
 import { useFishStore } from '../stores/fishStore';
 import { useAquariumStore } from '../stores/aquariumStore';
-import Modal from './Modal';
+import CardComponent from './CardComponent';
 import SpriteGallery from './SpriteGallery';
 import { FISH_CONFIG } from '../constants/index';
 
 function FishEditor({ isVisible, onClose }) {
+  // Map the props to CardComponent interface
+  const isOpen = isVisible;
+  const onToggle = () => onClose();
   const { 
     fish, 
     addFish,
@@ -100,7 +103,7 @@ function FishEditor({ isVisible, onClose }) {
     }
   }, [fish, selectedFish, editingColor, editingName, editingSpriteUrl, editingSize]);
 
-  if (!isVisible) return null;
+  // Remove early return - CardComponent handles visibility
 
   const handleFishSelect = (fishData) => {
     // Ensure consistent format (convert snake_case to camelCase if needed)
@@ -256,10 +259,12 @@ function FishEditor({ isVisible, onClose }) {
   ];
 
   return (
-    <Modal 
-      isVisible={isVisible} 
-      onClose={onClose} 
+    <CardComponent 
       title="Fish Editor"
+      componentId="fish-editor"
+      isOpen={isOpen}
+      onToggle={onToggle}
+      defaultViewMode="fullscreen"
       size="large"
       className="fish-editor-modal"
     >
@@ -524,7 +529,7 @@ function FishEditor({ isVisible, onClose }) {
             </div>
           )}
         </div>
-    </Modal>
+    </CardComponent>
   );
 }
 

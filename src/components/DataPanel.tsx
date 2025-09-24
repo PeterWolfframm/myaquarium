@@ -1,5 +1,5 @@
 import { useAquariumStore } from '../stores/aquariumStore';
-import Collapsible from './Collapsible';
+import CardComponent from './CardComponent';
 
 function DataPanel({ visibleCubes, fishInfo, viewportPosition, tileDimensions, zoomInfo, aquarium, isOpen, onToggle, isDraggable = false, draggableId = null, draggablePosition = null }) {
   const { showGrid, toggleGrid } = useAquariumStore();
@@ -11,16 +11,17 @@ function DataPanel({ visibleCubes, fishInfo, viewportPosition, tileDimensions, z
   };
 
   return (
-    <Collapsible 
+    <CardComponent 
       title="📊 Stats"
-      position={isDraggable ? "static" : "top-right"}
-      size="medium"
+      componentId="stats"
       isOpen={isOpen}
       onToggle={onToggle}
+      defaultViewMode="sticky"
+      position={isDraggable ? "static" : "top-right"}
+      size="medium"
       className="stats-collapsible"
       hideWhenClosed={true}
       isDraggable={isDraggable}
-      draggableId={draggableId}
       draggablePosition={draggablePosition}
     >
       <div className="data-section">
@@ -75,7 +76,7 @@ function DataPanel({ visibleCubes, fishInfo, viewportPosition, tileDimensions, z
           </label>
         </div>
       </div>
-    </Collapsible>
+    </CardComponent>
   );
 }
 

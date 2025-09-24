@@ -7,7 +7,9 @@ import type {
   SpriteData, 
   UISettingsData,
   MoodType,
-  DatabaseError 
+  DatabaseError,
+  ViewMode,
+  ComponentPreference
 } from '../types/global';
 
 /**
@@ -1052,6 +1054,142 @@ class DatabaseService {
     } catch (error) {
       console.error('Error in updateUISettings:', error);
       return null;
+    }
+  }
+
+  // ==================== COMPONENT PREFERENCES ====================
+
+  /**
+   * Get component view preference for the current user
+   * @param {string} componentId - Component identifier
+   * @returns {Promise<ViewMode|null>} View mode preference or null if not found
+   */
+  async getComponentViewPreference(componentId: string): Promise<ViewMode | null> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const { data, error } = await supabase
+        .from(TABLES.COMPONENT_PREFERENCES)
+        .select('view_mode')
+        .eq('user_id', user.id)
+        .eq('component_id', componentId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
+        console.error('Error fetching component preference:', error);
+        return null;
+      }
+
+      return data?.view_mode || null;
+    } catch (error) {
+      console.error('Error in getComponentViewPreference:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Save component view preference for the current user
+   * @param {string} componentId - Component identifier
+   * @param {ViewMode} viewMode - View mode preference
+   * @returns {Promise<ComponentPreference|null>} Saved preference or null if error
+   */
+  async saveComponentViewPreference(componentId: string, viewMode: ViewMode): Promise<ComponentPreference | null> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      // Check if preference already exists
+      const existingPreference = await this.getComponentViewPreference(componentId);
+      
+      const preferenceData = {
+        user_id: user.id,
+        component_id: componentId,
+        view_mode: viewMode
+      };
+
+      let result;
+      if (existingPreference) {
+        // Update existing preference
+        result = await supabase
+          .from(TABLES.COMPONENT_PREFERENCES)
+          .update({ view_mode: viewMode })
+          .eq('user_id', user.id)
+          .eq('component_id', componentId)
+          .select()
+          .single();
+      } else {
+        // Insert new preference
+        result = await supabase
+          .from(TABLES.COMPONENT_PREFERENCES)
+          .insert(preferenceData)
+          .select()
+          .single();
+      }
+
+      if (result.error) {
+        console.error('Error saving component preference:', result.error);
+        return null;
+      }
+
+      return result.data;
+    } catch (error) {
+      console.error('Error in saveComponentViewPreference:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get all component preferences for the current user
+   * @returns {Promise<ComponentPreference[]>} Array of component preferences
+   */
+  async getAllComponentPreferences(): Promise<ComponentPreference[]> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      const { data, error } = await supabase
+        .from(TABLES.COMPONENT_PREFERENCES)
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error fetching component preferences:', error);
+        return [];
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error('Error in getAllComponentPreferences:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Delete component preference for the current user
+   * @param {string} componentId - Component identifier
+   * @returns {Promise<boolean>} Success status
+   */
+  async deleteComponentViewPreference(componentId: string): Promise<boolean> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return false;
+
+      const { error } = await supabase
+        .from(TABLES.COMPONENT_PREFERENCES)
+        .delete()
+        .eq('user_id', user.id)
+        .eq('component_id', componentId);
+
+      if (error) {
+        console.error('Error deleting component preference:', error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error in deleteComponentViewPreference:', error);
+      return false;
     }
   }
 }

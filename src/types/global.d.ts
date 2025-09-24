@@ -359,6 +359,19 @@ export interface PerformanceSettings {
   isMobile: boolean;
 }
 
+// ==================== COMPONENT PREFERENCES TYPES ====================
+
+export type ViewMode = 'sticky' | 'fullscreen';
+
+export interface ComponentPreference {
+  id?: string;
+  user_id: string;
+  component_id: string;
+  view_mode: ViewMode;
+  created_at?: string;
+  updated_at?: string;
+}
+
 // ==================== DRAG AND DROP TYPES ====================
 
 export interface DragEndEvent {

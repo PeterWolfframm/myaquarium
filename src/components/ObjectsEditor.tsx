@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'preact/hooks';
-import Collapsible from './Collapsible';
+import CardComponent from './CardComponent';
 import ObjectsSpriteGallery from './ObjectsSpriteGallery';
 import { databaseService } from '../services/database';
 
@@ -267,16 +267,17 @@ function ObjectsEditor({
   };
 
   return (
-    <Collapsible 
+    <CardComponent 
       title="🎨 Objects Manager"
-      position={isDraggable ? "static" : "top-left"}
-      size="large"
+      componentId="objects"
       isOpen={isOpen}
       onToggle={onToggle}
+      defaultViewMode="sticky"
+      position={isDraggable ? "static" : "top-left"}
+      size="large"
       className="objects-manager-collapsible"
       hideWhenClosed={true}
       isDraggable={isDraggable}
-      draggableId={draggableId}
       draggablePosition={draggablePosition}
     >
       {error && (
@@ -516,7 +517,7 @@ function ObjectsEditor({
           )}
         </div>
       </div>
-    </Collapsible>
+    </CardComponent>
   );
 }
 

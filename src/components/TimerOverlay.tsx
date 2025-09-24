@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'preact/hooks';
 import { databaseService } from '../services/database';
-import Collapsible from './Collapsible';
+import CardComponent from './CardComponent';
 
 function TimerOverlay({ time, mood, onMoodChange, currentSession, onSessionsLoaded, isOpen, onToggle, isDraggable = false, draggableId = null, draggablePosition = null }) {
   const [recentSessions, setRecentSessions] = useState([]);
@@ -76,16 +76,17 @@ function TimerOverlay({ time, mood, onMoodChange, currentSession, onSessionsLoad
   };
 
   return (
-    <Collapsible 
+    <CardComponent 
       title={`⏱️ Timer - ${time}`}
-      position={isDraggable ? "static" : "center"}
-      size="medium"
+      componentId="timer"
       isOpen={isOpen}
       onToggle={onToggle}
+      defaultViewMode="sticky"
+      position={isDraggable ? "static" : "center"}
+      size="medium"
       className="timer-collapsible"
       hideWhenClosed={true}
       isDraggable={isDraggable}
-      draggableId={draggableId}
       draggablePosition={draggablePosition}
     >
       <div className="timer-content">
@@ -133,7 +134,7 @@ function TimerOverlay({ time, mood, onMoodChange, currentSession, onSessionsLoad
           )}
         </div>
       </div>
-    </Collapsible>
+    </CardComponent>
   );
 }
 
