@@ -5,10 +5,19 @@ import CardComponent from './CardComponent';
 import SpriteGallery from './SpriteGallery';
 import { FISH_CONFIG } from '../constants/index';
 
-function FishEditor({ isVisible, onClose }) {
-  // Map the props to CardComponent interface
-  const isOpen = isVisible;
-  const onToggle = () => onClose();
+function FishEditor({ 
+  isOpen, 
+  onToggle, 
+  isDraggable = false, 
+  draggableId = null, 
+  draggablePosition = null 
+}: {
+  isOpen: boolean;
+  onToggle: () => void;
+  isDraggable?: boolean;
+  draggableId?: string | null;
+  draggablePosition?: { x: number; y: number } | null;
+}) {
   const { 
     fish, 
     addFish,
@@ -56,7 +65,7 @@ function FishEditor({ isVisible, onClose }) {
 
   // Reset when modal opens/closes
   useEffect(() => {
-    if (isVisible) {
+    if (isOpen) {
       setSelectedFish(null);
       setEditingColor('');
       setEditingName('');
@@ -70,7 +79,7 @@ function FishEditor({ isVisible, onClose }) {
       setNewFishSize(1.0);
       clearSyncError();
     }
-  }, [isVisible, clearSyncError, isOnline, sharkSpriteUrl]);
+  }, [isOpen, clearSyncError, isOnline, sharkSpriteUrl]);
 
   // Update selected fish when store data changes
   useEffect(() => {
@@ -261,12 +270,16 @@ function FishEditor({ isVisible, onClose }) {
   return (
     <CardComponent 
       title="Fish Editor"
-      componentId="fish-editor"
+      componentId={draggableId || "fish-editor"}
       isOpen={isOpen}
       onToggle={onToggle}
-      defaultViewMode="fullscreen"
+      defaultViewMode={isDraggable ? "sticky" : "fullscreen"}
+      position={isDraggable ? "static" : "center"}
       size="large"
       className="fish-editor-modal"
+      hideWhenClosed={true}
+      isDraggable={isDraggable}
+      draggablePosition={draggablePosition}
     >
       {syncError && (
         <div className="error-message">

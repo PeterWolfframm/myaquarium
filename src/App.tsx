@@ -59,14 +59,18 @@ function App(): JSX.Element {
         timer: { x: window.innerWidth / 2 - 150, y: 50 },
         stats: { x: window.innerWidth - 320, y: 50 },
         objectsManager: { x: 20, y: 120 },
-        brutalistPanel: { x: window.innerWidth - 320, y: 200 }
+        brutalistPanel: { x: window.innerWidth - 320, y: 200 },
+        settings: { x: window.innerWidth / 2 - 200, y: 100 },
+        fishEditor: { x: window.innerWidth / 2 - 250, y: 80 }
       };
     } catch {
       return {
         timer: { x: window.innerWidth / 2 - 150, y: 50 },
         stats: { x: window.innerWidth - 320, y: 50 },
         objectsManager: { x: 20, y: 120 },
-        brutalistPanel: { x: window.innerWidth - 320, y: 200 }
+        brutalistPanel: { x: window.innerWidth - 320, y: 200 },
+        settings: { x: window.innerWidth / 2 - 200, y: 100 },
+        fishEditor: { x: window.innerWidth / 2 - 250, y: 80 }
       };
     }
   });
@@ -327,17 +331,9 @@ function App(): JSX.Element {
   const toggleSettings = (): void => {
     setShowSettings(!showSettings);
   };
-  
-  const closeSettings = (): void => {
-    setShowSettings(false);
-  };
 
   const toggleFishEditor = (): void => {
     setShowFishEditor(!showFishEditor);
-  };
-  
-  const closeFishEditor = (): void => {
-    setShowFishEditor(false);
   };
 
   const toggleTimer = (): void => {
@@ -392,61 +388,71 @@ function App(): JSX.Element {
           </button>
         </div>
 
-        <TimerOverlay 
-          time={time} 
-          mood={mood} 
-          onMoodChange={handleMoodChange}
-          currentSession={currentSession}
-          isOpen={showTimer}
-          onToggle={toggleTimer}
-          isDraggable={true}
-          draggableId="timer"
-          draggablePosition={panelPositions.timer}
-        />
+        <div className="component-panel">
+            <TimerOverlay 
+              time={time} 
+              mood={mood} 
+              onMoodChange={handleMoodChange}
+              currentSession={currentSession}
+              isOpen={showTimer}
+              onToggle={toggleTimer}
+              isDraggable={true}
+              draggableId="timer"
+              draggablePosition={panelPositions.timer}
+            />
 
-        <DataPanel 
-          visibleCubes={visibleCubes}
-          fishInfo={fishInfo}
-          viewportPosition={viewportPosition}
-          tileDimensions={tileDimensions}
-          zoomInfo={zoomInfo}
-          aquarium={aquariumRef}
-          isOpen={showStats}
-          onToggle={toggleStats}
-          isDraggable={true}
-          draggableId="stats"
-          draggablePosition={panelPositions.stats}
-        />
+            <DataPanel 
+              visibleCubes={visibleCubes}
+              fishInfo={fishInfo}
+              viewportPosition={viewportPosition}
+              tileDimensions={tileDimensions}
+              zoomInfo={zoomInfo}
+              aquarium={aquariumRef}
+              isOpen={showStats}
+              onToggle={toggleStats}
+              isDraggable={true}
+              draggableId="stats"
+              draggablePosition={panelPositions.stats}
+            />
 
-        <ObjectsEditor 
-          isOpen={showObjectsManager}
-          onToggle={toggleObjectsManager}
-          isDraggable={true}
-          draggableId="objectsManager"
-          draggablePosition={panelPositions.objectsManager}
-          aquarium={aquariumRef}
-        />
+            <ObjectsEditor 
+              isOpen={showObjectsManager}
+              onToggle={toggleObjectsManager}
+              isDraggable={true}
+              draggableId="objectsManager"
+              draggablePosition={panelPositions.objectsManager}
+              aquarium={aquariumRef}
+            />
 
-        <BrutalistPanel 
-          isOpen={showBrutalistPanel}
-          onToggle={toggleBrutalistPanel}
-          isDraggable={true}
-          draggableId="brutalistPanel"
-          draggablePosition={panelPositions.brutalistPanel}
-        />
+            <BrutalistPanel 
+              isOpen={showBrutalistPanel}
+              onToggle={toggleBrutalistPanel}
+              isDraggable={true}
+              draggableId="brutalistPanel"
+              draggablePosition={panelPositions.brutalistPanel}
+            />
+
+            <AquariumSettings 
+              isOpen={showSettings}
+              onToggle={toggleSettings}
+              aquarium={aquariumRef}
+              isDraggable={true}
+              draggableId="settings"
+              draggablePosition={panelPositions.settings}
+            />
+            
+            <FishEditor 
+              isOpen={showFishEditor}
+              onToggle={toggleFishEditor}
+              isDraggable={true}
+              draggableId="fishEditor"
+              draggablePosition={panelPositions.fishEditor}
+            />
+        </div>
 
         <AquariumContainer 
           mood={mood} 
           onAquariumReady={handleAquariumReady}
-        />
-        <AquariumSettings 
-          isVisible={showSettings}
-          onClose={closeSettings}
-          aquarium={aquariumRef}
-        />
-        <FishEditor 
-          isVisible={showFishEditor}
-          onClose={closeFishEditor}
         />
       </div>
     </DragAndDropProvider>

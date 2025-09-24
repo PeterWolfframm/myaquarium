@@ -269,7 +269,7 @@ function ObjectsEditor({
   return (
     <CardComponent 
       title="🎨 Objects Manager"
-      componentId="objects"
+      componentId={draggableId || "objectsManager"}
       isOpen={isOpen}
       onToggle={onToggle}
       defaultViewMode="sticky"

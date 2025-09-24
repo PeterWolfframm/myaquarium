@@ -1,0 +1,5 @@
+---
+description: "never run npm run dev"
+globs:
+alwaysApply: true
+---

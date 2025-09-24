@@ -266,6 +266,8 @@ export interface PanelPositions {
   stats: Position;
   objectsManager: Position;
   brutalistPanel: Position;
+  settings: Position;
+  fishEditor: Position;
 }
 
 export interface FishInfo {

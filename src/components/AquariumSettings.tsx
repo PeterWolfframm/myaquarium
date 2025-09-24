@@ -3,10 +3,21 @@ import { useAquariumStore } from '../stores/aquariumStore';
 import { useUIStore } from '../stores/uiStore';
 import CardComponent from './CardComponent';
 
-function AquariumSettings({ isVisible, onClose, aquarium }: { isVisible: boolean; onClose: () => void; aquarium: any }) {
-  // Map the props to CardComponent interface
-  const isOpen = isVisible;
-  const onToggle = () => onClose();
+function AquariumSettings({ 
+  isOpen, 
+  onToggle, 
+  aquarium, 
+  isDraggable = false, 
+  draggableId = null, 
+  draggablePosition = null 
+}: { 
+  isOpen: boolean; 
+  onToggle: () => void; 
+  aquarium: any;
+  isDraggable?: boolean;
+  draggableId?: string | null;
+  draggablePosition?: { x: number; y: number } | null;
+}) {
   const {
     tilesHorizontal,
     tilesVertical,
@@ -42,18 +53,18 @@ function AquariumSettings({ isVisible, onClose, aquarium }: { isVisible: boolean
 
   // Sync local state when store values change or modal opens
   useEffect(() => {
-    if (isVisible) {
+    if (isOpen) {
       setLocalValues({
         tilesHorizontal,
         tilesVertical,
         defaultVisibleVerticalTiles
       });
     }
-  }, [isVisible, tilesHorizontal, tilesVertical, defaultVisibleVerticalTiles]);
+  }, [isOpen, tilesHorizontal, tilesVertical, defaultVisibleVerticalTiles]);
 
   // Update zoom info when modal is visible
   useEffect(() => {
-    if (isVisible && aquarium) {
+    if (isOpen && aquarium) {
       const updateZoomInfo = () => {
         const info = aquarium.getZoomInfo();
         setZoomInfo(info);
@@ -65,7 +76,7 @@ function AquariumSettings({ isVisible, onClose, aquarium }: { isVisible: boolean
       const interval = setInterval(updateZoomInfo, 100);
       return () => clearInterval(interval);
     }
-  }, [isVisible, aquarium]);
+  }, [isOpen, aquarium]);
 
   // Remove early return - CardComponent handles visibility
 
@@ -116,12 +127,16 @@ function AquariumSettings({ isVisible, onClose, aquarium }: { isVisible: boolean
   return (
     <CardComponent 
       title="Aquarium Settings"
-      componentId="settings"
+      componentId={draggableId || "settings"}
       isOpen={isOpen}
       onToggle={onToggle}
-      defaultViewMode="fullscreen"
+      defaultViewMode={isDraggable ? "sticky" : "fullscreen"}
+      position={isDraggable ? "static" : "center"}
       size="medium"
       className="settings-modal"
+      hideWhenClosed={true}
+      isDraggable={isDraggable}
+      draggablePosition={draggablePosition}
     >
       <div className="settings-content">
         <div className="setting-group">

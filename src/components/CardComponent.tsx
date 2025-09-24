@@ -53,7 +53,7 @@ export default function CardComponent({
   className = ''
 }: CardComponentProps) {
   const [viewMode, setViewMode] = useState<ViewMode>(defaultViewMode);
-  const [isLoadingPreference, setIsLoadingPreference] = useState(true);
+  const [isLoadingPreference, setIsLoadingPreference] = useState(false);
 
   // Load view preference from database on mount
   useEffect(() => {
@@ -62,6 +62,7 @@ export default function CardComponent({
 
   const loadViewPreference = async () => {
     try {
+      setIsLoadingPreference(true);
       const preference = await databaseService.getComponentViewPreference(componentId);
       if (preference) {
         setViewMode(preference);
@@ -99,10 +100,7 @@ export default function CardComponent({
     disabled: !isDraggable || viewMode !== 'sticky'
   });
 
-  // Don't render anything while loading preferences
-  if (isLoadingPreference) {
-    return null;
-  }
+  // Note: We render immediately with default view mode, then update when preference loads
 
   // Handle fullscreen mode
   if (viewMode === 'fullscreen') {
