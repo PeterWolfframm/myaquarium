@@ -32,26 +32,34 @@ function DraggableSpriteItem({ sprite, isSelected, onSelect, selectedSize = 6 })
       style={style}
       {...listeners}
       {...attributes}
-      className={`sprite-item draggable-sprite ${isSelected ? 'selected' : ''} ${isDragging ? 'dragging' : ''}`}
+      className={`section-interactive relative cursor-pointer transition-all duration-200 p-3 rounded-lg border ${
+        isSelected 
+          ? 'border-primary-500 bg-primary-500/20 shadow-lg' 
+          : 'border-white/20 bg-white/5 hover:border-primary-400/50 hover:bg-primary-500/10'
+      } ${isDragging ? 'opacity-70 rotate-1 scale-105 z-50' : ''}`}
       onClick={() => onSelect(sprite.url)}
       title={`${sprite.name} - Drag to aquarium to place`}
     >
-      <img 
-        src={sprite.url} 
-        alt={sprite.name}
-        className="sprite-preview"
-        onError={(e) => {
-          e.target.style.display = 'none';
-          e.target.nextSibling.style.display = 'block';
-        }}
-      />
-      <div className="sprite-error" style={{ display: 'none' }}>
-        Failed to load
+      <div className="flex flex-col items-center gap-2">
+        <img 
+          src={sprite.url} 
+          alt={sprite.name}
+          className="w-12 h-12 object-cover rounded border border-white/20"
+          onError={(e) => {
+            e.target.style.display = 'none';
+            e.target.nextSibling.style.display = 'block';
+          }}
+        />
+        <div className="text-xs text-red-400 hidden">
+          Failed to load
+        </div>
+        <div className="text-mono-small text-center">{sprite.name}</div>
+        {isDragging && (
+          <div className="absolute -top-2 -right-2 bg-primary-500 text-white text-xs px-2 py-1 rounded-full shadow-lg animate-pulse">
+            Drop on aquarium
+          </div>
+        )}
       </div>
-      <div className="sprite-name">{sprite.name}</div>
-      {isDragging && (
-        <div className="drag-hint">Drop on aquarium</div>
-      )}
     </div>
   );
 }
@@ -175,62 +183,79 @@ function ObjectsSpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadCompl
 
   if (isLoading) {
     return (
-      <div className="sprite-gallery">
-        <h4>Object Sprites</h4>
-        <div className="loading">Loading object sprites...</div>
+      <div className="space-y-4">
+        <h4 className="text-section-title">Object Sprites</h4>
+        <div className="loading-state">Loading object sprites...</div>
       </div>
     );
   }
 
   return (
-    <div className="sprite-gallery objects-sprite-gallery">
-      <h4>Object Sprites</h4>
+    <div className="space-y-6">
+      <h4 className="text-section-title">Object Sprites</h4>
 
       {/* Upload Section */}
-      <div className="sprite-actions-section">
-        <label className="upload-button">
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleFileSelect}
-            disabled={uploading}
-            style={{ display: 'none' }}
-          />
-          {uploading ? 'Uploading...' : '+ Upload Object Sprite'}
-        </label>
+      <div className="section-secondary">
+        <div className="section-content">
+          <label className={`inline-flex items-center justify-center px-4 py-2 rounded-lg border transition-all duration-200 cursor-pointer ${
+            uploading 
+              ? 'border-gray-400/50 bg-gray-500/20 text-gray-400 cursor-not-allowed' 
+              : 'border-primary-400/50 bg-primary-500/20 text-primary-400 hover:border-primary-500/70 hover:bg-primary-500/30 hover:scale-105 active:scale-95'
+          }`}>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileSelect}
+              disabled={uploading}
+              style={{ display: 'none' }}
+            />
+            <span className="text-sm font-medium">
+              {uploading ? 'Uploading...' : '+ Upload Object Sprite'}
+            </span>
+          </label>
+        </div>
       </div>
 
       {/* Upload Form */}
       {showUploadForm && (
-        <div className="upload-form">
-          <h5>Upload Object Sprite</h5>
-          <div className="upload-form-content">
-            <div className="form-group">
-              <label>Object Name:</label>
+        <div className="section-secondary">
+          <h5 className="text-section-title mb-4">Upload Object Sprite</h5>
+          <div className="section-content space-y-4">
+            <div>
+              <label className="text-label block mb-2">Object Name:</label>
               <input
                 type="text"
                 value={uploadName}
                 onChange={(e) => setUploadName(e.target.value)}
                 placeholder="Enter object name (e.g. 'rock', 'seaweed', 'treasure chest')"
                 disabled={uploading}
+                className="input-primary w-full"
               />
             </div>
-            <div className="form-group">
-              <label>Selected File:</label>
-              <div className="selected-file-info">
+            <div>
+              <label className="text-label block mb-2">Selected File:</label>
+              <div className="text-value p-3 bg-white/5 border border-white/20 rounded-lg">
                 {selectedFile ? selectedFile.name : 'No file selected'}
               </div>
             </div>
-            <div className="form-actions">
+            <div className="flex gap-3 pt-2">
               <button 
-                className="upload-confirm-btn"
+                className={`flex-1 px-4 py-2 rounded-lg border transition-all duration-200 ${
+                  uploading || !uploadName.trim()
+                    ? 'border-gray-400/50 bg-gray-500/20 text-gray-400 cursor-not-allowed'
+                    : 'border-primary-400/50 bg-primary-500/20 text-primary-400 hover:border-primary-500/70 hover:bg-primary-500/30 hover:scale-105 active:scale-95'
+                }`}
                 onClick={handleUpload}
                 disabled={uploading || !uploadName.trim()}
               >
                 {uploading ? 'Uploading...' : 'Upload'}
               </button>
               <button 
-                className="upload-cancel-btn"
+                className={`flex-1 px-4 py-2 rounded-lg border transition-all duration-200 ${
+                  uploading
+                    ? 'border-gray-400/50 bg-gray-500/20 text-gray-400 cursor-not-allowed'
+                    : 'border-red-400/50 bg-red-500/20 text-red-400 hover:border-red-500/70 hover:bg-red-500/30 hover:scale-105 active:scale-95'
+                }`}
                 onClick={handleCancelUpload}
                 disabled={uploading}
               >
@@ -243,52 +268,62 @@ function ObjectsSpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadCompl
 
       {/* Current Selection */}
       {selectedSpriteUrl && (
-        <div className="current-sprite-section">
-          <h5>Current Selection:</h5>
-          <div className="sprite-item selected">
-            <img 
-              src={selectedSpriteUrl} 
-              alt="Current object sprite" 
-              className="sprite-preview"
-              onError={(e) => {
-                e.target.style.display = 'none';
-                e.target.nextSibling.style.display = 'block';
-              }}
-            />
-            <div className="sprite-error" style={{ display: 'none' }}>
-              Failed to load image
+        <div className="section-secondary">
+          <h5 className="text-section-title mb-3">Current Selection:</h5>
+          <div className="section-content">
+            <div className="section-interactive border-primary-500 bg-primary-500/20 p-4 relative">
+              <div className="flex items-center gap-4">
+                <img 
+                  src={selectedSpriteUrl} 
+                  alt="Current object sprite" 
+                  className="w-16 h-16 object-cover rounded border border-white/20"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'block';
+                  }}
+                />
+                <div className="text-xs text-red-400 hidden">
+                  Failed to load image
+                </div>
+                <div className="flex-1">
+                  <div className="text-value">Selected for placement</div>
+                  <div className="text-mono-small">Size: {selectedSize}x{selectedSize}</div>
+                </div>
+                <button 
+                  className="px-3 py-1 rounded border border-red-400/50 bg-red-500/20 text-red-400 hover:border-red-500/70 hover:bg-red-500/30 transition-all duration-200 hover:scale-105 active:scale-95"
+                  onClick={handleRemoveSprite}
+                  title="Remove selection"
+                >
+                  Remove
+                </button>
+              </div>
             </div>
-            <button 
-              className="remove-sprite-btn"
-              onClick={handleRemoveSprite}
-              title="Remove selection"
-            >
-              Remove
-            </button>
           </div>
         </div>
       )}
 
       {/* Available Sprites */}
-      <div className="available-sprites-section">
-        <h5>Available Object Sprites:</h5>
-        {availableSprites.length === 0 ? (
-          <div className="no-sprites">
-            No object sprites available. Upload your first object sprite!
-          </div>
-        ) : (
-          <div className="sprites-grid">
-            {availableSprites.map((sprite) => (
-              <DraggableSpriteItem
-                key={sprite.name}
-                sprite={sprite}
-                isSelected={selectedSpriteUrl === sprite.url}
-                onSelect={handleSpriteSelect}
-                selectedSize={selectedSize}
-              />
-            ))}
-          </div>
-        )}
+      <div className="section-secondary">
+        <h5 className="text-section-title mb-3">Available Object Sprites:</h5>
+        <div className="section-content">
+          {availableSprites.length === 0 ? (
+            <div className="empty-state">
+              No object sprites available. Upload your first object sprite!
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              {availableSprites.map((sprite) => (
+                <DraggableSpriteItem
+                  key={sprite.name}
+                  sprite={sprite}
+                  isSelected={selectedSpriteUrl === sprite.url}
+                  onSelect={handleSpriteSelect}
+                  selectedSize={selectedSize}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
