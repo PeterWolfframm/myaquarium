@@ -3,7 +3,7 @@ import { useDraggable } from '@dnd-kit/core';
 import { databaseService } from '../services/database.js';
 
 // Draggable sprite item component
-function DraggableSpriteItem({ sprite, isSelected, onSelect }) {
+function DraggableSpriteItem({ sprite, isSelected, onSelect, selectedSize = 6 }) {
   const {
     attributes,
     listeners,
@@ -15,7 +15,8 @@ function DraggableSpriteItem({ sprite, isSelected, onSelect }) {
     data: {
       type: 'object-sprite',
       spriteUrl: sprite.url,
-      spriteName: sprite.name
+      spriteName: sprite.name,
+      selectedSize: selectedSize
     }
   });
 
@@ -55,7 +56,7 @@ function DraggableSpriteItem({ sprite, isSelected, onSelect }) {
   );
 }
 
-function ObjectsSpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadComplete, onError }) {
+function ObjectsSpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadComplete, onError, selectedSize = 6 }) {
   const [availableSprites, setAvailableSprites] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -283,6 +284,7 @@ function ObjectsSpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadCompl
                 sprite={sprite}
                 isSelected={selectedSpriteUrl === sprite.url}
                 onSelect={handleSpriteSelect}
+                selectedSize={selectedSize}
               />
             ))}
           </div>

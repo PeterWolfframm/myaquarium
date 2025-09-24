@@ -55,6 +55,7 @@ function DragAndDropProvider({
       console.log('Object sprite dropped on aquarium:', {
         spriteUrl: active.data.current.spriteUrl,
         spriteName: active.data.current.spriteName,
+        selectedSize: active.data.current.selectedSize,
         dropPosition: over.rect
       });
       
@@ -69,6 +70,7 @@ function DragAndDropProvider({
         detail: {
           spriteUrl: active.data.current.spriteUrl,
           spriteName: active.data.current.spriteName,
+          selectedSize: active.data.current.selectedSize || 6, // Default to 6 if not provided
           // Use the actual mouse position where the drop occurred
           screenX: dropScreenX,
           screenY: dropScreenY,

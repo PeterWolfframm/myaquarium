@@ -1708,6 +1708,60 @@ body {
   box-shadow: 0 4px 12px rgba(0, 200, 255, 0.3);
 }
 
+/* Size Selector Section */
+.size-selector-section {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: rgba(0, 200, 255, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 200, 255, 0.2);
+}
+
+.size-selector-section h4 {
+  margin-bottom: 12px;
+  color: #00ccff;
+  font-size: 1rem;
+}
+
+.size-selector {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.size-option {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  font-weight: 500;
+  min-width: 56px;
+  text-align: center;
+}
+
+.size-option:hover {
+  background: rgba(0, 200, 255, 0.2);
+  border-color: rgba(0, 200, 255, 0.4);
+  transform: translateY(-1px);
+}
+
+.size-option.selected {
+  background: linear-gradient(135deg, #00ccff, #0099cc);
+  border-color: #00ccff;
+  color: white;
+  box-shadow: 0 2px 8px rgba(0, 200, 255, 0.3);
+}
+
+.size-info {
+  color: #888;
+  font-size: 0.85rem;
+}
+
 /* Placed Objects Section */
 .placed-objects-section {
   margin-top: 20px;

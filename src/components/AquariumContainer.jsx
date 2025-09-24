@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'preact/hooks';
-import { useDroppable } from '@dnd-kit/core';
+import { useDroppable, useDndContext } from '@dnd-kit/core';
 import { Aquarium } from '../classes/Aquarium.js';
 import { useAquariumStore } from '../stores/aquariumStore.js';
 
@@ -7,6 +7,9 @@ function AquariumContainer({ mood, onAquariumReady }) {
   const canvasRef = useRef(null);
   const aquariumRef = useRef(null);
   const store = useAquariumStore();
+
+  // Get active drag context to access selected size
+  const { active } = useDndContext();
 
   // Set up drop zone for sprite placement
   const { isOver, setNodeRef } = useDroppable({
@@ -29,10 +32,12 @@ function AquariumContainer({ mood, onAquariumReady }) {
         const screenX = event.clientX - rect.left;
         const screenY = event.clientY - rect.top;
         
+        // Get the selected size from active drag data, default to 6
+        const dragSize = active?.data?.current?.selectedSize || 6;
         // Convert to grid coordinates and show highlight
-        const gridCoords = aquariumRef.current.screenToGridCoordinates(screenX, screenY);
-        // Show tile highlighting at calculated grid position
-        aquariumRef.current.showTileHighlight(gridCoords.gridX, gridCoords.gridY, 6);
+        const gridCoords = aquariumRef.current.screenToGridCoordinates(screenX, screenY, dragSize);
+        // Show tile highlighting at calculated grid position with correct size
+        aquariumRef.current.showTileHighlight(gridCoords.gridX, gridCoords.gridY, dragSize);
       }
     };
 

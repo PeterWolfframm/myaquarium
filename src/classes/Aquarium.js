@@ -434,9 +434,10 @@ export class Aquarium {
      * Convert screen coordinates to grid coordinates
      * @param {number} screenX - Screen X coordinate
      * @param {number} screenY - Screen Y coordinate
+     * @param {number} objectSize - Size of the object (default: 6)
      * @returns {Object} {gridX, gridY, worldX, worldY}
      */
-    screenToGridCoordinates(screenX, screenY) {
+    screenToGridCoordinates(screenX, screenY, objectSize = 6) {
         // Convert screen to world coordinates using viewport
         const worldPos = this.viewport.toWorld(screenX, screenY);
         
@@ -444,9 +445,9 @@ export class Aquarium {
         const gridX = Math.floor(worldPos.x / this.tileSize);
         const gridY = Math.floor(worldPos.y / this.tileSize);
         
-        // Apply clamping to ensure 6x6 object fits within bounds
-        const clampedGridX = Math.max(0, Math.min(gridX, this.tilesHorizontal - 6));
-        const clampedGridY = Math.max(0, Math.min(gridY, this.tilesVertical - 6));
+        // Apply clamping to ensure object fits within bounds
+        const clampedGridX = Math.max(0, Math.min(gridX, this.tilesHorizontal - objectSize));
+        const clampedGridY = Math.max(0, Math.min(gridY, this.tilesVertical - objectSize));
         
         return {
             gridX: clampedGridX,
@@ -1345,6 +1346,35 @@ export class Aquarium {
      */
     getObjectCount() {
         return this.objectManager ? this.objectManager.getObjectCount() : 0;
+    }
+    
+    /**
+     * Enable object selection with click callback
+     * @param {Function} clickCallback - Function to call when object is clicked
+     */
+    enableObjectSelection(clickCallback) {
+        if (this.objectManager) {
+            this.objectManager.setClickCallback(clickCallback);
+        }
+    }
+    
+    /**
+     * Disable object selection
+     */
+    disableObjectSelection() {
+        if (this.objectManager) {
+            this.objectManager.setClickCallback(null);
+            this.objectManager.clearSelection();
+        }
+    }
+    
+    /**
+     * Clear object selection
+     */
+    clearObjectSelection() {
+        if (this.objectManager) {
+            this.objectManager.clearSelection();
+        }
     }
     
     /**

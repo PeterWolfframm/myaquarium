@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'preact/hooks';
+import { useState, useEffect, useCallback } from 'preact/hooks';
 import Collapsible from './Collapsible.jsx';
 import ObjectsSpriteGallery from './ObjectsSpriteGallery.jsx';
 import { databaseService } from '../services/database.js';
@@ -17,6 +17,41 @@ function ObjectsEditor({
   const [uploadHistory, setUploadHistory] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [selectedSize, setSelectedSize] = useState(6); // Default size: 6x6
+
+  // Handle object clicks from aquarium
+  const handleObjectClick = useCallback((objectData) => {
+    console.log('Object clicked from aquarium:', objectData);
+    setSelectedObject({
+      object_id: objectData.id,
+      sprite_url: objectData.spriteUrl,
+      grid_x: objectData.gridX,
+      grid_y: objectData.gridY,
+      size: objectData.size,
+      layer: objectData.layer
+    });
+    setSelectedSprite(null); // Clear sprite selection when object is clicked
+  }, []);
+
+  // Enable/disable object selection when panel opens/closes
+  useEffect(() => {
+    if (isOpen && aquarium) {
+      // Enable object selection when panel opens
+      console.log('Enabling object selection...');
+      aquarium.enableObjectSelection(handleObjectClick);
+    } else if (aquarium) {
+      // Disable object selection when panel closes
+      console.log('Disabling object selection...');
+      aquarium.disableObjectSelection();
+    }
+    
+    // Cleanup when component unmounts or dependencies change
+    return () => {
+      if (aquarium) {
+        aquarium.disableObjectSelection();
+      }
+    };
+  }, [isOpen, aquarium, handleObjectClick]);
 
   // Reset when panel opens/closes
   useEffect(() => {
@@ -25,6 +60,11 @@ function ObjectsEditor({
       setSelectedObject(null);
       setError(null);
       loadPlacedObjects();
+    } else {
+      // Clear selection when closing
+      if (aquarium) {
+        aquarium.clearObjectSelection();
+      }
     }
   }, [isOpen]);
 
@@ -45,11 +85,23 @@ function ObjectsEditor({
   const handleSpriteSelect = (spriteUrl) => {
     setSelectedSprite(spriteUrl);
     setSelectedObject(null); // Clear object selection when selecting sprite
+    
+    // Also clear blinking in the aquarium when selecting sprite
+    if (aquarium && aquarium.objectManager) {
+      aquarium.objectManager.clearSelection();
+    }
   };
 
   const handleObjectSelect = (objectData) => {
+    console.log('🖱️ Object selected from UI list:', objectData);
     setSelectedObject(objectData);
     setSelectedSprite(null); // Clear sprite selection when selecting object
+    
+    // Also show blinking in the aquarium when selecting from UI
+    if (aquarium && aquarium.objectManager) {
+      console.log('🌟 Triggering aquarium blink for object:', objectData.object_id);
+      aquarium.objectManager.selectObjectById(objectData.object_id);
+    }
   };
 
   const handleUploadComplete = (uploadResult) => {
@@ -74,6 +126,11 @@ function ObjectsEditor({
 
   const handleClearObjectSelection = () => {
     setSelectedObject(null);
+    
+    // Also clear blinking in the aquarium
+    if (aquarium && aquarium.objectManager) {
+      aquarium.objectManager.clearSelection();
+    }
   };
 
   // Movement handlers
@@ -232,12 +289,33 @@ function ObjectsEditor({
           <p>Upload and manage object sprites for your aquarium. Only name input is required for uploads.</p>
         </div>
 
+        {/* Size Selector */}
+        <div className="size-selector-section">
+          <h4>Object Size:</h4>
+          <div className="size-selector">
+            {[6, 7, 8, 9, 10, 12].map(size => (
+              <button
+                key={size}
+                className={`size-option ${selectedSize === size ? 'selected' : ''}`}
+                onClick={() => setSelectedSize(size)}
+                title={`${size}x${size} tiles`}
+              >
+                {size}x{size}
+              </button>
+            ))}
+          </div>
+          <div className="size-info">
+            <small>Selected size: {selectedSize}x{selectedSize} tiles ({selectedSize * 64}x{selectedSize * 64} pixels)</small>
+          </div>
+        </div>
+
         <div className="objects-main">
           <ObjectsSpriteGallery
             selectedSpriteUrl={selectedSprite}
             onSpriteSelect={handleSpriteSelect}
             onUploadComplete={handleUploadComplete}
             onError={setError}
+            selectedSize={selectedSize}
           />
 
           {/* Placed Objects Section */}

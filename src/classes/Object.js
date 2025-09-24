@@ -57,9 +57,13 @@ export class AquariumObject {
             this.sprite.x = this.worldX;
             this.sprite.y = this.worldY;
             
-            // Disable interactivity
-            this.sprite.interactive = false;
+            // Enable interactivity for click detection
+            this.sprite.interactive = true;
             this.sprite.interactiveChildren = false;
+            this.sprite.cursor = 'pointer';
+            
+            // Store object ID reference for click handling
+            this.sprite.objectId = this.id;
             
             this.isLoaded = true;
             
@@ -89,8 +93,13 @@ export class AquariumObject {
         graphics.x = this.worldX;
         graphics.y = this.worldY;
         
-        graphics.interactive = false;
+        // Enable interactivity for click detection
+        graphics.interactive = true;
         graphics.interactiveChildren = false;
+        graphics.cursor = 'pointer';
+        
+        // Store object ID reference for click handling
+        graphics.objectId = this.id;
         
         this.sprite = graphics;
         this.isLoaded = true;
@@ -175,6 +184,13 @@ export class ObjectManager {
         
         this.objects = new Map(); // Map of object ID to AquariumObject
         this.gridOccupancy = []; // 2D array to track occupied grid positions
+        
+        // Selection and sprite blinking system
+        this.selectedObjectId = null;
+        this.selectedObject = null; // Reference to the selected AquariumObject
+        this.blinkTicker = null;
+        this.isBlinking = false;
+        this.clickCallback = null; // Callback for when an object is clicked
         
         this.initializeGrid();
         
@@ -336,6 +352,9 @@ export class ObjectManager {
         this.objects.set(objectId, aquariumObject);
         this.markGridAreaOccupied(objectId, position.gridX, position.gridY, size);
         
+        // Add click listener if callback is set
+        this.addClickListener(aquariumObject);
+        
         // Add to container with proper layer ordering
         this.addSpriteToContainerInOrder(aquariumObject.sprite, layer);
         
@@ -384,6 +403,9 @@ export class ObjectManager {
         // Track the object
         this.objects.set(objectId, aquariumObject);
         this.markGridAreaOccupied(objectId, gridX, gridY, size);
+        
+        // Add click listener if callback is set
+        this.addClickListener(aquariumObject);
         
         // Add to container with proper layer ordering
         this.addSpriteToContainerInOrder(aquariumObject.sprite, layer);
@@ -449,6 +471,9 @@ export class ObjectManager {
             // Track the object
             this.objects.set(objectData.id, aquariumObject);
             this.markGridAreaOccupied(objectData.id, objectData.gridX, objectData.gridY, objectData.size);
+            
+            // Add click listener if callback is set
+            this.addClickListener(aquariumObject);
         }
         
         console.log(`Loaded ${objectsData.length} objects from data (sorted by layer)`);
@@ -521,6 +546,9 @@ export class ObjectManager {
      * Clear all objects
      */
     clearAllObjects() {
+        // Clear selection before destroying objects
+        this.clearSelection();
+        
         for (const object of this.objects.values()) {
             object.destroy();
         }
@@ -534,5 +562,136 @@ export class ObjectManager {
      */
     getObjectCount() {
         return this.objects.size;
+    }
+    
+    /**
+     * Set click callback for object selection
+     * @param {Function} callback - Function to call when an object is clicked
+     */
+    setClickCallback(callback) {
+        console.log(`🎯 Setting click callback: ${!!callback ? 'enabled' : 'disabled'}, objects count: ${this.objects.size}`);
+        this.clickCallback = callback;
+        
+        // Add click listeners to all existing objects
+        for (const aquariumObject of this.objects.values()) {
+            this.addClickListener(aquariumObject);
+        }
+    }
+    
+    /**
+     * Add click listener to an object sprite
+     * @param {AquariumObject} aquariumObject - The object to add listener to
+     */
+    addClickListener(aquariumObject) {
+        if (!aquariumObject.sprite || !this.clickCallback) {
+            console.log(`Cannot add click listener: sprite=${!!aquariumObject.sprite}, callback=${!!this.clickCallback}`);
+            return;
+        }
+        
+        aquariumObject.sprite.removeAllListeners('pointerdown'); // Remove existing listeners
+        aquariumObject.sprite.on('pointerdown', (event) => {
+            event.stopPropagation();
+            console.log(`🔥 Object clicked: ${aquariumObject.id}`, aquariumObject.toData());
+            this.selectObject(aquariumObject.id);
+            this.clickCallback(aquariumObject.toData());
+        });
+        
+        console.log(`✅ Click listener added to object: ${aquariumObject.id}`);
+    }
+    
+    /**
+     * Select an object and make its sprite blink
+     * @param {string} objectId - ID of object to select
+     */
+    selectObject(objectId) {
+        // Clear previous selection
+        this.clearSelection();
+        
+        const aquariumObject = this.objects.get(objectId);
+        if (!aquariumObject || !aquariumObject.sprite) return;
+        
+        this.selectedObjectId = objectId;
+        this.selectedObject = aquariumObject;
+        this.startBlinking();
+        
+        console.log(`Selected object: ${objectId} - sprite will blink`);
+    }
+    
+    /**
+     * Clear object selection and stop blinking
+     */
+    clearSelection() {
+        this.selectedObjectId = null;
+        this.selectedObject = null;
+        this.stopBlinking();
+    }
+    
+    // Outline methods removed - now using sprite blinking instead
+    
+    /**
+     * Start blinking animation for selected sprite
+     */
+    startBlinking() {
+        this.stopBlinking(); // Stop any existing blink
+        
+        if (!this.selectedObject || !this.selectedObject.sprite) return;
+        
+        this.isBlinking = true;
+        let blinkState = true;
+        
+        this.blinkTicker = setInterval(() => {
+            if (!this.selectedObject || !this.selectedObject.sprite || !this.isBlinking) {
+                this.stopBlinking();
+                return;
+            }
+            
+            blinkState = !blinkState;
+            
+            if (blinkState) {
+                // Bright green tint with full opacity
+                this.selectedObject.sprite.alpha = 1.0;
+                this.selectedObject.sprite.tint = 0x00ff88; // Bright green
+            } else {
+                // Normal appearance 
+                this.selectedObject.sprite.alpha = 0.7;
+                this.selectedObject.sprite.tint = 0xffffff; // White (normal)
+            }
+        }, 400); // Fast blink for visibility
+        
+        console.log(`Started blinking for selected object: ${this.selectedObject.id}`);
+    }
+    
+    /**
+     * Stop blinking animation and restore sprite to normal appearance
+     */
+    stopBlinking() {
+        this.isBlinking = false;
+        if (this.blinkTicker) {
+            clearInterval(this.blinkTicker);
+            this.blinkTicker = null;
+        }
+        
+        // Restore sprite to normal appearance
+        if (this.selectedObject && this.selectedObject.sprite) {
+            this.selectedObject.sprite.alpha = 1.0;
+            this.selectedObject.sprite.tint = 0xffffff; // Reset to white (normal)
+            console.log(`Stopped blinking for object: ${this.selectedObject.id}`);
+        }
+    }
+    
+    /**
+     * Get selected object ID
+     * @returns {string|null} Selected object ID or null
+     */
+    getSelectedObjectId() {
+        return this.selectedObjectId;
+    }
+    
+    /**
+     * Public method to manually select an object (for UI selection)
+     * @param {string} objectId - ID of object to select
+     */
+    selectObjectById(objectId) {
+        this.selectObject(objectId);
     }
 }

@@ -81,7 +81,7 @@ function App() {
   // Handle object drops on aquarium
   useEffect(() => {
     const handleObjectDrop = async (event) => {
-      const { spriteUrl, spriteName, screenX, screenY, useGridPlacement } = event.detail;
+      const { spriteUrl, spriteName, selectedSize, screenX, screenY, useGridPlacement } = event.detail;
       
       if (aquariumRef) {
         console.log(`Placing object: ${spriteName} at screen position (${screenX}, ${screenY})`);
@@ -97,14 +97,15 @@ function App() {
             const canvasY = screenY - rect.top;
             
             // Use precise grid-based placement with canvas-relative coordinates
-            const gridCoords = aquariumRef.screenToGridCoordinates(canvasX, canvasY);
-            console.log(`🎯 Placing object at grid (${gridCoords.gridX}, ${gridCoords.gridY})`);
+            const objectSize = selectedSize || 6;
+            const gridCoords = aquariumRef.screenToGridCoordinates(canvasX, canvasY, objectSize);
+            console.log(`🎯 Placing object at grid (${gridCoords.gridX}, ${gridCoords.gridY}) with size ${objectSize}x${objectSize}`);
             
             success = await aquariumRef.placeObjectAtGrid(
               spriteUrl, 
               gridCoords.gridX, 
               gridCoords.gridY, 
-              6, // size 
+              objectSize, // Use selected size or default to 6
               0  // layer
             );
           } else {
