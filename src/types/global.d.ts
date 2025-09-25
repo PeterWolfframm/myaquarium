@@ -266,6 +266,7 @@ export interface PanelPositions {
   stats: Position;
   objectsManager: Position;
   cardShowcase: Position;
+  cardShowcase2: Position;
   settings: Position;
   fishEditor: Position;
 }

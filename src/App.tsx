@@ -6,6 +6,7 @@ import FishEditor from './components/FishEditor';
 import ObjectsEditor from './components/ObjectsEditor';
 import DataPanel from './components/DataPanel';
 import CardShowcase from './components/CardShowcase';
+import CardDesignShowcase2 from './components/CardDesignShowcase2';
 import DragAndDropProvider from './components/DragAndDropProvider';
 import { useAquariumStore } from './stores/aquariumStore';
 import { useFishStore } from './stores/fishStore';
@@ -45,6 +46,7 @@ const constrainToViewport = (position: Position, panelWidth: number = 300, panel
       stats: constrainToViewport({ x: Math.max(margin, viewportWidth - 320), y: 50 }, 320, 300),
       objectsManager: constrainToViewport({ x: margin, y: 120 }, 350, 400),
       cardShowcase: constrainToViewport({ x: Math.max(margin, viewportWidth / 2 - 250), y: 60 }, 500, 600),
+      cardShowcase2: constrainToViewport({ x: Math.max(margin, viewportWidth / 2 - 250), y: 80 }, 500, 600),
       settings: constrainToViewport({ x: Math.max(margin, viewportWidth / 2 - 200), y: 100 }, 400, 500),
       fishEditor: constrainToViewport({ x: Math.max(margin, viewportWidth / 2 - 250), y: 80 }, 500, 600)
     };
@@ -76,6 +78,7 @@ function App() {
   const [showFishEditor, setShowFishEditor] = useState<boolean>(false);
   const [showObjectsManager, setShowObjectsManager] = useState<boolean>(false);
   const [showCardShowcase, setShowCardShowcase] = useState<boolean>(false);
+  const [showCardShowcase2, setShowCardShowcase2] = useState<boolean>(false);
   const [showTimer, setShowTimer] = useState<boolean>(true);
   const [showStats, setShowStats] = useState<boolean>(true);
   
@@ -443,6 +446,10 @@ function App() {
     setShowCardShowcase(!showCardShowcase);
   };
 
+  const toggleCardShowcase2 = (): void => {
+    setShowCardShowcase2(!showCardShowcase2);
+  };
+
 
   return (
     <DragAndDropProvider
@@ -477,6 +484,9 @@ function App() {
           </button>
           <button className="control-button card-showcase-button" onClick={toggleCardShowcase}>
             💎 Design System
+          </button>
+          <button className="control-button card-showcase2-button" onClick={toggleCardShowcase2}>
+            ✨ Modern UI
           </button>
         </div>
 
@@ -539,6 +549,13 @@ function App() {
               onToggle={toggleCardShowcase}
               isDraggable={true}
               draggablePosition={panelPositions.cardShowcase}
+            />
+            
+            <CardDesignShowcase2 
+              isOpen={showCardShowcase2}
+              onToggle={toggleCardShowcase2}
+              isDraggable={true}
+              draggablePosition={panelPositions.cardShowcase2}
             />
         </div>
 
