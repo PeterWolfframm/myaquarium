@@ -360,8 +360,8 @@ function CardDesignShowcase2({
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex justify-center pt-4">
-            <Pagination>
+          <div className="flex justify-center pt-4 pb-2">
+            <Pagination className="w-fit mx-auto">
               <PaginationContent>
                 <PaginationItem>
                   <PaginationPrevious 

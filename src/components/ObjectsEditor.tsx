@@ -27,6 +27,26 @@ function ObjectsEditor({
   const [error, setError] = useState(null);
   const [selectedSize, setSelectedSize] = useState(6); // Default size: 6x6
 
+  // Enhanced toggle handler that ensures selection is cleared when closing
+  const handleToggle = useCallback(() => {
+    if (isOpen) {
+      // If we're currently open and about to close, clear all selections first
+      console.log('🔒 Objects Editor closing via toggle - clearing selections...');
+      
+      // Clear local state
+      setSelectedObject(null);
+      setSelectedSprite(null);
+      
+      // Clear aquarium selections
+      if (aquarium && aquarium.objectManager) {
+        aquarium.objectManager.clearSelection();
+      }
+    }
+    
+    // Call the original toggle function
+    onToggle();
+  }, [isOpen, onToggle, aquarium]);
+
   // Handle object clicks from aquarium
   const handleObjectClick = useCallback((objectData) => {
     console.log('Object clicked from aquarium:', objectData);
@@ -61,20 +81,26 @@ function ObjectsEditor({
     };
   }, [isOpen, aquarium, handleObjectClick]);
 
-  // Reset when panel opens/closes
+  // Clear all selections and reset state when panel opens/closes
   useEffect(() => {
     if (isOpen) {
+      // Reset state when opening
       setSelectedSprite(null);
       setSelectedObject(null);
       setError(null);
       loadPlacedObjects();
     } else {
-      // Clear selection when closing
+      // Clear ALL selections when closing - both local state and aquarium state
       console.log('🔒 Objects Editor closing - clearing all selections and stopping blinking');
+      
+      // Clear local component state
       setSelectedObject(null);
       setSelectedSprite(null);
-      if (aquarium) {
-        aquarium.clearObjectSelection();
+      
+      // Clear aquarium object selection and any visual effects (blinking, etc.)
+      if (aquarium && aquarium.objectManager) {
+        console.log('🧹 Clearing object selection in aquarium...');
+        aquarium.objectManager.clearSelection();
       }
     }
   }, [isOpen]);
@@ -279,7 +305,7 @@ function ObjectsEditor({
       title="🎨 Objects Manager"
       componentId={draggableId || "objectsManager"}
       isOpen={isOpen}
-      onToggle={onToggle}
+      onToggle={handleToggle}
       defaultViewMode="sticky"
       position={isDraggable ? "static" : "top-left"}
       size="large"

@@ -189,7 +189,7 @@ function ObjectsSpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadCompl
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <h4 className="text-lg font-semibold text-foreground">Object Sprites</h4>
+        <h4 className="text-lg font-semibold text-white">Object Sprites</h4>
         <div className="flex items-center justify-center p-8 text-muted-foreground">
           <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mr-2"></div>
           Loading object sprites...
@@ -200,7 +200,7 @@ function ObjectsSpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadCompl
 
   return (
     <div className="space-y-6">
-      <h4 className="text-lg font-semibold text-foreground">Object Sprites</h4>
+      <h4 className="text-lg font-semibold text-white">Object Sprites</h4>
 
       {/* Upload Section */}
       <Card>
@@ -293,7 +293,7 @@ function ObjectsSpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadCompl
                 Failed to load image
               </div>
               <div className="flex-1">
-                <div className="font-medium text-foreground">Selected for placement</div>
+                <div className="font-medium text-white">Selected for placement</div>
                 <div className="text-sm font-mono text-muted-foreground">Size: {selectedSize}x{selectedSize}</div>
               </div>
               <Button 

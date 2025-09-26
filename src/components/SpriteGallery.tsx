@@ -105,7 +105,7 @@ function SpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadComplete, on
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <h4 className="text-lg font-semibold text-foreground">Fish Sprites</h4>
+        <h4 className="text-lg font-semibold text-white">Fish Sprites</h4>
         <div className="flex items-center justify-center p-8 text-muted-foreground">
           <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mr-2"></div>
           Loading sprites...
@@ -116,7 +116,7 @@ function SpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadComplete, on
 
   return (
     <div className="space-y-6">
-      <h4 className="text-lg font-semibold text-foreground">Fish Sprites</h4>
+      <h4 className="text-lg font-semibold text-white">Fish Sprites</h4>
       
       {error && (
         <Alert variant="destructive">
@@ -185,7 +185,7 @@ function SpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadComplete, on
                 Failed to load image
               </div>
               <div className="flex-1">
-                <div className="font-semibold text-foreground">Selected sprite</div>
+                <div className="font-semibold text-white">Selected sprite</div>
                 <div className="text-sm font-mono text-muted-foreground">Ready for new fish</div>
               </div>
               <Button 
@@ -296,7 +296,7 @@ function SpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadComplete, on
               <div className="flex items-center gap-3">
                 <div className="text-2xl">🦈</div>
                 <div>
-                  <div className="font-semibold text-foreground">Shark (offline default)</div>
+                  <div className="font-semibold text-white">Shark (offline default)</div>
                   <div className="text-sm font-mono text-muted-foreground">Built-in sprite for offline use</div>
                 </div>
               </div>
@@ -313,7 +313,7 @@ function SpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadComplete, on
               <div className="flex items-center gap-3">
                 <div className="text-2xl">🐠</div>
                 <div>
-                  <div className="font-semibold text-foreground">Default Fish Sprite</div>
+                  <div className="font-semibold text-white">Default Fish Sprite</div>
                   <div className="text-sm font-mono text-muted-foreground">Standard aquarium fish</div>
                 </div>
               </div>
