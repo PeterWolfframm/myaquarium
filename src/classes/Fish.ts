@@ -2,7 +2,10 @@ import * as PIXI from 'pixi.js';
 import { FISH_CONFIG, COLORS, MOODS } from '../constants/index';
 import { randomRange, randomChoice, clamp, calculateOptimalEntityCounts, isMobileDevice } from '../utils/performance';
 import { useFishStore } from '../stores/fishStore';
+import { AssetManager } from '../utils/AssetManager';
+import { ViewportCulling } from '../utils/ViewportCulling';
 import type { FishData, SafeZone, MoodType, PIXISprite } from '../types/global';
+import type { Viewport } from 'pixi-viewport';
 
 /**
  * Individual fish entity with swimming behavior and animation
@@ -147,11 +150,11 @@ export class Fish {
     }
     
     /**
-     * Load sprite from URL
+     * Load sprite from URL using cached texture manager
      */
     async loadSprite() {
         try {
-            const texture = await PIXI.Assets.load(this.spriteUrl);
+            const texture = await AssetManager.getCachedTexture(this.spriteUrl);
             this.spriteTexture = texture;
             
             // Remove old sprite if exists
@@ -435,6 +438,8 @@ export class Fish {
  * Manages all fish entities in the aquarium
  */
 export class FishManager {
+    private cullingSystem: ViewportCulling | null = null;
+    
     /**
      * Create a new fish manager
      * @param {PIXI.Container} container - PIXI container for fish sprites
@@ -465,6 +470,17 @@ export class FishManager {
         this.setupStoreSubscription();
     }
     
+    /**
+     * Set the viewport for culling system
+     * @param {Viewport} viewport - The pixi-viewport instance
+     */
+    setViewport(viewport: Viewport): void {
+        if (viewport) {
+            this.cullingSystem = new ViewportCulling(viewport, 150); // 150px margin for smoother culling
+            console.log('🎯 Fish culling system initialized with viewport');
+        }
+    }
+
     /**
      * Calculate optimal fish count based on screen size and device capabilities
      * @returns {number} Optimal number of fish
@@ -674,27 +690,6 @@ export class FishManager {
                oldFish.size !== newFish.size;
     }
     
-    /**
-     * Cleanup method to unsubscribe from store and clean up resources
-     */
-    destroy() {
-        // Clear debounce timer
-        if (this.syncDebounceTimer) {
-            clearTimeout(this.syncDebounceTimer);
-            this.syncDebounceTimer = null;
-        }
-        
-        // Unsubscribe from store changes
-        if (this.storeUnsubscribe) {
-            this.storeUnsubscribe();
-            this.storeUnsubscribe = null;
-        }
-        
-        // Clear all fish
-        this.clearAllFish();
-        
-        console.log('FishManager destroyed and cleaned up');
-    }
     
     /**
      * Clear all visual fish from the aquarium
@@ -748,13 +743,30 @@ export class FishManager {
     }
     
     /**
-     * Update all fish positions and animations
+     * Update all fish positions and animations with viewport culling
      * @param {number} deltaTime - Time since last update in milliseconds
      */
     update(deltaTime) {
-        this.fish.forEach(fish => {
-            fish.update(deltaTime);
-        });
+        if (this.cullingSystem && this.fish.length > 0) {
+            // Use culling system to determine visible fish
+            const visibleFish = this.cullingSystem.cullSprites(this.fish);
+            
+            // Only update fish that are visible
+            visibleFish.forEach(fish => {
+                fish.update(deltaTime);
+            });
+            
+            // Log culling stats occasionally for debugging (every 100 frames)
+            if (Math.random() < 0.01) { // ~1% chance per frame
+                const stats = this.cullingSystem.getCullingStats(this.fish);
+                console.log(`🎯 Fish culling: ${stats.visible}/${stats.total} visible (${stats.cullingRatio.toFixed(1)}% culled)`);
+            }
+        } else {
+            // Fallback to updating all fish if culling system not available
+            this.fish.forEach(fish => {
+                fish.update(deltaTime);
+            });
+        }
         
         // Debounced sync to database (only sync if no updates for a while)
         if (this.syncDebounceTimer) {
@@ -847,14 +859,41 @@ export class FishManager {
     }
     
     /**
-     * Clean up fish manager resources
+     * Clean up fish manager resources with proper memory management
      */
     destroy() {
+        console.log('🧹 Destroying FishManager and cleaning up resources...');
+        
+        // Clear debounce timer
+        if (this.syncDebounceTimer) {
+            clearTimeout(this.syncDebounceTimer);
+            this.syncDebounceTimer = null;
+        }
+        
+        // Unsubscribe from store changes
+        if (this.storeUnsubscribe) {
+            this.storeUnsubscribe();
+            this.storeUnsubscribe = null;
+        }
+        
+        // Clean up all fish sprites and references
         this.fish.forEach(fish => {
-            if (fish.sprite && fish.sprite.parent) {
-                fish.sprite.parent.removeChild(fish.sprite);
+            if (fish.sprite) {
+                if (fish.sprite.parent) {
+                    fish.sprite.parent.removeChild(fish.sprite);
+                }
+                // Destroy sprite and free texture memory
+                fish.sprite.destroy({ texture: false }); // Keep texture in cache
+                fish.sprite = null;
             }
+            
+            // Clear texture reference
+            fish.spriteTexture = null;
         });
+        
         this.fish = [];
+        this.container = null;
+        
+        console.log('✅ FishManager destruction completed');
     }
 }

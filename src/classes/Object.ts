@@ -1,5 +1,8 @@
 import * as PIXI from 'pixi.js';
+import { AssetManager } from '../utils/AssetManager';
+import { ViewportCulling } from '../utils/ViewportCulling';
 import type { AquariumObjectData, PIXISprite } from '../types/global';
+import type { Viewport } from 'pixi-viewport';
 
 /**
  * Represents a single object placed in the aquarium
@@ -46,11 +49,11 @@ export class AquariumObject {
     }
     
     /**
-     * Initialize the PIXI sprite for this object
+     * Initialize the PIXI sprite for this object using cached texture manager
      */
     async initializeSprite(): Promise<void> {
         try {
-            const texture = await PIXI.Assets.load(this.spriteUrl);
+            const texture = await AssetManager.getCachedTexture(this.spriteUrl);
             
             this.sprite = new PIXI.Sprite(texture);
             this.sprite.anchor.set(0.5, 0.5);
@@ -135,16 +138,24 @@ export class AquariumObject {
     }
     
     /**
-     * Remove this object and cleanup
+     * Remove this object and cleanup with proper memory management
      */
     destroy() {
-        if (this.sprite && this.sprite.parent) {
-            this.sprite.parent.removeChild(this.sprite);
+        if (this.sprite) {
+            // Remove all event listeners before destroying
+            if (this.sprite.removeAllListeners) {
+                this.sprite.removeAllListeners();
+            }
+            
+            if (this.sprite.parent) {
+                this.sprite.parent.removeChild(this.sprite);
+            }
+            
+            // Destroy sprite but keep texture in cache
+            this.sprite.destroy({ texture: false });
+            this.sprite = null;
         }
-        if (this.sprite && this.sprite.destroy) {
-            this.sprite.destroy();
-        }
-        this.sprite = null;
+        
         this.isLoaded = false;
     }
     
@@ -175,6 +186,8 @@ export class AquariumObject {
  * Manages all placed objects in the aquarium
  */
 export class ObjectManager {
+    private cullingSystem: ViewportCulling | null = null;
+    
     /**
      * Create a new object manager
      * @param {PIXI.Container} container - PIXI container for object sprites
@@ -211,6 +224,36 @@ export class ObjectManager {
         console.log(`ObjectManager initialized for ${tilesHorizontal}x${tilesVertical} grid`);
     }
     
+    /**
+     * Set the viewport for culling system
+     * @param {Viewport} viewport - The pixi-viewport instance
+     */
+    setViewport(viewport: Viewport): void {
+        if (viewport) {
+            this.cullingSystem = new ViewportCulling(viewport, 100); // 100px margin for objects
+            console.log('🎯 Object culling system initialized with viewport');
+            
+            // Update visibility immediately
+            this.updateObjectVisibility();
+        }
+    }
+
+    /**
+     * Update visibility of all objects based on viewport culling
+     */
+    updateObjectVisibility(): void {
+        if (!this.cullingSystem) return;
+
+        const objectArray = Array.from(this.objects.values());
+        this.cullingSystem.cullSprites(objectArray);
+        
+        // Log culling stats occasionally for debugging
+        if (Math.random() < 0.005) { // ~0.5% chance per call
+            const stats = this.cullingSystem.getCullingStats(objectArray);
+            console.log(`🎯 Object culling: ${stats.visible}/${stats.total} visible (${stats.cullingRatio.toFixed(1)}% culled)`);
+        }
+    }
+
     /**
      * Initialize the grid occupancy tracking
      */
@@ -557,17 +600,36 @@ export class ObjectManager {
     }
     
     /**
-     * Clear all objects
+     * Clear all objects with proper memory management
      */
     clearAllObjects() {
-        // Clear selection before destroying objects
+        console.log('🧹 Clearing all objects and cleaning up resources...');
+        
+        // Clear selection and stop any blinking animations
         this.clearSelection();
         
+        // Clear blinking timer if active
+        if (this.blinkTicker) {
+            clearInterval(this.blinkTicker);
+            this.blinkTicker = null;
+        }
+        
+        // Destroy all objects
         for (const object of this.objects.values()) {
             object.destroy();
         }
+        
         this.objects.clear();
         this.initializeGrid();
+        
+        // Clear references
+        this.selectedObjectId = null;
+        this.selectedObject = null;
+        this.clickCallback = null;
+        this.originalTint = null;
+        this.originalAlpha = null;
+        
+        console.log('✅ All objects cleared');
     }
     
     /**

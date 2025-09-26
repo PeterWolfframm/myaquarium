@@ -5,6 +5,7 @@ import { ObjectManager } from './Object';
 import { useAquariumStore } from '../stores/aquariumStore';
 import { AQUARIUM_CONFIG, NAVIGATION, UI_CONFIG, COLORS, PERFORMANCE } from '../constants/index';
 import { databaseService } from '../services/database';
+import { AssetManager } from '../utils/AssetManager';
 import type { PerformanceLogData } from '../types/global';
 
 export class Aquarium {
@@ -73,6 +74,9 @@ export class Aquarium {
         this.lastPerformanceLogTime = 0;
         this.sessionStartTime = Date.now();
         
+        // Event listener references for cleanup
+        this.keydownHandler = null;
+        
         this.init().catch(error => {
             console.error('Error initializing aquarium:', error);
         });
@@ -80,6 +84,12 @@ export class Aquarium {
     
     async init() {
         await this.createPixiApp();
+        
+        // Preload assets before creating entities for better performance
+        console.log('🚀 Starting asset preloading...');
+        await AssetManager.preloadAssets();
+        console.log('✅ Asset preloading completed');
+        
         this.setupViewport();
         this.createLayers();
         this.createGrid();
@@ -95,6 +105,10 @@ export class Aquarium {
         console.log('Aquarium initialization completed successfully');
         console.log(`Fish container children: ${this.fishContainer.children.length}`);
         console.log(`Background container children: ${this.backgroundContainer.children.length}`);
+        
+        // Log asset cache statistics
+        const cacheStats = AssetManager.getCacheStats();
+        console.log(`📊 Asset Cache: ${cacheStats.cacheSize} textures cached`);
     }
     
     updateFromStore(newState) {
@@ -280,10 +294,16 @@ export class Aquarium {
             this.viewport.plugins.remove('wheel');
         }
         
-        // Set up zoom level tracking
+        // Set up zoom level tracking and culling updates
         this.viewport.on('zoomed', () => {
             this.updateCurrentZoomLevel();
             this.updateGridForScale();
+            this.updateCulling(); // Update culling when zoom changes
+        });
+        
+        // Update culling when viewport moves
+        this.viewport.on('moved', () => {
+            this.updateCulling();
         });
         
         // Start centered horizontally and show the bottom (ground) of the aquarium
@@ -730,18 +750,46 @@ export class Aquarium {
             this.safeZone
         );
         
-        
+        // Initialize culling systems after managers are created
+        this.initializeCullingSystems();
         
         console.log('Entity spawning completed');
     }
     
+    /**
+     * Initialize culling systems for both fish and objects
+     */
+    initializeCullingSystems() {
+        if (this.viewport) {
+            if (this.fishManager) {
+                this.fishManager.setViewport(this.viewport);
+            }
+            if (this.objectManager) {
+                this.objectManager.setViewport(this.viewport);
+            }
+            
+            console.log('🎯 Culling systems initialized for fish and objects');
+        }
+    }
+
+    /**
+     * Update culling visibility when viewport changes
+     */
+    updateCulling() {
+        if (this.objectManager) {
+            this.objectManager.updateObjectVisibility();
+        }
+        // Fish culling is handled automatically in their update loop
+    }
+
     /**
      * Setup keyboard event listeners for tile-based navigation and zoom
      * Arrow keys move the viewport by tile increments
      * +/- keys zoom in/out with proper constraints
      */
     setupEventListeners() {
-        window.addEventListener('keydown', (e) => {
+        // Store reference for proper cleanup
+        this.keydownHandler = (e) => {
             
             // Arrow key navigation - move by tile increments
             if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'ArrowUp' || e.key === 'ArrowDown') {
@@ -768,6 +816,9 @@ export class Aquarium {
                     this.viewport.moveCenter(currentX, newY);
                 }
                 
+                // Update culling after movement
+                this.updateCulling();
+                
                 // Log movement for debugging
                 const tileX = Math.floor(this.viewport.center.x / this.tileSize);
                 const tileY = Math.floor(this.viewport.center.y / this.tileSize);
@@ -791,6 +842,7 @@ export class Aquarium {
                     this.viewport.setZoom(newScale, true);
                     this.updateCurrentZoomLevel();
                     this.updateGridForScale();
+                    this.updateCulling(); // Update culling after zoom
                     console.log(`Zoomed in to ${newScale.toFixed(4)}x`);
                 } else if (e.key === '-') {
                     // Zoom out - prevent going beyond the minimum zoom scale
@@ -812,9 +864,13 @@ export class Aquarium {
                     
                     this.updateCurrentZoomLevel();
                     this.updateGridForScale();
+                    this.updateCulling(); // Update culling after zoom
                 }
             }
-        });
+        };
+        
+        // Add the event listener
+        window.addEventListener('keydown', this.keydownHandler);
     }
     
     startGameLoop() {
@@ -919,6 +975,8 @@ export class Aquarium {
             this.fishManager.resize(this.worldWidth, this.worldHeight, this.safeZone);
         }
         
+        // Reinitialize culling systems after resize
+        this.initializeCullingSystems();
         
     }
     
@@ -1449,20 +1507,50 @@ export class Aquarium {
     }
     
     destroy() {
+        console.log('🧹 Destroying Aquarium and cleaning up resources...');
+        
         // Unsubscribe from store updates
         if (this.unsubscribe) {
             this.unsubscribe();
+            this.unsubscribe = null;
         }
         
         // Clean up managers
         if (this.fishManager) {
             this.fishManager.destroy();
+            this.fishManager = null;
         }
         
+        if (this.objectManager) {
+            this.objectManager.clearAllObjects();
+            this.objectManager = null;
+        }
         
+        // Remove global event listeners
+        window.removeEventListener('keydown', this.keydownHandler);
         
+        // Clear viewport event listeners
+        if (this.viewport) {
+            this.viewport.removeAllListeners();
+        }
+        
+        // Clean up PIXI app
         if (this.app) {
             this.app.destroy(true, true);
+            this.app = null;
         }
+        
+        // Clear references to containers
+        this.backgroundContainer = null;
+        this.objectContainer = null;
+        this.fishContainer = null;
+        this.gridContainer = null;
+        this.grid = null;
+        this.tileHighlightContainer = null;
+        this.tileHighlight = null;
+        this.orangeCube = null;
+        this.viewport = null;
+        
+        console.log('✅ Aquarium destruction completed');
     }
 }
