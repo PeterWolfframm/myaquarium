@@ -1,5 +1,11 @@
 import { useAquariumStore } from '../stores/aquariumStore';
 import CardComponent from './CardComponent';
+import { Button } from './ui/button';
+import { Badge } from './ui/badge';
+import { Card, CardContent } from './ui/card';
+import { Separator } from './ui/separator';
+import { Switch } from './ui/switch';
+import { Label } from './ui/label';
 
 function DataPanel({ visibleCubes, fishInfo, viewportPosition, tileDimensions, zoomInfo, aquarium, isOpen, onToggle, isDraggable = false, draggableId = null, draggablePosition = null }) {
   const { showGrid, toggleGrid } = useAquariumStore();
@@ -24,70 +30,104 @@ function DataPanel({ visibleCubes, fishInfo, viewportPosition, tileDimensions, z
       isDraggable={isDraggable}
       draggablePosition={draggablePosition}
     >
-      <div className="card-content-stats">
+      <div className="space-y-6">
         {/* Zoom Section */}
-        <div className="section-primary">
-          <div className="space-y-2 mb-4">
-            <div className="grid-data-columns">
-              <span className="text-label">Zoom:</span>
-              <span className="text-value">{zoomInfo?.currentZoom || 1.0}x ({zoomInfo?.zoomPercentage || 100}%)</span>
+        <Card className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border-blue-500/20">
+          <CardContent className="p-4">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-400">Zoom:</span>
+                <Badge variant="outline" className="text-blue-400 border-blue-400">
+                  {zoomInfo?.currentZoom || 1.0}x ({zoomInfo?.zoomPercentage || 100}%)
+                </Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-400">V-Tiles:</span>
+                <span className="text-sm font-medium text-white">{zoomInfo?.visibleVerticalTiles || 0}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-400">Range:</span>
+                <span className="text-sm font-medium text-white">{zoomInfo?.minZoom || 0.1}x - {zoomInfo?.maxZoom || 4.0}x</span>
+              </div>
             </div>
-            <div className="grid-data-columns">
-              <span className="text-label">V-Tiles:</span>
-              <span className="text-value">{zoomInfo?.visibleVerticalTiles || 0}</span>
-            </div>
-            <div className="grid-data-columns">
-              <span className="text-label">Range:</span>
-              <span className="text-value">{zoomInfo?.minZoom || 0.1}x - {zoomInfo?.maxZoom || 4.0}x</span>
-            </div>
-          </div>
-          <button 
-            className="btn-action"
-            onClick={handleResetToDefaultZoom}
-          >
-            Reset Zoom
-          </button>
-        </div>
+            <Button 
+              className="w-full mt-4 bg-blue-600 hover:bg-blue-700"
+              onClick={handleResetToDefaultZoom}
+            >
+              Reset Zoom
+            </Button>
+          </CardContent>
+        </Card>
         
         {/* Stats Grid */}
-        <div className="grid-stats">
-          <div className="section-secondary">
-            <div className="text-label">
-              Visible Cubes: <span className="text-value">{visibleCubes || 0}</span>
-            </div>
-          </div>
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider">Statistics</h3>
           
-          <div className="section-secondary">
-            <div className="text-label">
-              Tiles: <span className="text-value">H:{tileDimensions?.horizontalTiles || 0} | V:{tileDimensions?.verticalTiles || 0} | T:{tileDimensions?.totalTiles || 0}</span>
-            </div>
-          </div>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-400">Visible Cubes:</span>
+                <Badge variant="secondary" className="bg-green-500/20 text-green-300">
+                  {visibleCubes || 0}
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
           
-          <div className="section-secondary">
-            <div className="text-label">
-              Fish: <span className="text-value">H:{fishInfo?.horizontalCount || 0} | V:{fishInfo?.verticalCount || 0} | T:{fishInfo?.total || 0}</span>
-            </div>
-          </div>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-400">Tiles:</span>
+                <div className="text-sm font-medium text-white">
+                  H:{tileDimensions?.horizontalTiles || 0} | V:{tileDimensions?.verticalTiles || 0} | T:{tileDimensions?.totalTiles || 0}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
           
-          <div className="section-secondary">
-            <div className="text-label text-xs">
-              Position: <span className="text-value">({viewportPosition?.tileX || 0}, {viewportPosition?.tileY || 0}) | {viewportPosition?.percentageX || 0}%H, {viewportPosition?.percentageY || 0}%V</span>
-            </div>
-          </div>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-400">Fish:</span>
+                <div className="text-sm font-medium text-white">
+                  H:{fishInfo?.horizontalCount || 0} | V:{fishInfo?.verticalCount || 0} | T:{fishInfo?.total || 0}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-400">Position:</span>
+                <div className="text-xs font-medium text-white">
+                  ({viewportPosition?.tileX || 0}, {viewportPosition?.tileY || 0}) | {viewportPosition?.percentageX || 0}%H, {viewportPosition?.percentageY || 0}%V
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
         
+        <Separator />
+        
         {/* Grid Toggle */}
-        <div className="section-secondary">
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input 
-              type="checkbox" 
-              checked={showGrid} 
-              onChange={toggleGrid}
-              className="checkbox-primary"
-            />
-            <span className="text-label select-none">Show Grid</span>
-          </label>
-        </div>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label htmlFor="show-grid" className="text-sm font-medium text-gray-200">
+                  Show Grid
+                </Label>
+                <p className="text-xs text-gray-400">Toggle grid overlay on aquarium</p>
+              </div>
+              <Switch
+                id="show-grid"
+                checked={showGrid}
+                onCheckedChange={toggleGrid}
+              />
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </CardComponent>
   );

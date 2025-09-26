@@ -2,6 +2,15 @@ import { useState, useEffect } from 'preact/hooks';
 import { useAquariumStore } from '../stores/aquariumStore';
 import { useUIStore } from '../stores/uiStore';
 import CardComponent from './CardComponent';
+import { Button } from './ui/button';
+import { Badge } from './ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Separator } from './ui/separator';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Slider } from './ui/slider';
+import { Alert, AlertDescription } from './ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 
 function AquariumSettings({ 
   isOpen, 
@@ -126,7 +135,7 @@ function AquariumSettings({
 
   return (
     <CardComponent 
-      title="Aquarium Settings"
+      title="⚙️ Aquarium Settings"
       componentId={draggableId || "settings"}
       isOpen={isOpen}
       onToggle={onToggle}
@@ -138,208 +147,330 @@ function AquariumSettings({
       isDraggable={isDraggable}
       draggablePosition={draggablePosition}
     >
-      <div className="card-content-stats space-y-6">
-        {/* Current Zoom Status */}
-        <div className="section-primary">
-          <h3 className="text-section-title">Current Zoom Status</h3>
-          <div className="grid-stats">
-            <div className="section-content">
-              <div className="grid-data-columns">
-                <span className="text-label">Current Zoom:</span>
-                <span className="text-value">{zoomInfo.currentZoom}x ({zoomInfo.zoomPercentage}%)</span>
-              </div>
-            </div>
-            <div className="section-content">
-              <div className="grid-data-columns">
-                <span className="text-label">Visible V-Tiles:</span>
-                <span className="text-value">{zoomInfo.visibleVerticalTiles}</span>
-              </div>
-            </div>
-            <div className="section-content">
-              <div className="grid-data-columns">
-                <span className="text-label">Zoom Range:</span>
-                <span className="text-value">{minZoom || 0.1}x - {maxZoom || 4.0}x</span>
-              </div>
-            </div>
-          </div>
-          <button 
-            className="btn-action mt-4"
-            onClick={handleResetToDefaultZoom}
-          >
-            Reset to Default Zoom
-          </button>
-        </div>
+      <Tabs defaultValue="display" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-3 bg-slate-800/50 border border-slate-600">
+          <TabsTrigger value="display" className="data-[state=active]:bg-slate-700 data-[state=active]:text-white">
+            🖥️ Display
+          </TabsTrigger>
+          <TabsTrigger value="world" className="data-[state=active]:bg-slate-700 data-[state=active]:text-white">
+            🌍 World
+          </TabsTrigger>
+          <TabsTrigger value="theme" className="data-[state=active]:bg-slate-700 data-[state=active]:text-white">
+            🎨 Theme
+          </TabsTrigger>
+        </TabsList>
 
-        {/* Zoom Boundaries */}
-        <div className="section-secondary">
-          <h3 className="text-section-title">Zoom Boundaries</h3>
-          <div className="grid-stats mb-4">
-            <div className="section-content">
-              <div className="grid-data-columns">
-                <span className="text-label">Custom Min Zoom:</span>
-                <span className="text-value">{minZoom ? `${minZoom}x` : 'Not Set'}</span>
-              </div>
-            </div>
-            <div className="section-content">
-              <div className="grid-data-columns">
-                <span className="text-label">Custom Max Zoom:</span>
-                <span className="text-value">{maxZoom ? `${maxZoom}x` : 'Not Set'}</span>
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-col gap-2 mb-4">
-            <button className="btn-secondary" onClick={handleCaptureMinZoom}>
-              Capture Min Zoom
-            </button>
-            <button className="btn-secondary" onClick={handleCaptureMaxZoom}>
-              Capture Max Zoom
-            </button>
-            <button className="btn-secondary" onClick={handleClearZoomBoundaries}>
-              Clear Boundaries
-            </button>
-          </div>
-          <div className="section-content">
-            <p className="text-sm text-slate-300">Set your current zoom level as the minimum or maximum boundary. Once set, you won't be able to zoom beyond these limits.</p>
-          </div>
-        </div>
+        <div className="min-h-[400px]">
+          <TabsContent value="display" className="mt-0 space-y-6">
+            {/* Current Zoom Status */}
+            <Card className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border-blue-500/20">
+              <CardHeader>
+                <CardTitle className="text-lg text-blue-300">Current Zoom Status</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-400">Current Zoom:</span>
+                    <Badge variant="outline" className="text-blue-400 border-blue-400">
+                      {zoomInfo.currentZoom}x ({zoomInfo.zoomPercentage}%)
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-400">Visible V-Tiles:</span>
+                    <span className="text-sm font-medium text-white">{zoomInfo.visibleVerticalTiles}</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-400">Zoom Range:</span>
+                  <span className="text-sm font-medium text-white">{minZoom || 0.1}x - {maxZoom || 4.0}x</span>
+                </div>
+                <Button 
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                  onClick={handleResetToDefaultZoom}
+                >
+                  Reset to Default Zoom
+                </Button>
+              </CardContent>
+            </Card>
 
-        {/* Default Zoom Level */}
-        <div className="section-secondary">
-          <h3 className="text-section-title">Default Zoom Level</h3>
-          <div className="section-content space-y-3">
-            <label className="text-label block">
-              Default Visible Vertical Tiles:
-              <input
-                type="number"
-                min="5"
-                max="50"
-                value={localValues.defaultVisibleVerticalTiles}
-                onChange={(e) => updateLocalValue('defaultVisibleVerticalTiles', parseInt((e.target as HTMLInputElement)?.value) || 0)}
-                className="input-primary mt-2 w-full"
-              />
-            </label>
-            <p className="text-sm text-slate-300">Controls how many tiles you see vertically when the app opens. Currently: {localValues.defaultVisibleVerticalTiles} tiles. Higher values = more tiles visible (smaller zoom).</p>
-          </div>
-        </div>
+            {/* Zoom Boundaries */}
+            <Card className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border-purple-500/20">
+              <CardHeader>
+                <CardTitle className="text-lg text-purple-300">Zoom Boundaries</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-400">Custom Min Zoom:</span>
+                    <Badge variant={minZoom ? "default" : "secondary"} className={minZoom ? "text-purple-300" : ""}>
+                      {minZoom ? `${minZoom}x` : 'Not Set'}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-400">Custom Max Zoom:</span>
+                    <Badge variant={maxZoom ? "default" : "secondary"} className={maxZoom ? "text-purple-300" : ""}>
+                      {maxZoom ? `${maxZoom}x` : 'Not Set'}
+                    </Badge>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 gap-2">
+                  <Button variant="outline" className="border-purple-500/50 hover:bg-purple-500/20" onClick={handleCaptureMinZoom}>
+                    Capture Min Zoom
+                  </Button>
+                  <Button variant="outline" className="border-purple-500/50 hover:bg-purple-500/20" onClick={handleCaptureMaxZoom}>
+                    Capture Max Zoom
+                  </Button>
+                  <Button variant="outline" className="border-purple-500/50 hover:bg-purple-500/20" onClick={handleClearZoomBoundaries}>
+                    Clear Boundaries
+                  </Button>
+                </div>
+                <Alert className="border-purple-500/50 bg-purple-500/10">
+                  <AlertDescription className="text-sm text-gray-300">
+                    Set your current zoom level as the minimum or maximum boundary. Once set, you won't be able to zoom beyond these limits.
+                  </AlertDescription>
+                </Alert>
+              </CardContent>
+            </Card>
+
+            {/* Default Zoom Level */}
+            <Card className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20">
+              <CardHeader>
+                <CardTitle className="text-lg text-green-300">Default Zoom Level</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="defaultVisibleTiles" className="text-sm font-medium text-gray-200">
+                    Default Visible Vertical Tiles
+                  </Label>
+                  <Input
+                    id="defaultVisibleTiles"
+                    type="number"
+                    min="5"
+                    max="50"
+                    value={localValues.defaultVisibleVerticalTiles}
+                    onChange={(e) => updateLocalValue('defaultVisibleVerticalTiles', parseInt((e.target as HTMLInputElement)?.value) || 0)}
+                    className="bg-slate-800/50 border-green-500/50"
+                  />
+                </div>
+                <Alert className="border-green-500/50 bg-green-500/10">
+                  <AlertDescription className="text-sm text-gray-300">
+                    Controls how many tiles you see vertically when the app opens. Currently: <Badge variant="outline" className="text-green-400 border-green-400">{localValues.defaultVisibleVerticalTiles}</Badge> tiles. Higher values = more tiles visible (smaller zoom).
+                  </AlertDescription>
+                </Alert>
+              </CardContent>
+            </Card>
+          </TabsContent>
         
-        {/* Aquarium Size */}
-        <div className="section-secondary">
-          <h3 className="text-section-title">Aquarium Size (Fixed 64px Tiles)</h3>
-          <div className="section-content space-y-4">
-            <label className="text-label block">
-              Horizontal Tiles:
-              <input
-                type="number"
-                min="10"
-                max="1000"
-                value={localValues.tilesHorizontal}
-                onChange={(e) => updateLocalValue('tilesHorizontal', parseInt((e.target as HTMLInputElement)?.value) || 0)}
-                className="input-primary mt-2 w-full"
-              />
-            </label>
-            <label className="text-label block">
-              Vertical Tiles:
-              <input
-                type="number"
-                min="10"
-                max="500"
-                value={localValues.tilesVertical}
-                onChange={(e) => updateLocalValue('tilesVertical', parseInt((e.target as HTMLInputElement)?.value) || 0)}
-                className="input-primary mt-2 w-full"
-              />
-            </label>
-            <p className="text-sm text-slate-300">Each tile is exactly 64 pixels. The aquarium size is defined by the number of tiles.</p>
-          </div>
+          <TabsContent value="world" className="mt-0 space-y-6">
+            {/* Aquarium Size */}
+            <Card className="bg-gradient-to-br from-orange-500/10 to-yellow-500/10 border-orange-500/20">
+              <CardHeader>
+                <CardTitle className="text-lg text-orange-300">Aquarium Size (Fixed 64px Tiles)</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="horizontalTiles" className="text-sm font-medium text-gray-200">
+                      Horizontal Tiles
+                    </Label>
+                    <Input
+                      id="horizontalTiles"
+                      type="number"
+                      min="10"
+                      max="1000"
+                      value={localValues.tilesHorizontal}
+                      onChange={(e) => updateLocalValue('tilesHorizontal', parseInt((e.target as HTMLInputElement)?.value) || 0)}
+                      className="bg-slate-800/50 border-orange-500/50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="verticalTiles" className="text-sm font-medium text-gray-200">
+                      Vertical Tiles
+                    </Label>
+                    <Input
+                      id="verticalTiles"
+                      type="number"
+                      min="10"
+                      max="500"
+                      value={localValues.tilesVertical}
+                      onChange={(e) => updateLocalValue('tilesVertical', parseInt((e.target as HTMLInputElement)?.value) || 0)}
+                      className="bg-slate-800/50 border-orange-500/50"
+                    />
+                  </div>
+                </div>
+                <Alert className="border-orange-500/50 bg-orange-500/10">
+                  <AlertDescription className="text-sm text-gray-300">
+                    Each tile is exactly 64 pixels. The aquarium size is defined by the number of tiles.
+                  </AlertDescription>
+                </Alert>
+              </CardContent>
+            </Card>
+
+            {/* Preview */}
+            <Card className="bg-gradient-to-br from-slate-500/10 to-gray-500/10 border-slate-500/20">
+              <CardHeader>
+                <CardTitle className="text-lg text-slate-300">World Preview</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-400">World Size:</span>
+                    <Badge variant="outline" className="text-slate-400 border-slate-400">
+                      {localValues.tilesHorizontal} × {localValues.tilesVertical} tiles
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-400">World Dimensions:</span>
+                    <Badge variant="outline" className="text-slate-400 border-slate-400">
+                      {localValues.tilesHorizontal * 64} × {localValues.tilesVertical * 64}px
+                    </Badge>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-400">Default Visible:</span>
+                    <Badge variant="outline" className="text-slate-400 border-slate-400">
+                      {localValues.defaultVisibleVerticalTiles} V-tiles
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-400">Tile Size:</span>
+                    <Badge variant="outline" className="text-slate-400 border-slate-400">
+                      64px (fixed)
+                    </Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="theme" className="mt-0 space-y-6">
+            {/* Brutalist Panel Colors */}
+            <Card className="bg-gradient-to-br from-pink-500/10 to-red-500/10 border-pink-500/20">
+              <CardHeader>
+                <CardTitle className="text-lg text-pink-300">Brutalist Panel Colors</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="primaryColor" className="text-sm font-medium text-gray-200">
+                      Primary Color (Background)
+                    </Label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        id="primaryColor"
+                        type="color"
+                        value={brutalistPrimaryColor}
+                        onChange={(e) => setBrutalistPrimaryColor((e.target as HTMLInputElement)?.value)}
+                        className="w-12 h-10 border-2 border-pink-500/50 rounded cursor-pointer"
+                      />
+                      <Badge variant="outline" className="text-pink-400 border-pink-400 font-mono">
+                        {brutalistPrimaryColor}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="secondaryColor" className="text-sm font-medium text-gray-200">
+                      Secondary Color (Border/Accent)
+                    </Label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        id="secondaryColor"
+                        type="color"
+                        value={brutalistSecondaryColor}
+                        onChange={(e) => setBrutalistSecondaryColor((e.target as HTMLInputElement)?.value)}
+                        className="w-12 h-10 border-2 border-pink-500/50 rounded cursor-pointer"
+                      />
+                      <Badge variant="outline" className="text-pink-400 border-pink-400 font-mono">
+                        {brutalistSecondaryColor}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-4">
+                  <Label className="text-sm font-medium text-gray-200 mb-3 block">Preview</Label>
+                  <div 
+                    className="text-center py-6 px-6 font-black text-white rounded-lg" 
+                    style={{
+                      '--brutalist-primary': brutalistPrimaryColor,
+                      '--brutalist-secondary': brutalistSecondaryColor,
+                      background: 'var(--brutalist-primary)',
+                      border: '4px solid var(--brutalist-secondary)',
+                      color: '#FFFFFF',
+                      fontWeight: 'bold',
+                      textAlign: 'center',
+                      textShadow: '1px 1px 0 #000000',
+                      boxShadow: '4px 4px 0 #000000'
+                    }}
+                  >
+                    BRUTALIST PREVIEW
+                  </div>
+                </div>
+                
+                <Alert className="border-pink-500/50 bg-pink-500/10">
+                  <AlertDescription className="text-sm text-gray-300">
+                    Customize the colors for the brutalist UI panel. Changes apply immediately to the panel styling.
+                  </AlertDescription>
+                </Alert>
+              </CardContent>
+            </Card>
+
+            {/* Navigation Controls */}
+            <Card className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border-indigo-500/20">
+              <CardHeader>
+                <CardTitle className="text-lg text-indigo-300">Navigation Controls</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-1 gap-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-400">Arrow Keys:</span>
+                    <Badge variant="outline" className="text-indigo-400 border-indigo-400">
+                      Move around (5 tiles/press)
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-400">+ / =:</span>
+                    <Badge variant="outline" className="text-indigo-400 border-indigo-400">
+                      Zoom in
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-400">-:</span>
+                    <Badge variant="outline" className="text-indigo-400 border-indigo-400">
+                      Zoom out
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-400">B:</span>
+                    <Badge variant="outline" className="text-indigo-400 border-indigo-400">
+                      Toggle bubbles
+                    </Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </div>
 
-        {/* Preview */}
-        <div className="section-tertiary">
-          <h3 className="text-section-title">Preview</h3>
-          <div className="section-content space-y-2">
-            <p className="text-sm text-slate-300">World Size: <span className="text-value">{localValues.tilesHorizontal} × {localValues.tilesVertical}</span> tiles</p>
-            <p className="text-sm text-slate-300">World Dimensions: <span className="text-value">{localValues.tilesHorizontal * 64} × {localValues.tilesVertical * 64}</span> pixels</p>
-            <p className="text-sm text-slate-300">Default Visible: <span className="text-value">{localValues.defaultVisibleVerticalTiles}</span> vertical tiles on app start</p>
-            <p className="text-sm text-slate-300">Tile Size: <span className="text-value">64px</span> (fixed)</p>
-          </div>
-        </div>
+        <Separator className="my-4" />
 
-        {/* Brutalist Panel Colors */}
-        <div className="section-secondary">
-          <h3 className="text-section-title">Brutalist Panel Colors</h3>
-          <div className="section-content space-y-4">
-            <label className="text-label block">
-              Primary Color (Background):
-              <div className="flex items-center gap-3 mt-2">
-                <input
-                  type="color"
-                  value={brutalistPrimaryColor}
-                  onChange={(e) => setBrutalistPrimaryColor((e.target as HTMLInputElement)?.value)}
-                  className="w-12 h-8 border-2 border-primary-400/50 rounded cursor-pointer"
-                />
-                <span className="text-mono-small bg-slate-800/50 px-3 py-1 rounded border border-primary-400/30">{brutalistPrimaryColor}</span>
-              </div>
-            </label>
-            <label className="text-label block">
-              Secondary Color (Border/Accent):
-              <div className="flex items-center gap-3 mt-2">
-                <input
-                  type="color"
-                  value={brutalistSecondaryColor}
-                  onChange={(e) => setBrutalistSecondaryColor((e.target as HTMLInputElement)?.value)}
-                  className="w-12 h-8 border-2 border-primary-400/50 rounded cursor-pointer"
-                />
-                <span className="text-mono-small bg-slate-800/50 px-3 py-1 rounded border border-primary-400/30">{brutalistSecondaryColor}</span>
-              </div>
-            </label>
-            <div className="section-content">
-              <div 
-                className="text-center py-4 px-6 font-black text-white" 
-                style={{
-                  '--brutalist-primary': brutalistPrimaryColor,
-                  '--brutalist-secondary': brutalistSecondaryColor,
-                  background: 'var(--brutalist-primary)',
-                  border: '4px solid var(--brutalist-secondary)',
-                  borderRadius: '0',
-                  color: '#FFFFFF',
-                  fontWeight: 'bold',
-                  textAlign: 'center',
-                  textShadow: '1px 1px 0 #000000',
-                  boxShadow: '4px 4px 0 #000000'
-                }}
-              >
-                BRUTALIST PREVIEW
-              </div>
-            </div>
-            <p className="text-sm text-slate-300">Customize the colors for the brutalist UI panel. Changes apply immediately to the panel styling.</p>
-          </div>
+        <div className="flex gap-4 justify-end">
+          <Button 
+            variant="outline"
+            className="border-slate-600 hover:bg-slate-700"
+            onClick={handleReset}
+          >
+            Reset
+          </Button>
+          <Button 
+            className="bg-blue-600 hover:bg-blue-700"
+            onClick={handleApply}
+          >
+            Apply Changes
+          </Button>
         </div>
-
-        {/* Navigation Controls */}
-        <div className="section-tertiary">
-          <h3 className="text-section-title">Navigation Controls</h3>
-          <div className="section-content space-y-2">
-            <p className="text-sm text-slate-300"><span className="text-label-large">Arrow Keys:</span> Move around the aquarium (5 tiles per press)</p>
-            <p className="text-sm text-slate-300"><span className="text-label-large">+ / =:</span> Zoom in</p>
-            <p className="text-sm text-slate-300"><span className="text-label-large">-:</span> Zoom out</p>
-            <p className="text-sm text-slate-300"><span className="text-label-large">B:</span> Toggle bubbles visibility</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex gap-4 justify-end pt-6 border-t-4 border-primary-400/50">
-        <button 
-          className="btn-secondary-enhanced"
-          onClick={handleReset}
-        >
-          Reset
-        </button>
-        <button 
-          className="btn-primary-enhanced"
-          onClick={handleApply}
-        >
-          Apply
-        </button>
-      </div>
+      </Tabs>
     </CardComponent>
   );
 }

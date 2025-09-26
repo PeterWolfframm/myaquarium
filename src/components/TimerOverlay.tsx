@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'preact/hooks';
 import { databaseService } from '../services/database';
 import CardComponent from './CardComponent';
+import { Button } from './ui/button';
+import { Badge } from './ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Separator } from './ui/separator';
+import { Avatar, AvatarFallback } from './ui/avatar';
 
 interface TimerSession {
   id: string;
@@ -120,53 +125,85 @@ function TimerOverlay({
       isDraggable={isDraggable}
       draggablePosition={draggablePosition}
     >
-      <div className="card-content-timer">
-        <div className="flex gap-3 justify-center mb-6">
-          {moods.map(({ id, label }) => (
-            <button
-              key={id}
-              className={`btn-mood ${mood === id ? 'active' : ''} ${switchingMood === id ? 'switching' : ''} disabled:cursor-not-allowed`}
-              onClick={() => {
-                setSwitchingMood(id);
-                onMoodChange(id);
-                // Clear switching state after a delay
-                setTimeout(() => setSwitchingMood(null), 500);
-              }}
-              disabled={switchingMood === id}
-            >
-              {switchingMood === id ? '...' : label}
-            </button>
-          ))}
+      <div className="space-y-6">
+        {/* Mood Selection */}
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider text-center">Current Mode</h3>
+          <div className="flex gap-3 justify-center">
+            {moods.map(({ id, label }) => (
+              <Button
+                key={id}
+                variant={mood === id ? "default" : "outline"}
+                size="sm"
+                className={`${
+                  mood === id 
+                    ? "bg-blue-600 hover:bg-blue-700 text-white" 
+                    : "bg-slate-800/50 border-slate-600 hover:bg-slate-700"
+                } disabled:cursor-not-allowed disabled:opacity-50`}
+                onClick={() => {
+                  setSwitchingMood(id);
+                  onMoodChange(id);
+                  // Clear switching state after a delay
+                  setTimeout(() => setSwitchingMood(null), 500);
+                }}
+                disabled={switchingMood === id}
+              >
+                {switchingMood === id ? '...' : label}
+              </Button>
+            ))}
+          </div>
         </div>
         
+        <Separator />
+        
         {/* Recent Sessions */}
-        <div className="section-tertiary">
-          <h4 className="text-section-title">
+        <div className="space-y-4">
+          <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider">
             Recent Sessions
-          </h4>
+          </h3>
           {loading ? (
-            <div className="loading-state">Loading...</div>
-          ) : recentSessions.length > 0 ? (
-            <div className="flex flex-col gap-2">
-              {recentSessions.map((session, index) => (
-                <div key={session.id} className="grid-session session-item-base">
-                  <span className="session-mood-display">
-                    <span className="text-lg">{getMoodIcon(session.mood)}</span>
-                    <span className="session-mood-text">{session.mood}</span>
-                  </span>
-                  <span className="text-mono-small">
-                    {formatSessionTime(session.start_time)}
-                  </span>
-                  <span className="text-duration">
-                    {formatDuration(session.duration_seconds)}
-                  </span>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-center text-gray-400">
+                  Loading...
                 </div>
+              </CardContent>
+            </Card>
+          ) : recentSessions.length > 0 ? (
+            <div className="space-y-3">
+              {recentSessions.map((session, index) => (
+                <Card key={session.id} className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border-purple-500/20">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback className="bg-purple-500/20 text-purple-400 text-lg">
+                            {getMoodIcon(session.mood)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="font-medium text-white capitalize">{session.mood}</div>
+                          <div className="text-xs text-gray-400 font-mono">
+                            {formatSessionTime(session.start_time)}
+                          </div>
+                        </div>
+                      </div>
+                      <Badge variant="secondary" className="bg-blue-500/20 text-blue-300">
+                        {formatDuration(session.duration_seconds)}
+                      </Badge>
+                    </div>
+                  </CardContent>
+                </Card>
               ))}
             </div>
           ) : (
-            <div className="empty-state">
-              No recent sessions
-            </div>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-center text-gray-400">
+                  No recent sessions
+                </div>
+              </CardContent>
+            </Card>
           )}
         </div>
       </div>

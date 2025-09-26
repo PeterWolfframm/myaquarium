@@ -8,6 +8,7 @@ import DataPanel from './components/DataPanel';
 import CardShowcase from './components/CardShowcase';
 import CardDesignShowcase2 from './components/CardDesignShowcase2';
 import DragAndDropProvider from './components/DragAndDropProvider';
+import { Toaster } from './components/ui/toaster';
 import { useAquariumStore } from './stores/aquariumStore';
 import { useFishStore } from './stores/fishStore';
 import { useUIStore } from './stores/uiStore';
@@ -563,6 +564,8 @@ function App() {
           mood={mood} 
           onAquariumReady={handleAquariumReady}
         />
+        
+        <Toaster />
       </div>
     </DragAndDropProvider>
   );
