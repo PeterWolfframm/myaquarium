@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'preact/hooks';
 import { databaseService } from '../services/database';
 import { FISH_CONFIG } from '../constants/index';
+import { Button } from './ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Alert, AlertDescription } from './ui/alert';
 
 function SpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadComplete, onAddRandomFish, isCreatingFish = false }) {
   const [availableSprites, setAvailableSprites] = useState([]);
@@ -102,36 +105,39 @@ function SpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadComplete, on
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <h4 className="text-section-title">Fish Sprites</h4>
-        <div className="loading-state">Loading sprites...</div>
+        <h4 className="text-lg font-semibold text-foreground">Fish Sprites</h4>
+        <div className="flex items-center justify-center p-8 text-muted-foreground">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mr-2"></div>
+          Loading sprites...
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <h4 className="text-section-title">Fish Sprites</h4>
+      <h4 className="text-lg font-semibold text-foreground">Fish Sprites</h4>
       
       {error && (
-        <div className="error-alert">
-          <span>{error}</span>
-          <button 
-            onClick={() => setError(null)}
-            className="ml-3 hover:bg-red-500/30 w-6 h-6 rounded-full flex items-center justify-center transition-colors"
-          >
-            ×
-          </button>
-        </div>
+        <Alert variant="destructive">
+          <AlertDescription className="flex items-center justify-between">
+            <span>{error}</span>
+            <Button 
+              variant="ghost"
+              size="sm"
+              onClick={() => setError(null)}
+              className="h-6 w-6 p-0 hover:bg-destructive/30"
+            >
+              ×
+            </Button>
+          </AlertDescription>
+        </Alert>
       )}
 
       {/* Upload Section */}
-      <div className="bg-slate-800/70 border-2 border-primary-400/40 p-3 hover:bg-slate-700/70 hover:border-primary-400/70 transition-all duration-200 ">
-        <div className="section-content">
-          <label className={`inline-flex items-center justify-center px-4 py-2 rounded-lg border transition-all duration-200 cursor-pointer ${
-            uploading || !isOnline
-              ? 'border-gray-400/50 bg-gray-500/20 text-gray-400 cursor-not-allowed' 
-              : 'border-primary-400/50 bg-primary-500/20 text-primary-400 hover:border-primary-500/70 hover:bg-primary-500/30 hover:scale-105 active:scale-95'
-          }`}>
+      <Card>
+        <CardContent className="pt-6">
+          <label className="cursor-pointer">
             <input
               type="file"
               accept="image/*"
@@ -139,66 +145,76 @@ function SpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadComplete, on
               disabled={uploading || !isOnline}
               style={{ display: 'none' }}
             />
-            <span className="text-sm font-medium">
-              {!isOnline ? 'Upload (offline)' : uploading ? 'Uploading...' : '+ Upload Sprite'}
-            </span>
+            <Button
+              variant="outline"
+              disabled={uploading || !isOnline}
+              className="w-full"
+              asChild
+            >
+              <span>
+                {!isOnline ? 'Upload (offline)' : uploading ? 'Uploading...' : '+ Upload Sprite'}
+              </span>
+            </Button>
           </label>
           {!isOnline && (
-            <div className="text-mono-small text-gray-400 mt-2">
+            <div className="text-sm font-mono text-muted-foreground mt-2 text-center">
               Upload is disabled while offline
             </div>
           )}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Current Selection */}
       {selectedSpriteUrl && (
-        <div className="bg-slate-800/70 border-2 border-primary-400/40 p-3 hover:bg-slate-700/70 hover:border-primary-400/70 transition-all duration-200 ">
-          <h5 className="text-primary-300 font-black text-base uppercase tracking-wider mb-4 text-center border-b-2 border-primary-400/30 pb-2">Current Sprite:</h5>
-          <div className="section-content">
-            <div className="section-interactive border-primary-500 bg-primary-500/20 p-4 relative">
-              <div className="flex items-center gap-4">
-                  <img 
-                    src={selectedSpriteUrl} 
-                    alt="Current sprite" 
-                    className="w-16 h-16 object-cover rounded border border-white/20 transition-transform duration-200 hover:scale-125"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                      e.target.nextSibling.style.display = 'block';
-                    }}
-                  />
-                <div className="text-xs text-red-400 hidden">
-                  Failed to load image
-                </div>
-                <div className="flex-1">
-                  <div className="text-white font-black">Selected sprite</div>
-                  <div className="text-mono-small">Ready for new fish</div>
-                </div>
-                <button 
-                  className="px-3 py-1 rounded border border-red-400/50 bg-red-500/20 text-red-400 hover:border-red-500/70 hover:bg-red-500/30 transition-all duration-200 hover:scale-105 active:scale-95"
-                  onClick={handleRemoveSprite}
-                  title="Remove sprite"
-                >
-                  Remove
-                </button>
+        <Card>
+          <CardHeader>
+            <CardTitle>Current Sprite</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-4 p-4 border border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-950/20 rounded-lg">
+              <img 
+                src={selectedSpriteUrl} 
+                alt="Current sprite" 
+                className="w-16 h-16 object-cover rounded border shadow-sm transition-transform duration-200 hover:scale-110"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'block';
+                }}
+              />
+              <div className="text-xs text-destructive hidden">
+                Failed to load image
               </div>
+              <div className="flex-1">
+                <div className="font-semibold text-foreground">Selected sprite</div>
+                <div className="text-sm font-mono text-muted-foreground">Ready for new fish</div>
+              </div>
+              <Button 
+                variant="destructive"
+                size="sm"
+                onClick={handleRemoveSprite}
+                title="Remove sprite"
+              >
+                Remove
+              </Button>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Available Sprites */}
-      <div className="bg-slate-800/70 border-2 border-primary-400/40 p-3 hover:bg-slate-700/70 hover:border-primary-400/70 transition-all duration-200 ">
-        <h5 className="text-primary-300 font-black text-base uppercase tracking-wider mb-4 text-center border-b-2 border-primary-400/30 pb-2">Available Sprites:</h5>
-        <div className="section-content">
+      <Card>
+        <CardHeader>
+          <CardTitle>Available Sprites</CardTitle>
+        </CardHeader>
+        <CardContent>
           {!isOnline ? (
             // When offline, only show shark sprite
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
               <div 
-                className={`section-interactive relative cursor-pointer transition-all duration-200 p-3 rounded-lg border ${
+                className={`relative cursor-pointer transition-all duration-200 p-3 rounded-lg border-2 ${
                   selectedSpriteUrl === sharkSpriteUrl
-                    ? 'border-primary-500 bg-primary-500/20 shadow-lg' 
-                    : 'border-white/20 bg-white/5 hover:border-primary-400/50 hover:bg-primary-500/10'
+                    ? 'border-primary-500 bg-primary-100 dark:bg-primary-900/20 shadow-lg' 
+                    : 'border-border hover:border-primary-400 bg-card hover:bg-accent'
                 }`}
                 onClick={() => handleSpriteSelect(sharkSpriteUrl)}
                 title="Shark (offline mode)"
@@ -207,7 +223,7 @@ function SpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadComplete, on
                   <img 
                     src={sharkSpriteUrl} 
                     alt="Shark"
-                    className="w-12 h-12 object-cover rounded border border-white/20 transition-transform duration-200 hover:scale-125"
+                    className="w-12 h-12 object-cover rounded border shadow-sm transition-transform duration-200 hover:scale-110"
                     onError={(e) => {
                       e.target.style.display = 'none';
                       e.target.nextSibling.style.display = 'block';
@@ -216,23 +232,25 @@ function SpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadComplete, on
                   <div className="text-xs text-red-400 hidden">
                     Failed to load
                   </div>
-                  <div className="text-mono-small text-center">Shark (offline)</div>
+                  <div className="text-xs font-mono text-muted-foreground text-center">Shark (offline)</div>
                 </div>
               </div>
             </div>
           ) : availableSprites.length === 0 ? (
-            <div className="text-center text-slate-400 font-bold italic py-4 border border-slate-600/50 bg-slate-800/30">
-              No sprites available. Upload your first sprite!
-            </div>
+            <Alert>
+              <AlertDescription>
+                No sprites available. Upload your first sprite!
+              </AlertDescription>
+            </Alert>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
               {availableSprites.map((sprite) => (
                 <div 
                   key={sprite.name}
-                  className={`section-interactive relative cursor-pointer transition-all duration-200 p-3 rounded-lg border ${
+                  className={`relative cursor-pointer transition-all duration-200 p-3 rounded-lg border-2 ${
                     selectedSpriteUrl === sprite.url
-                      ? 'border-primary-500 bg-primary-500/20 shadow-lg' 
-                      : 'border-white/20 bg-white/5 hover:border-primary-400/50 hover:bg-primary-500/10'
+                      ? 'border-primary-500 bg-primary-100 dark:bg-primary-900/20 shadow-lg' 
+                      : 'border-border hover:border-primary-400 bg-card hover:bg-accent'
                   }`}
                   onClick={() => handleSpriteSelect(sprite.url)}
                   title={sprite.name}
@@ -241,7 +259,7 @@ function SpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadComplete, on
                     <img 
                       src={sprite.url} 
                       alt={sprite.name}
-                      className="w-12 h-12 object-cover rounded border border-white/20 transition-transform duration-200 hover:scale-125"
+                      className="w-12 h-12 object-cover rounded border shadow-sm transition-transform duration-200 hover:scale-110"
                       onError={(e) => {
                         e.target.style.display = 'none';
                         e.target.nextSibling.style.display = 'block';
@@ -250,57 +268,59 @@ function SpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadComplete, on
                     <div className="text-xs text-red-400 hidden">
                       Failed to load
                     </div>
-                    <div className="text-mono-small text-center">{sprite.name}</div>
+                    <div className="text-xs font-mono text-muted-foreground text-center truncate">{sprite.name}</div>
                   </div>
                 </div>
               ))}
             </div>
           )}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Default Option */}
-      <div className="bg-slate-800/70 border-2 border-primary-400/40 p-3 hover:bg-slate-700/70 hover:border-primary-400/70 transition-all duration-200 ">
-        <h5 className="text-primary-300 font-black text-base uppercase tracking-wider mb-4 text-center border-b-2 border-primary-400/30 pb-2">Default:</h5>
-        <div className="section-content">
+      <Card>
+        <CardHeader>
+          <CardTitle>Default</CardTitle>
+        </CardHeader>
+        <CardContent>
           {!isOnline ? (
             // When offline, default is also shark
             <div 
-              className={`section-interactive cursor-pointer transition-all duration-200 p-4 rounded-lg border ${
+              className={`cursor-pointer transition-all duration-200 p-4 rounded-lg border-2 ${
                 selectedSpriteUrl === sharkSpriteUrl
-                  ? 'border-primary-500 bg-primary-500/20 shadow-lg' 
-                  : 'border-white/20 bg-white/5 hover:border-primary-400/50 hover:bg-primary-500/10'
+                  ? 'border-primary-500 bg-primary-100 dark:bg-primary-900/20 shadow-lg' 
+                  : 'border-border hover:border-primary-400 bg-card hover:bg-accent'
               }`}
               onClick={() => handleSpriteSelect(sharkSpriteUrl)}
             >
               <div className="flex items-center gap-3">
                 <div className="text-2xl">🦈</div>
                 <div>
-                  <div className="text-white font-black">Shark (offline default)</div>
-                  <div className="text-mono-small">Built-in sprite for offline use</div>
+                  <div className="font-semibold text-foreground">Shark (offline default)</div>
+                  <div className="text-sm font-mono text-muted-foreground">Built-in sprite for offline use</div>
                 </div>
               </div>
             </div>
           ) : (
             <div 
-              className={`section-interactive cursor-pointer transition-all duration-200 p-4 rounded-lg border ${
+              className={`cursor-pointer transition-all duration-200 p-4 rounded-lg border-2 ${
                 selectedSpriteUrl === FISH_CONFIG.DEFAULT_SPRITE_URL
-                  ? 'border-primary-500 bg-primary-500/20 shadow-lg' 
-                  : 'border-white/20 bg-white/5 hover:border-primary-400/50 hover:bg-primary-500/10'
+                  ? 'border-primary-500 bg-primary-100 dark:bg-primary-900/20 shadow-lg' 
+                  : 'border-border hover:border-primary-400 bg-card hover:bg-accent'
               }`}
               onClick={() => handleSpriteSelect(FISH_CONFIG.DEFAULT_SPRITE_URL)}
             >
               <div className="flex items-center gap-3">
                 <div className="text-2xl">🐠</div>
                 <div>
-                  <div className="text-white font-black">Default Fish Sprite</div>
-                  <div className="text-mono-small">Standard aquarium fish</div>
+                  <div className="font-semibold text-foreground">Default Fish Sprite</div>
+                  <div className="text-sm font-mono text-muted-foreground">Standard aquarium fish</div>
                 </div>
               </div>
             </div>
           )}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -5,7 +5,6 @@ import AquariumSettings from './components/AquariumSettings';
 import FishEditor from './components/FishEditor';
 import ObjectsEditor from './components/ObjectsEditor';
 import DataPanel from './components/DataPanel';
-import CardShowcase from './components/CardShowcase';
 import CardDesignShowcase2 from './components/CardDesignShowcase2';
 import DragAndDropProvider from './components/DragAndDropProvider';
 import { Toaster } from './components/ui/toaster';
@@ -46,7 +45,6 @@ const constrainToViewport = (position: Position, panelWidth: number = 300, panel
       timer: constrainToViewport({ x: Math.max(margin, viewportWidth / 2 - 150), y: 50 }, 300, 200),
       stats: constrainToViewport({ x: Math.max(margin, viewportWidth - 320), y: 50 }, 320, 300),
       objectsManager: constrainToViewport({ x: margin, y: 120 }, 350, 400),
-      cardShowcase: constrainToViewport({ x: Math.max(margin, viewportWidth / 2 - 250), y: 60 }, 500, 600),
       cardShowcase2: constrainToViewport({ x: Math.max(margin, viewportWidth / 2 - 250), y: 80 }, 500, 600),
       settings: constrainToViewport({ x: Math.max(margin, viewportWidth / 2 - 200), y: 100 }, 400, 500),
       fishEditor: constrainToViewport({ x: Math.max(margin, viewportWidth / 2 - 250), y: 80 }, 500, 600)
@@ -78,7 +76,6 @@ function App() {
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [showFishEditor, setShowFishEditor] = useState<boolean>(false);
   const [showObjectsManager, setShowObjectsManager] = useState<boolean>(false);
-  const [showCardShowcase, setShowCardShowcase] = useState<boolean>(false);
   const [showCardShowcase2, setShowCardShowcase2] = useState<boolean>(false);
   const [showTimer, setShowTimer] = useState<boolean>(true);
   const [showStats, setShowStats] = useState<boolean>(true);
@@ -443,10 +440,6 @@ function App() {
     setShowObjectsManager(!showObjectsManager);
   };
 
-  const toggleCardShowcase = (): void => {
-    setShowCardShowcase(!showCardShowcase);
-  };
-
   const toggleCardShowcase2 = (): void => {
     setShowCardShowcase2(!showCardShowcase2);
   };
@@ -482,9 +475,6 @@ function App() {
           </button>
           <button className="control-button objects-manager-button" onClick={toggleObjectsManager}>
             🎨 Objects
-          </button>
-          <button className="control-button card-showcase-button" onClick={toggleCardShowcase}>
-            💎 Design System
           </button>
           <button className="control-button card-showcase2-button" onClick={toggleCardShowcase2}>
             ✨ Modern UI
@@ -543,13 +533,6 @@ function App() {
               isDraggable={true}
               draggableId="fishEditor"
               draggablePosition={panelPositions.fishEditor}
-            />
-            
-            <CardShowcase 
-              isOpen={showCardShowcase}
-              onToggle={toggleCardShowcase}
-              isDraggable={true}
-              draggablePosition={panelPositions.cardShowcase}
             />
             
             <CardDesignShowcase2 

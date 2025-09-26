@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'preact/hooks';
 import { useDraggable } from '@dnd-kit/core';
 import { databaseService } from '../services/database';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Alert, AlertDescription } from './ui/alert';
 
 // Draggable sprite item component
 function DraggableSpriteItem({ sprite, isSelected, onSelect, selectedSize = 6 }) {
@@ -32,11 +37,11 @@ function DraggableSpriteItem({ sprite, isSelected, onSelect, selectedSize = 6 })
       style={style}
       {...listeners}
       {...attributes}
-      className={`gallery-item-enhanced relative cursor-pointer p-3 ${
+      className={`relative cursor-pointer p-3 rounded-lg border-2 transition-all duration-200 ${
         isSelected 
-          ? 'gallery-item-selected' 
-          : ''
-      } ${isDragging ? 'gallery-item-dragging' : ''}`}
+          ? 'border-primary-500 bg-primary-100 dark:bg-primary-900/20 shadow-lg' 
+          : 'border-border hover:border-primary-400 bg-card hover:bg-accent'
+      } ${isDragging ? 'opacity-50 z-50 scale-105 shadow-2xl' : ''}`}
       onClick={() => onSelect(sprite.url)}
       title={`${sprite.name} - Drag to aquarium to place`}
     >
@@ -44,7 +49,7 @@ function DraggableSpriteItem({ sprite, isSelected, onSelect, selectedSize = 6 })
         <img 
           src={sprite.url} 
           alt={sprite.name}
-          className="gallery-thumbnail-enhanced w-12 h-12"
+          className="w-12 h-12 object-cover rounded border shadow-sm"
           onError={(e) => {
             e.target.style.display = 'none';
             e.target.nextSibling.style.display = 'block';
@@ -53,7 +58,7 @@ function DraggableSpriteItem({ sprite, isSelected, onSelect, selectedSize = 6 })
         <div className="text-xs text-red-400 hidden">
           Failed to load
         </div>
-        <div className="text-mono-small text-center">{sprite.name}</div>
+        <div className="text-xs font-mono text-muted-foreground text-center truncate">{sprite.name}</div>
         {isDragging && (
           <div className="absolute -top-2 -right-2 bg-primary-500 text-white text-xs px-2 py-1 rounded-full shadow-lg animate-pulse">
             Drop on aquarium
@@ -184,24 +189,23 @@ function ObjectsSpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadCompl
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <h4 className="text-section-title">Object Sprites</h4>
-        <div className="loading-state">Loading object sprites...</div>
+        <h4 className="text-lg font-semibold text-foreground">Object Sprites</h4>
+        <div className="flex items-center justify-center p-8 text-muted-foreground">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mr-2"></div>
+          Loading object sprites...
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <h4 className="text-section-title">Object Sprites</h4>
+      <h4 className="text-lg font-semibold text-foreground">Object Sprites</h4>
 
       {/* Upload Section */}
-      <div className="section-secondary">
-        <div className="section-content">
-          <label className={`btn-compact cursor-pointer ${
-            uploading 
-              ? 'bg-gray-500/20 text-gray-400 border-gray-400/50 cursor-not-allowed' 
-              : 'bg-primary-500/20 text-primary-400 border-primary-400/50 hover:bg-primary-500/30 hover:border-primary-500/70'
-          }`}>
+      <Card>
+        <CardContent className="pt-6">
+          <label className="cursor-pointer">
             <input
               type="file"
               accept="image/*"
@@ -209,107 +213,114 @@ function ObjectsSpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadCompl
               disabled={uploading}
               style={{ display: 'none' }}
             />
-            <span className="text-sm font-medium">
-              {uploading ? 'Uploading...' : '+ Upload Object Sprite'}
-            </span>
+            <Button
+              variant="outline"
+              disabled={uploading}
+              className="w-full"
+              asChild
+            >
+              <span>
+                {uploading ? 'Uploading...' : '+ Upload Object Sprite'}
+              </span>
+            </Button>
           </label>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Upload Form */}
       {showUploadForm && (
-        <div className="form-section-enhanced">
-          <h5 className="text-section-title mb-4">Upload Object Sprite</h5>
-          <div className="section-content space-y-4">
-            <div>
-              <label className="form-label-enhanced block mb-2">Object Name:</label>
-              <input
+        <Card>
+          <CardHeader>
+            <CardTitle>Upload Object Sprite</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="object-name">Object Name:</Label>
+              <Input
+                id="object-name"
                 type="text"
                 value={uploadName}
                 onChange={(e) => setUploadName(e.target.value)}
                 placeholder="Enter object name (e.g. 'rock', 'seaweed', 'treasure chest')"
                 disabled={uploading}
-                className="form-input-enhanced w-full"
               />
             </div>
-            <div>
-              <label className="form-label-enhanced block mb-2">Selected File:</label>
-              <div className="text-value p-3 bg-white/5 border border-white/20 rounded-lg">
+            <div className="space-y-2">
+              <Label>Selected File:</Label>
+              <div className="p-3 bg-muted rounded-lg text-sm text-muted-foreground">
                 {selectedFile ? selectedFile.name : 'No file selected'}
               </div>
             </div>
             <div className="flex gap-3 pt-2">
-              <button 
-                className={`btn-compact flex-1 ${
-                  uploading || !uploadName.trim()
-                    ? 'bg-gray-500/20 text-gray-400 border-gray-400/50 cursor-not-allowed'
-                    : 'bg-primary-500/20 text-primary-400 border-primary-400/50 hover:bg-primary-500/30 hover:border-primary-500/70'
-                }`}
+              <Button 
+                className="flex-1"
                 onClick={handleUpload}
                 disabled={uploading || !uploadName.trim()}
               >
                 {uploading ? 'Uploading...' : 'Upload'}
-              </button>
-              <button 
-                className={`btn-compact flex-1 ${
-                  uploading
-                    ? 'bg-gray-500/20 text-gray-400 border-gray-400/50 cursor-not-allowed'
-                    : 'bg-red-500/20 text-red-400 border-red-400/50 hover:bg-red-500/30 hover:border-red-500/70'
-                }`}
+              </Button>
+              <Button 
+                variant="destructive"
+                className="flex-1"
                 onClick={handleCancelUpload}
                 disabled={uploading}
               >
                 Cancel
-              </button>
+              </Button>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Current Selection */}
       {selectedSpriteUrl && (
-        <div className="section-secondary">
-          <h5 className="text-section-title mb-3">Current Selection:</h5>
-          <div className="section-content">
-            <div className="gallery-item-enhanced gallery-item-selected p-4 relative">
-              <div className="flex items-center gap-4">
-                <img 
-                  src={selectedSpriteUrl} 
-                  alt="Current object sprite" 
-                  className="gallery-thumbnail-enhanced w-16 h-16"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                    e.target.nextSibling.style.display = 'block';
-                  }}
-                />
-                <div className="text-xs text-red-400 hidden">
-                  Failed to load image
-                </div>
-                <div className="flex-1">
-                  <div className="text-value">Selected for placement</div>
-                  <div className="text-mono-small">Size: {selectedSize}x{selectedSize}</div>
-                </div>
-                <button 
-                  className="btn-compact bg-red-500/20 text-red-400 border-red-400/50 hover:bg-red-500/30 hover:border-red-500/70"
-                  onClick={handleRemoveSprite}
-                  title="Remove selection"
-                >
-                  Remove
-                </button>
+        <Card>
+          <CardHeader>
+            <CardTitle>Current Selection</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-4 p-4 border border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-950/20 rounded-lg">
+              <img 
+                src={selectedSpriteUrl} 
+                alt="Current object sprite" 
+                className="w-16 h-16 object-cover rounded border shadow-sm"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'block';
+                }}
+              />
+              <div className="text-xs text-destructive hidden">
+                Failed to load image
               </div>
+              <div className="flex-1">
+                <div className="font-medium text-foreground">Selected for placement</div>
+                <div className="text-sm font-mono text-muted-foreground">Size: {selectedSize}x{selectedSize}</div>
+              </div>
+              <Button 
+                variant="destructive"
+                size="sm"
+                onClick={handleRemoveSprite}
+                title="Remove selection"
+              >
+                Remove
+              </Button>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Available Sprites */}
-      <div className="section-secondary">
-        <h5 className="text-section-title mb-3">Available Object Sprites:</h5>
-        <div className="section-content">
+      <Card>
+        <CardHeader>
+          <CardTitle>Available Object Sprites</CardTitle>
+        </CardHeader>
+        <CardContent>
           {availableSprites.length === 0 ? (
-            <div className="empty-state">
-              No object sprites available. Upload your first object sprite!
-            </div>
+            <Alert>
+              <AlertDescription>
+                No object sprites available. Upload your first object sprite!
+              </AlertDescription>
+            </Alert>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
               {availableSprites.map((sprite) => (
@@ -323,8 +334,8 @@ function ObjectsSpriteGallery({ selectedSpriteUrl, onSpriteSelect, onUploadCompl
               ))}
             </div>
           )}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
