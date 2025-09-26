@@ -120,6 +120,13 @@ function App() {
     signOut
   } = useAuthStore();
 
+  // Get UI store for card background style
+  const {
+    cardBackgroundStyle,
+    brutalistPrimaryColor,
+    brutalistSecondaryColor
+  } = useUIStore();
+
   // Get store initialization functions
   const initializeAquariumStore = useAquariumStore(state => (state as any).initializeFromDatabase);
   const initializeFishStore = useFishStore(state => (state as any).initializeFromDatabase);
@@ -177,6 +184,23 @@ function App() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Update CSS custom properties for card background style
+  useEffect(() => {
+    const root = document.documentElement;
+
+    if (cardBackgroundStyle === 'black-translucent') {
+      root.style.setProperty('--card-background', 'rgba(0, 0, 0, 0.8)');
+      root.style.setProperty('--card-background-fullscreen', 'rgba(17, 24, 39, 0.95)');
+    } else if (cardBackgroundStyle === 'navy-blue') {
+      root.style.setProperty('--card-background', 'rgb(15, 23, 42)');
+      root.style.setProperty('--card-background-fullscreen', 'rgb(15, 23, 42)');
+    }
+
+    // Also update brutalist colors
+    root.style.setProperty('--brutalist-primary', brutalistPrimaryColor);
+    root.style.setProperty('--brutalist-secondary', brutalistSecondaryColor);
+  }, [cardBackgroundStyle, brutalistPrimaryColor, brutalistSecondaryColor]);
 
   // Handle object drops on aquarium
   useEffect(() => {

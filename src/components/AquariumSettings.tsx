@@ -43,8 +43,10 @@ function AquariumSettings({
   const {
     brutalistPrimaryColor,
     brutalistSecondaryColor,
+    cardBackgroundStyle,
     setBrutalistPrimaryColor,
-    setBrutalistSecondaryColor
+    setBrutalistSecondaryColor,
+    setCardBackgroundStyle
   } = useUIStore();
   
   const [localValues, setLocalValues] = useState({
@@ -342,6 +344,35 @@ function AquariumSettings({
                 </div>
               </CardContent>
             </Card>
+
+            {/* Navigation Controls */}
+            <Card className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border-indigo-500/20">
+              <CardHeader>
+                <CardTitle className="text-lg text-indigo-300">Navigation Controls</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-1 gap-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-400">Arrow Keys:</span>
+                    <Badge variant="outline" className="text-indigo-400 border-indigo-400">
+                      Move around (5 tiles/press)
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-400">+ / =:</span>
+                    <Badge variant="outline" className="text-indigo-400 border-indigo-400">
+                      Zoom in
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-400">-:</span>
+                    <Badge variant="outline" className="text-indigo-400 border-indigo-400">
+                      Zoom out
+                    </Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="theme" className="mt-0 space-y-6">
@@ -411,6 +442,74 @@ function AquariumSettings({
                 <Alert className="border-pink-500/50 bg-pink-500/10">
                   <AlertDescription className="text-sm text-gray-300">
                     Customize the colors for the brutalist UI panel. Changes apply immediately to the panel styling.
+                  </AlertDescription>
+                </Alert>
+              </CardContent>
+            </Card>
+
+            {/* Card Background Style */}
+            <Card className="bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border-cyan-500/20">
+              <CardHeader>
+                <CardTitle className="text-lg text-cyan-300">Card Background Style</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-gray-200">Background Style</Label>
+                    <div className="flex gap-2">
+                      <button
+                        className={`flex-1 px-3 py-2 rounded-lg border text-sm font-medium transition-all ${
+                          cardBackgroundStyle === 'black-translucent'
+                            ? 'bg-cyan-600 border-cyan-400 text-white shadow-lg'
+                            : 'bg-slate-800/50 border-slate-600 text-gray-300 hover:bg-slate-700/50'
+                        }`}
+                        onClick={() => setCardBackgroundStyle('black-translucent')}
+                      >
+                        Black & Translucent
+                      </button>
+                      <button
+                        className={`flex-1 px-3 py-2 rounded-lg border text-sm font-medium transition-all ${
+                          cardBackgroundStyle === 'navy-blue'
+                            ? 'bg-cyan-600 border-cyan-400 text-white shadow-lg'
+                            : 'bg-slate-800/50 border-slate-600 text-gray-300 hover:bg-slate-700/50'
+                        }`}
+                        onClick={() => setCardBackgroundStyle('navy-blue')}
+                      >
+                        Solid Navy
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <Label className="text-sm font-medium text-gray-200 mb-3 block">Preview</Label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div
+                      className="text-center py-4 px-4 rounded-lg border-2 font-medium transition-all"
+                      style={{
+                        background: cardBackgroundStyle === 'black-translucent' ? 'rgba(0, 0, 0, 0.8)' : 'rgb(15, 23, 42)',
+                        borderColor: cardBackgroundStyle === 'black-translucent' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(59, 130, 246, 0.5)',
+                        color: '#FFFFFF',
+                      }}
+                    >
+                      {cardBackgroundStyle === 'black-translucent' ? 'BLACK' : 'NAVY'}
+                    </div>
+                    <div
+                      className="text-center py-4 px-4 rounded-lg border-2 font-medium transition-all"
+                      style={{
+                        background: cardBackgroundStyle === 'black-translucent' ? 'rgba(17, 24, 39, 0.95)' : 'rgb(15, 23, 42)',
+                        borderColor: cardBackgroundStyle === 'black-translucent' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(59, 130, 246, 0.5)',
+                        color: '#FFFFFF',
+                      }}
+                    >
+                      FULLSCREEN
+                    </div>
+                  </div>
+                </div>
+
+                <Alert className="border-cyan-500/50 bg-cyan-500/10">
+                  <AlertDescription className="text-sm text-gray-300">
+                    Choose between semi-transparent black or solid navy blue card backgrounds. Changes apply immediately to all card components.
                   </AlertDescription>
                 </Alert>
               </CardContent>

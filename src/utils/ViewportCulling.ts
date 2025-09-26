@@ -123,7 +123,7 @@ export class ViewportCulling {
      * @param sprites - Array of objects with sprite property
      * @returns Array of visible sprites for updating
      */
-    cullSprites<T extends { sprite: PIXISprite; id?: string }>(sprites: T[]): T[] {
+    cullSprites<T extends { sprite: PIXISprite; id?: string | null }>(sprites: T[]): T[] {
         const visibleSprites: T[] = [];
         const bounds = this.getVisibleBounds();
 
@@ -149,7 +149,7 @@ export class ViewportCulling {
      * @param sprites - Array of sprites to analyze
      * @returns Statistics object
      */
-    getCullingStats<T extends { sprite: PIXISprite }>(sprites: T[]) {
+    getCullingStats<T extends { sprite: PIXISprite; id?: string | null }>(sprites: T[]) {
         const totalSprites = sprites.length;
         let visibleSprites = 0;
         let hiddenSprites = 0;

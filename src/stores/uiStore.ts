@@ -5,10 +5,13 @@ export interface UIStoreState {
   // Brutalist panel colors
   brutalistPrimaryColor: string;
   brutalistSecondaryColor: string;
-  
+
   // Panel visibility
   showBrutalistPanel: boolean;
-  
+
+  // Card background style
+  cardBackgroundStyle: 'black-translucent' | 'navy-blue';
+
   // Database synchronization state
   isLoading: boolean;
   isSyncing: boolean;
@@ -20,11 +23,14 @@ export interface UIStoreActions {
   // Color actions
   setBrutalistPrimaryColor: (color: string) => Promise<void>;
   setBrutalistSecondaryColor: (color: string) => Promise<void>;
-  
+
   // Panel visibility actions
   setShowBrutalistPanel: (show: boolean) => void;
   toggleBrutalistPanel: () => void;
-  
+
+  // Card background style actions
+  setCardBackgroundStyle: (style: 'black-translucent' | 'navy-blue') => Promise<void>;
+
   // Database sync actions
   initializeFromDatabase: () => Promise<void>;
   syncToDatabase: () => Promise<void>;
@@ -39,9 +45,12 @@ export const useUIStore = create<UIStoreState & UIStoreActions>((set, get) => ({
   // Default brutalist colors - refined and bold
   brutalistPrimaryColor: '#1e3a8a', // Navy blue
   brutalistSecondaryColor: '#ea580c', // Orange
-  
+
   // Panel visibility
   showBrutalistPanel: true,
+
+  // Card background style - default to black/translucent
+  cardBackgroundStyle: 'black-translucent',
   
   // Database synchronization state
   isLoading: false,
@@ -63,12 +72,23 @@ export const useUIStore = create<UIStoreState & UIStoreActions>((set, get) => ({
 
   setBrutalistSecondaryColor: async (color: string) => {
     set({ brutalistSecondaryColor: color });
-    
+
     // Auto-sync to database
     try {
       await get().syncToDatabase();
     } catch (error) {
       console.warn('Failed to sync secondary color to database:', error);
+    }
+  },
+
+  setCardBackgroundStyle: async (style: 'black-translucent' | 'navy-blue') => {
+    set({ cardBackgroundStyle: style });
+
+    // Auto-sync to database
+    try {
+      await get().syncToDatabase();
+    } catch (error) {
+      console.warn('Failed to sync card background style to database:', error);
     }
   },
 
@@ -98,6 +118,7 @@ export const useUIStore = create<UIStoreState & UIStoreActions>((set, get) => ({
           brutalistPrimaryColor: settings.brutalist_primary_color || '#1e3a8a',
           brutalistSecondaryColor: settings.brutalist_secondary_color || '#ea580c',
           showBrutalistPanel: settings.show_brutalist_panel ?? true,
+          cardBackgroundStyle: settings.card_background_style || 'black-translucent',
           lastSyncTime: new Date().toISOString(),
           isLoading: false
         });
@@ -128,7 +149,8 @@ export const useUIStore = create<UIStoreState & UIStoreActions>((set, get) => ({
       await databaseService.updateUISettings({
         brutalist_primary_color: state.brutalistPrimaryColor,
         brutalist_secondary_color: state.brutalistSecondaryColor,
-        show_brutalist_panel: state.showBrutalistPanel
+        show_brutalist_panel: state.showBrutalistPanel,
+        card_background_style: state.cardBackgroundStyle
       });
       
       set({ 

@@ -55,8 +55,8 @@ export class Fish {
     // Visibility and initialization tracking
     private framesSinceCreation: number;
     private readonly INVISIBLE_FRAMES: number = 3; // Keep invisible for first 3 frames
-    private spriteReady: boolean;
-    private spritePositioned: boolean;
+    public spriteReady: boolean;
+    public spritePositioned: boolean;
     private hasWarnedZeroMovement: boolean;
     
     // Additional properties for proper initialization
@@ -429,7 +429,7 @@ export class Fish {
         this.updateVisibility();
         
         // Debug: Check for zero movement issues (warn only once)
-        if ((this.currentSpeed <= 0 || this.direction === 0 || this.verticalSpeed <= 0) && !this.hasWarnedZeroMovement) {
+        if ((this.currentSpeed <= 0 || this.verticalSpeed <= 0) && !this.hasWarnedZeroMovement) {
             console.warn(`Fish ${this.id || 'unnamed'} has zero movement! currentSpeed: ${this.currentSpeed}, direction: ${this.direction}, verticalSpeed: ${this.verticalSpeed}`);
             this.hasWarnedZeroMovement = true;
         }
@@ -590,10 +590,11 @@ export class FishManager {
             
             console.log(`Fish Store loaded, contains ${storeFish.length} fish, needs population: ${needsDefaultPopulation}`);
             
-            // If store indicates we need default fish, populate them
+            // If store indicates we need default fish, populate them (limit to 5 fish max)
             if (needsDefaultPopulation && storeFish.length === 0) {
                 console.log('Populating default fish as requested by store...');
-                await populateDefaultFish(this.maxFish, this.worldWidth, this.worldHeight);
+                const fallbackFishCount = Math.min(5, this.maxFish);
+                await populateDefaultFish(fallbackFishCount, this.worldWidth, this.worldHeight);
                 
                 // Wait a moment for the fish to be added to store via real-time subscription
                 setTimeout(() => {
@@ -613,8 +614,8 @@ export class FishManager {
     /**
      * Wait for Fish Store to finish loading from database
      */
-    async waitForStoreToLoad() {
-        return new Promise((resolve) => {
+    async waitForStoreToLoad(): Promise<void> {
+        return new Promise<void>((resolve) => {
             const checkLoading = () => {
                 const { isLoading } = useFishStore.getState();
                 if (!isLoading) {
@@ -692,7 +693,7 @@ export class FishManager {
             for (const [fishId] of oldFishMap) {
                 if (!newFishMap.has(fishId)) {
                     const visualFish = visualFishMap.get(fishId);
-                    if (visualFish) {
+                    if (visualFish && visualFish.sprite) {
                         this.container.removeChild(visualFish.sprite);
                         this.fish = this.fish.filter(f => f.id !== fishId);
                         console.log(`Removed fish ${fishId}`);
@@ -721,7 +722,7 @@ export class FishManager {
                     const visualFish = visualFishMap.get(fishId);
                     if (visualFish) {
                         // Convert database format to runtime format for updates
-                        const updates = {};
+                        const updates: any = {};
                         if (oldFishData.color !== newFishData.color) {
                             updates.color = newFishData.color;
                         }
@@ -800,9 +801,11 @@ export class FishManager {
      * Spawn random fish (fallback method)
      */
     spawnRandomFish() {
-        console.log(`Creating ${this.maxFish} random fish as fallback`);
+        // Limit fallback fish to 5 maximum to avoid overwhelming the aquarium
+        const fallbackFishCount = Math.min(5, this.maxFish);
+        console.log(`Creating ${fallbackFishCount} random fish as fallback`);
         
-        for (let i = 0; i < this.maxFish; i++) {
+        for (let i = 0; i < fallbackFishCount; i++) {
             try {
                 const fish = new Fish(this.worldWidth, this.worldHeight, this.safeZone);
                 this.fish.push(fish);
@@ -813,13 +816,13 @@ export class FishManager {
                 // Apply current mood speed
                 fish.setMoodSpeed(this.moodMultiplier);
                 
-                console.log(`Created fish ${i + 1}/${this.maxFish}`);
+                console.log(`Created fish ${i + 1}/${fallbackFishCount}`);
             } catch (error) {
                 console.error(`Error creating fish ${i + 1}:`, error);
             }
         }
         
-        console.log(`Successfully created ${this.fish.length} fish sprites and added to container`);
+        console.log(`Successfully created ${this.fish.length} fallback fish sprites and added to container`);
     }
     
     /**
@@ -846,12 +849,15 @@ export class FishManager {
             
             // Only update culling every 100ms for better performance
             if (this.cullingCheckTimer >= 100) {
-                this.visibleFishCache = this.cullingSystem.cullSprites(this.fish);
+                // Filter fish with valid sprites for culling
+                const fishWithSprites = this.fish.filter(fish => fish.sprite !== null) as (Fish & { sprite: PIXISprite })[];
+                const visibleFishResults = this.cullingSystem.cullSprites(fishWithSprites);
+                this.visibleFishCache = visibleFishResults;
                 this.cullingCheckTimer = 0;
                 
                 // Log culling stats occasionally for debugging
                 if (Math.random() < 0.005) { // ~0.5% chance per culling update
-                    const stats = this.cullingSystem.getCullingStats(this.fish);
+                    const stats = this.cullingSystem.getCullingStats(fishWithSprites);
                     console.log(`🎯 Fish culling: ${stats.visible}/${stats.total} visible (${stats.cullingRatio.toFixed(1)}% culled)`);
                 }
             }
@@ -939,11 +945,12 @@ export class FishManager {
             fish.targetY = fish.getRandomTargetY();
         });
         
-        // Adjust fish count if needed
+        // Adjust fish count if needed (but limit to 5 total fish for fallback scenarios)
         const newOptimalCount = this.getOptimalFishCount();
-        if (newOptimalCount > this.fish.length) {
-            // Add more fish
-            const fishToAdd = newOptimalCount - this.fish.length;
+        const maxAllowedFish = Math.min(5, newOptimalCount);
+        if (maxAllowedFish > this.fish.length) {
+            // Add more fish (limited)
+            const fishToAdd = maxAllowedFish - this.fish.length;
             for (let i = 0; i < fishToAdd; i++) {
                 const fish = new Fish(this.worldWidth, this.worldHeight, this.safeZone);
                 fish.setMoodSpeed(this.moodMultiplier);
@@ -952,16 +959,18 @@ export class FishManager {
                 // Wait for sprite to be ready before adding to container
                 this.waitForFishSprite(fish);
             }
-        } else if (newOptimalCount < this.fish.length) {
+        } else if (maxAllowedFish < this.fish.length) {
             // Remove excess fish
-            const fishToRemove = this.fish.length - newOptimalCount;
+            const fishToRemove = this.fish.length - maxAllowedFish;
             for (let i = 0; i < fishToRemove; i++) {
                 const fish = this.fish.pop();
-                this.container.removeChild(fish.sprite);
+                if (fish && fish.sprite) {
+                    this.container.removeChild(fish.sprite);
+                }
             }
         }
         
-        this.maxFish = newOptimalCount;
+        this.maxFish = maxAllowedFish;
     }
     
     /**

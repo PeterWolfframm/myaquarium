@@ -29,6 +29,10 @@
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
     --radius: 0.5rem;
+
+    /* Card background styles */
+    --card-background: rgba(0, 0, 0, 0.8); /* black-translucent default */
+    --card-background-fullscreen: rgba(17, 24, 39, 0.95); /* slate-900 equivalent */
   }
 }
 
@@ -1607,7 +1611,8 @@ body {
 
 /* ========== CARD COMPONENTS ========== */
 .card-base {
-  @apply bg-black/80 border border-white/20 backdrop-blur-sm transition-all duration-150 box-border;
+  background: var(--card-background);
+  @apply border border-white/20 backdrop-blur-sm transition-all duration-150 box-border;
 }
 
 .card-hover {
@@ -1623,7 +1628,8 @@ body {
 }
 
 .card-fullscreen-content {
-  @apply bg-slate-900/95 border-2 border-white/20 rounded-xl p-0 max-h-[calc(100vh-30px)] max-w-[calc(100vw-30px)] overflow-hidden relative box-border transition-all duration-150;
+  background: var(--card-background-fullscreen);
+  @apply border-2 border-white/20 rounded-xl p-0 max-h-[calc(100vh-30px)] max-w-[calc(100vw-30px)] overflow-hidden relative box-border transition-all duration-150;
 }
 
 .card-draggable {
@@ -1631,7 +1637,7 @@ body {
 }
 
 .card-dragging {
-  @apply rotate-0.5 shadow-[0_6px_20px_rgba(0,0,0,0.5)] bg-slate-700/95 backdrop-blur-[8px] border-primary-500/50 border-2 z-[1000];
+  @apply rotate-0.5 shadow-[0_6px_20px_rgba(0,0,0,0.5)] backdrop-blur-[8px] border-primary-500/50 border-2 z-[1000];
 }
 
 .card-header {

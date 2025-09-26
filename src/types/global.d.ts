@@ -46,6 +46,8 @@ export interface FishData {
   currentFrame: number;
   color: number;
   size: number;
+  positionX?: number; // Optional position data for initialization
+  positionY?: number; // Optional position data for initialization
   mood?: string;
   user_id?: string;
   created_at?: string;
@@ -263,12 +265,22 @@ export interface FishStoreState {
 export interface FishStoreActions {
   initializeFromDatabase: () => Promise<void>;
   setupRealtimeSubscription: () => void;
-  populateDefaultFish: (aquariumWidth: number, aquariumHeight: number, safeZone: SafeZone) => Promise<void>;
-  addFish: (fishData: Partial<FishData>) => Promise<void>;
-  updateFish: (id: string, fishData: Partial<FishData>) => Promise<void>;
-  deleteFish: (id: string) => Promise<void>;
-  clearAllFish: () => Promise<void>;
+  populateDefaultFish: (count: number, worldWidth: number, worldHeight: number) => Promise<boolean>;
+  addFish: (fishData: Partial<FishData>) => Promise<FishData | null>;
+  updateFish: (id: string, fishData: Partial<FishData>) => Promise<boolean>;
+  deleteFish: (id: string) => Promise<boolean>;
+  clearAllFish: () => Promise<boolean>;
   syncFishToDatabase: (fishInstances: any[]) => Promise<void>;
+  convertDbFishToRuntime: (dbFish: any) => FishData;
+  createFishData: (fishInstance: any) => any;
+  addRandomFish: (worldWidth: number, worldHeight: number, customName?: string) => Promise<any>;
+  updateFishPositions: (fishUpdates: any[]) => Promise<boolean>;
+  removeFish: (fishId: string) => Promise<boolean>;
+  getFishCount: () => number;
+  getFishById: (fishId: string) => FishData | null;
+  clearSyncError: () => void;
+  cleanup: () => void;
+  setLoadingFalse: () => void;
 }
 
 // ==================== COMPONENT PROP TYPES ====================
@@ -325,6 +337,7 @@ export interface UISettingsData {
   brutalist_primary_color: string;
   brutalist_secondary_color: string;
   show_brutalist_panel: boolean;
+  card_background_style: 'black-translucent' | 'navy-blue';
   created_at?: string;
   updated_at?: string;
 }
