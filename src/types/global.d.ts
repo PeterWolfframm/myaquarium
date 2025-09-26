@@ -395,6 +395,22 @@ export interface ComponentPosition {
   updated_at?: string;
 }
 
+export interface CardState {
+  id?: string;
+  user_id: string;
+  component_id: string;
+  is_open: boolean;
+  position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'center' | 'static';
+  size: 'small' | 'medium' | 'large';
+  is_draggable: boolean;
+  draggable_x?: number;
+  draggable_y?: number;
+  hide_when_closed: boolean;
+  collapsible: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
 // ==================== DRAG AND DROP TYPES ====================
 
 export interface DragEndEvent {

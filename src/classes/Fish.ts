@@ -37,20 +37,34 @@ export class Fish {
     public currentFrame: number;
 
     // State properties
-    public lastDriftTime: number;
-    public mood: MoodType;
-    public moodEffectActive: boolean;
-    public moodEffectStartTime: number;
+    public lastDriftTime: number = 0;
+    public mood: MoodType = 'work';
+    public moodEffectActive: boolean = false;
+    public moodEffectStartTime: number = 0;
 
     // PIXI.js objects
     public container: PIXI.Container;
     public sprite: PIXISprite | null;
-    public isLoaded: boolean;
+    public isLoaded: boolean = false;
 
     // Animation states
     public isEating: boolean;
     public isSleeping: boolean;
     public isMoving: boolean;
+    
+    // Visibility and initialization tracking
+    private framesSinceCreation: number;
+    private readonly INVISIBLE_FRAMES: number = 3; // Keep invisible for first 3 frames
+    private spriteReady: boolean;
+    private spritePositioned: boolean;
+    private hasWarnedZeroMovement: boolean;
+    
+    // Additional properties for proper initialization
+    private driftTimer: number;
+    private lastFrameTime: number;
+    private spriteTexture: PIXI.Texture | null;
+    private initialPositionX: number | undefined;
+    private initialPositionY: number | undefined;
 
     /**
      * Create a new fish instance
@@ -104,19 +118,31 @@ export class Fish {
             this.size = isSharkSprite ? 0.8 : 1.0; // Sharks are larger by default
         }
         
+        // Initialize visibility and state tracking
+        this.framesSinceCreation = 0;
+        this.spriteReady = false;
+        this.spritePositioned = false;
+        this.hasWarnedZeroMovement = false;
+        
         // Animation properties
         this.driftTimer = 0;
         this.lastFrameTime = 0;
         
         // Sprite loading properties
         this.spriteTexture = null;
+        this.sprite = null;
         
         // Store position data for later use
         this.initialPositionX = fishData?.positionX;
         this.initialPositionY = fishData?.positionY;
-        this.spriteReady = false;
-        this.spritePositioned = false;
-        this.hasWarnedZeroMovement = false;
+        
+        // Initialize state properties
+        this.isEating = false;
+        this.isSleeping = false;
+        this.isMoving = false;
+        
+        // Initialize container (will be set by FishManager)
+        this.container = new PIXI.Container();
         
         // Create sprite (async loading)
         this.createSprite();
@@ -177,6 +203,10 @@ export class Fish {
             this.sprite.interactive = false;
             this.sprite.interactiveChildren = false;
             
+            // Hide sprite initially to prevent stuck sprite issue
+            // Will be made visible after positioning is complete
+            this.sprite.visible = false;
+            
             this.spriteReady = true;
             
             console.log(`Sprite loaded successfully from ${this.spriteUrl}`);
@@ -204,6 +234,8 @@ export class Fish {
         
         // Mark sprite as positioned
         this.spritePositioned = true;
+        
+        // Visibility will be handled in update() based on frames elapsed
     }
     
     /**
@@ -218,7 +250,7 @@ export class Fish {
     /**
      * Update fish sprite (e.g., when sprite URL changes)
      */
-    async updateSprite(newSpriteUrl) {
+    async updateSprite(newSpriteUrl: string) {
         this.spriteUrl = newSpriteUrl || FISH_CONFIG.DEFAULT_SPRITE_URL;
         const oldX = this.sprite?.x;
         const oldY = this.sprite?.y;
@@ -236,6 +268,8 @@ export class Fish {
             }
             // Ensure size scaling is applied to new sprite
             this.applySizeScaling();
+            
+            // Visibility will be handled in update() based on frames elapsed and positioning
         }
     }
 
@@ -254,7 +288,7 @@ export class Fish {
     /**
      * Update fish color (stored for compatibility, sprites don't support color changes)
      */
-    updateColor(newColor) {
+    updateColor(newColor: string | number) {
         this.color = typeof newColor === 'string' ? parseInt(newColor, 16) : newColor;
         // Note: Sprite-based fish cannot change color dynamically
         // Color is stored for database persistence but doesn't affect rendering
@@ -263,14 +297,14 @@ export class Fish {
     /**
      * Update fish name
      */
-    updateName(newName) {
+    updateName(newName: string) {
         this.name = newName;
     }
 
     /**
      * Update fish size and apply scaling
      */
-    updateSize(newSize) {
+    updateSize(newSize: number) {
         this.size = Math.max(0.1, Math.min(3.0, newSize)); // Clamp between 0.1 and 3.0
         this.applySizeScaling();
     }
@@ -278,7 +312,7 @@ export class Fish {
     /**
      * Update multiple fish properties at once
      */
-    async updateProperties(updates) {
+    async updateProperties(updates: any) {
         if (updates.color !== undefined) {
             this.updateColor(updates.color);
         }
@@ -345,7 +379,7 @@ export class Fish {
      * @param {number} y - Y coordinate
      * @returns {boolean} Whether position is in safe zone
      */
-    isInSafeZone(x, y) {
+    isInSafeZone(x: number, y: number) {
         return x >= this.safeZone.x && 
                x <= this.safeZone.x + this.safeZone.width &&
                y >= this.safeZone.y && 
@@ -362,25 +396,63 @@ export class Fish {
         this.sprite.x = pos.x;
         this.sprite.y = pos.y;
         this.targetY = this.getRandomTargetY();
+        
+        // Reset frame counter to ensure proper visibility timing after respawn
+        this.resetFrameCounter();
+    }
+    
+    /**
+     * Reset frame counter and hide sprite (used during respawn or repositioning)
+     */
+    private resetFrameCounter() {
+        this.framesSinceCreation = 0;
+        if (this.sprite) {
+            this.sprite.visible = false;
+        }
     }
     
     /**
      * Set the fish speed based on mood multiplier
      * @param {number} multiplier - Speed multiplier (0.3 for pause, 1.0 for work, 2.0 for lunch)
      */
-    setMoodSpeed(multiplier) {
+    setMoodSpeed(multiplier: number) {
         // Sharks have higher max speed (8.0 vs 5.0 for regular fish)
         const maxSpeed = this.spriteUrl && this.spriteUrl.includes('shark.png') ? 8.0 : 5.0;
         this.currentSpeed = clamp(this.baseSpeed * multiplier, 0.1, maxSpeed);
     }
     
     /**
+     * Update sprite visibility based on positioning and frame count
+     * This prevents stuck sprites by ensuring proper timing
+     */
+    private updateVisibility() {
+        if (!this.sprite) return;
+        
+        // Only make visible if:
+        // 1. Sprite is properly positioned
+        // 2. Enough frames have passed since creation
+        const shouldBeVisible = this.spritePositioned && 
+                               this.framesSinceCreation >= this.INVISIBLE_FRAMES;
+        
+        if (shouldBeVisible && !this.sprite.visible) {
+            this.sprite.visible = true;
+            console.log(`Fish ${this.id || 'unnamed'} became visible after ${this.framesSinceCreation} frames`);
+        }
+    }
+    
+    /**
      * Update fish position, animation, and behavior
      * @param {number} deltaTime - Time since last update in milliseconds
      */
-    update(deltaTime) {
+    update(deltaTime: number) {
         // Don't update if sprite isn't ready
         if (!this.sprite || !this.spriteReady) return;
+        
+        // Increment frame counter
+        this.framesSinceCreation++;
+        
+        // Handle visibility based on positioning and frame count
+        this.updateVisibility();
         
         // Debug: Check for zero movement issues (warn only once)
         if ((this.currentSpeed <= 0 || this.direction === 0 || this.verticalSpeed <= 0) && !this.hasWarnedZeroMovement) {
@@ -469,7 +541,7 @@ export class FishManager {
     private lastSyncTime: number;
     private syncInterval: number;
     private syncDebounceTimer: any;
-    private storeUnsubscribe: (() => void) | null;
+    private storeUnsubscribe: (() => void) | null = null;
     private cullingCheckTimer: number;
     private visibleFishCache: Fish[] | null;
     
@@ -633,7 +705,7 @@ export class FishManager {
     /**
      * Handle fish store changes by updating individual fish instead of recreating all
      */
-    async handleFishStoreChanges(newFish, oldFish) {
+    async handleFishStoreChanges(newFish: any[], oldFish: any[]) {
         try {
             const { convertDbFishToRuntime } = useFishStore.getState();
             
@@ -703,15 +775,25 @@ export class FishManager {
 
     /**
      * Wait for fish sprite to be ready and add to container
+     * Improved race condition handling
      * @param {Fish} fish - Fish instance
      */
-    waitForFishSprite(fish) {
+    waitForFishSprite(fish: Fish) {
         const checkSprite = () => {
+            // Only add to container when sprite is fully ready AND positioned
+            // Note: sprite will still be invisible initially due to frame-based visibility
             if (fish.spriteReady && fish.sprite && fish.spritePositioned) {
-                this.container.addChild(fish.sprite);
-                console.log(`Fish sprite ${fish.id || 'unnamed'} added to container`);
+                // Double-check that sprite isn't already in container to prevent duplicates
+                if (!fish.sprite.parent) {
+                    this.container.addChild(fish.sprite);
+                    console.log(`Fish sprite ${fish.id || 'unnamed'} added to container (will become visible after positioning frames)`);
+                } else {
+                    console.log(`Fish sprite ${fish.id || 'unnamed'} already in container`);
+                }
             } else {
-                setTimeout(checkSprite, 10); // Check again in 10ms
+                // Continue checking with exponential backoff to reduce CPU usage
+                const delay = fish.spriteReady ? 5 : 16; // Faster check if sprite loaded, slower if still loading
+                setTimeout(checkSprite, delay);
             }
         };
         checkSprite();
@@ -720,7 +802,7 @@ export class FishManager {
     /**
      * Check if fish data has changed in ways that affect visuals
      */
-    hasFishChanged(oldFish, newFish) {
+    hasFishChanged(oldFish: any, newFish: any) {
         return oldFish.color !== newFish.color ||
                oldFish.name !== newFish.name ||
                oldFish.sprite_url !== newFish.sprite_url ||
@@ -783,7 +865,7 @@ export class FishManager {
      * Update all fish positions and animations with viewport culling
      * @param {number} deltaTime - Time since last update in milliseconds
      */
-    update(deltaTime) {
+    update(deltaTime: number) {
         if (this.cullingSystem && this.fish.length > 0) {
             // Use culling system to determine visible fish (throttled for performance)
             this.cullingCheckTimer = (this.cullingCheckTimer || 0) + deltaTime;
@@ -865,7 +947,7 @@ export class FishManager {
      * @param {number} newWorldHeight - New world height in pixels
      * @param {Object} newSafeZone - New safe zone boundaries
      */
-    resize(newWorldWidth, newWorldHeight, newSafeZone) {
+    resize(newWorldWidth: number, newWorldHeight: number, newSafeZone: SafeZone) {
         this.worldWidth = newWorldWidth;
         this.worldHeight = newWorldHeight;
         this.safeZone = newSafeZone;

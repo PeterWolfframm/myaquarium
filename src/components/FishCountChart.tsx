@@ -3,6 +3,7 @@ import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'rec
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { databaseService } from '../services/database';
+import { useFishStore } from '../stores/fishStore';
 
 interface ChartData {
   timestamp: string;
@@ -23,6 +24,9 @@ const FishCountChart: React.FC<FishCountChartProps> = ({
   const [data, setData] = useState<ChartData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Get real-time fish count from store
+  const currentFishCount = useFishStore(state => state.getFishCount());
 
   useEffect(() => {
     fetchChartData();
@@ -46,6 +50,8 @@ const FishCountChart: React.FC<FishCountChartProps> = ({
   };
 
   const getCurrentFishCount = () => {
+    // Use real-time fish count from store if available, fallback to chart data
+    if (currentFishCount > 0) return currentFishCount;
     if (data.length === 0) return 0;
     return data[data.length - 1]?.fishCount || 0;
   };
@@ -134,6 +140,9 @@ const FishCountChart: React.FC<FishCountChartProps> = ({
           </div>
           <div className="text-right">
             <div className="text-2xl font-bold text-blue-400">{getCurrentFishCount()}</div>
+            <div className="text-xs text-blue-300 mb-1">
+              {currentFishCount > 0 ? 'Live Count' : 'From Chart Data'}
+            </div>
             <Badge 
               variant="secondary" 
               className={`text-xs ${

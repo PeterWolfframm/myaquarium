@@ -11,6 +11,7 @@ import type {
   ViewMode,
   ComponentPreference,
   ComponentPosition,
+  CardState,
   Position,
   PerformanceLogData
 } from '../types/global';
@@ -1341,6 +1342,157 @@ class DatabaseService {
     }
   }
 
+  // ==================== CARD STATE ====================
+
+  /**
+   * Get card state for the current user
+   * @param {string} componentId - Component identifier
+   * @returns {Promise<CardState|null>} Card state or null if not found
+   */
+  async getCardState(componentId: string): Promise<CardState | null> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const { data, error } = await supabase
+        .from(TABLES.CARD_STATE)
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('component_id', componentId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
+        console.error('Error fetching card state:', error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error in getCardState:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Save card state for the current user
+   * @param {string} componentId - Component identifier
+   * @param {Partial<CardState>} cardState - Card state data
+   * @returns {Promise<CardState|null>} Saved card state or null if error
+   */
+  async saveCardState(componentId: string, cardState: Partial<CardState>): Promise<CardState | null> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      // Check if card state already exists
+      const existingState = await this.getCardState(componentId);
+      
+      const stateData = {
+        user_id: user.id,
+        component_id: componentId,
+        is_open: cardState.is_open,
+        position: cardState.position,
+        size: cardState.size,
+        is_draggable: cardState.is_draggable,
+        draggable_x: cardState.draggable_x,
+        draggable_y: cardState.draggable_y,
+        hide_when_closed: cardState.hide_when_closed,
+        collapsible: cardState.collapsible
+      };
+
+      let result;
+      if (existingState) {
+        // Update existing state
+        result = await supabase
+          .from(TABLES.CARD_STATE)
+          .update(stateData)
+          .eq('user_id', user.id)
+          .eq('component_id', componentId)
+          .select()
+          .single();
+      } else {
+        // Insert new state
+        result = await supabase
+          .from(TABLES.CARD_STATE)
+          .insert(stateData)
+          .select()
+          .single();
+      }
+
+      if (result.error) {
+        console.error('Error saving card state:', result.error);
+        return null;
+      }
+
+      return result.data;
+    } catch (error) {
+      console.error('Error in saveCardState:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get all card states for the current user
+   * @returns {Promise<{[componentId: string]: CardState}>} Object with card states
+   */
+  async getAllCardStates(): Promise<{[componentId: string]: CardState}> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return {};
+
+      const { data, error } = await supabase
+        .from(TABLES.CARD_STATE)
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error fetching card states:', error);
+        return {};
+      }
+
+      // Convert array to object with componentId as key
+      const states: {[componentId: string]: CardState} = {};
+      if (data) {
+        data.forEach(item => {
+          states[item.component_id] = item;
+        });
+      }
+
+      return states;
+    } catch (error) {
+      console.error('Error in getAllCardStates:', error);
+      return {};
+    }
+  }
+
+  /**
+   * Delete card state for the current user
+   * @param {string} componentId - Component identifier
+   * @returns {Promise<boolean>} Success status
+   */
+  async deleteCardState(componentId: string): Promise<boolean> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return false;
+
+      const { error } = await supabase
+        .from(TABLES.CARD_STATE)
+        .delete()
+        .eq('user_id', user.id)
+        .eq('component_id', componentId);
+
+      if (error) {
+        console.error('Error deleting card state:', error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error in deleteCardState:', error);
+      return false;
+    }
+  }
+
   // ==================== PERFORMANCE LOGGING ====================
 
   /**
@@ -1549,7 +1701,7 @@ class DatabaseService {
       }
 
       if (!data || data.length === 0) return [];
-
+      
       // Format data for charts
       return data.map(log => {
         const timestamp = new Date(log.logged_at);

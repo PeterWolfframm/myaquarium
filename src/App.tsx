@@ -11,6 +11,7 @@ import { Toaster } from './components/ui/toaster';
 import { useAquariumStore } from './stores/aquariumStore';
 import { useFishStore } from './stores/fishStore';
 import { useUIStore } from './stores/uiStore';
+import { useCardStateStore } from './stores/cardStateStore';
 import { databaseService } from './services/database';
 import type { 
   MoodType, 
@@ -74,15 +75,15 @@ function App() {
   });
   const [fps, setFps] = useState<number>(0);
   const [aquariumRef, setAquariumRef] = useState<any>(null); // TODO: Type Aquarium class properly
-  const [showSettings, setShowSettings] = useState<boolean>(false);
-  const [showFishEditor, setShowFishEditor] = useState<boolean>(false);
-  const [showObjectsManager, setShowObjectsManager] = useState<boolean>(false);
-  const [showCardShowcase2, setShowCardShowcase2] = useState<boolean>(false);
-  const [showTimer, setShowTimer] = useState<boolean>(true);
-  const [showStats, setShowStats] = useState<boolean>(true);
   
   // Panel positions for drag and drop - using safe default positions
   const [panelPositions, setPanelPositions] = useState<PanelPositions>(getSafeDefaultPositions());
+  
+  // Card state management using store
+  const cardStates = useCardStateStore(state => state.cardStates);
+  const setCardOpen = useCardStateStore(state => state.setCardOpen);
+  const getCardState = useCardStateStore(state => state.getCardState);
+  const initializeCardStore = useCardStateStore(state => state.initializeFromDatabase);
   
   const [positionsLoading, setPositionsLoading] = useState<boolean>(true);
 
@@ -117,6 +118,7 @@ function App() {
   const aquariumLoading = useAquariumStore(state => state.isLoading);
   const fishLoading = useFishStore(state => state.isLoading);
   const uiLoading = useUIStore(state => state.isLoading);
+  const cardStateLoading = useCardStateStore(state => state.isLoading);
 
   // Load component positions from database
   useEffect(() => {
@@ -266,6 +268,7 @@ function App() {
         const aquariumInitPromise = initializeAquariumStore();
         const fishInitPromise = initializeFishStore();
         const uiInitPromise = initializeUIStore();
+        const cardStateInitPromise = initializeCardStore();
         
         const timeoutPromise = new Promise((_, reject) => {
           setTimeout(() => reject(new Error('Store initialization timeout')), timeoutDuration);
@@ -274,7 +277,7 @@ function App() {
         try {
           // Race the initialization against the timeout
           await Promise.race([
-            Promise.all([aquariumInitPromise, fishInitPromise, uiInitPromise]),
+            Promise.all([aquariumInitPromise, fishInitPromise, uiInitPromise, cardStateInitPromise]),
             timeoutPromise
           ]);
           console.log('Stores initialized successfully');
@@ -298,7 +301,7 @@ function App() {
   };
 
   initializeStores();
-}, [initializeAquariumStore, initializeFishStore, initializeUIStore]);
+}, [initializeAquariumStore, initializeFishStore, initializeUIStore, initializeCardStore]);
 
   // Initialize time tracking
   const initializeTimeTracking = async (): Promise<void> => {
@@ -424,28 +427,40 @@ function App() {
     setAquariumRef(aquarium);
   };
   
+  // Helper function to get card open state with default
+  const getCardOpen = (componentId: string, defaultOpen: boolean = false): boolean => {
+    const cardState = getCardState(componentId);
+    return cardState ? cardState.is_open : defaultOpen;
+  };
+
   const toggleSettings = (): void => {
-    setShowSettings(!showSettings);
+    const isOpen = getCardOpen('settings', false);
+    setCardOpen('settings', !isOpen);
   };
 
   const toggleFishEditor = (): void => {
-    setShowFishEditor(!showFishEditor);
+    const isOpen = getCardOpen('fish-editor', false);
+    setCardOpen('fish-editor', !isOpen);
   };
 
   const toggleTimer = (): void => {
-    setShowTimer(!showTimer);
+    const isOpen = getCardOpen('timer', true);
+    setCardOpen('timer', !isOpen);
   };
 
   const toggleStats = (): void => {
-    setShowStats(!showStats);
+    const isOpen = getCardOpen('stats', true);
+    setCardOpen('stats', !isOpen);
   };
 
   const toggleObjectsManager = (): void => {
-    setShowObjectsManager(!showObjectsManager);
+    const isOpen = getCardOpen('objects', false);
+    setCardOpen('objects', !isOpen);
   };
 
   const toggleCardShowcase2 = (): void => {
-    setShowCardShowcase2(!showCardShowcase2);
+    const isOpen = getCardOpen('card-showcase', false);
+    setCardOpen('card-showcase', !isOpen);
   };
 
 
@@ -456,7 +471,7 @@ function App() {
     >
       <div className="aquarium-container">
         {/* Show loading indicator while stores are initializing */}
-        {(aquariumLoading || fishLoading || uiLoading || positionsLoading) && (
+        {(aquariumLoading || fishLoading || uiLoading || cardStateLoading || positionsLoading) && (
           <div className="loading-overlay">
             <div className="loading-spinner">🐠</div>
             <div className="loading-text">Loading aquarium from cloud...</div>
@@ -491,7 +506,7 @@ function App() {
               mood={mood} 
               onMoodChange={handleMoodChange}
               currentSession={currentSession}
-              isOpen={showTimer}
+              isOpen={getCardOpen('timer', true)}
               onToggle={toggleTimer}
               isDraggable={true}
               draggableId="timer"
@@ -506,7 +521,7 @@ function App() {
               zoomInfo={zoomInfo}
               fps={fps}
               aquarium={aquariumRef}
-              isOpen={showStats}
+              isOpen={getCardOpen('stats', true)}
               onToggle={toggleStats}
               isDraggable={true}
               draggableId="stats"
@@ -514,7 +529,7 @@ function App() {
             />
 
             <ObjectsEditor 
-              isOpen={showObjectsManager}
+              isOpen={getCardOpen('objects', false)}
               onToggle={toggleObjectsManager}
               isDraggable={true}
               draggableId="objectsManager"
@@ -524,7 +539,7 @@ function App() {
 
 
             <AquariumSettings 
-              isOpen={showSettings}
+              isOpen={getCardOpen('settings', false)}
               onToggle={toggleSettings}
               aquarium={aquariumRef}
               isDraggable={true}
@@ -533,7 +548,7 @@ function App() {
             />
             
             <FishEditor 
-              isOpen={showFishEditor}
+              isOpen={getCardOpen('fish-editor', false)}
               onToggle={toggleFishEditor}
               isDraggable={true}
               draggableId="fishEditor"
@@ -541,7 +556,7 @@ function App() {
             />
             
             <CardDesignShowcase2 
-              isOpen={showCardShowcase2}
+              isOpen={getCardOpen('card-showcase', false)}
               onToggle={toggleCardShowcase2}
               isDraggable={true}
               draggablePosition={panelPositions.cardShowcase2}
