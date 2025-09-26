@@ -102,12 +102,7 @@ function App() {
       await databaseService.saveComponentPosition(panelId, constrainedPosition);
     } catch (error) {
       console.warn('Failed to save panel position to database:', error);
-      // Fallback to localStorage for offline use
-      try {
-        localStorage.setItem('aquarium-panel-positions', JSON.stringify(updatedPositions));
-      } catch (localStorageError) {
-        console.warn('Failed to save panel positions to localStorage:', localStorageError);
-      }
+      // Note: No localStorage fallback - using database only
     }
   };
 
@@ -119,6 +114,9 @@ function App() {
   const fishLoading = useFishStore(state => state.isLoading);
   const uiLoading = useUIStore(state => state.isLoading);
   const cardStateLoading = useCardStateStore(state => state.isLoading);
+  
+  // Combined loading state for components that should wait for everything to load
+  const isFullyLoaded = !aquariumLoading && !fishLoading && !uiLoading && !cardStateLoading && !positionsLoading;
 
   // Load component positions from database
   useEffect(() => {
@@ -139,33 +137,6 @@ function App() {
           
           const mergedPositions = { ...defaultPositions, ...constrainedSavedPositions };
           setPanelPositions(mergedPositions);
-        } else {
-          // Fallback to localStorage if no database positions found
-          try {
-            const localSaved = localStorage.getItem('aquarium-panel-positions');
-            if (localSaved) {
-              const localPositions = JSON.parse(localSaved);
-              
-              // Constrain localStorage positions to viewport bounds
-              const constrainedLocalPositions: Partial<PanelPositions> = {};
-              for (const [panelId, position] of Object.entries(localPositions)) {
-                constrainedLocalPositions[panelId as keyof PanelPositions] = constrainToViewport(position as Position);
-              }
-              
-              const mergedWithDefaults = { ...getSafeDefaultPositions(), ...constrainedLocalPositions };
-              setPanelPositions(mergedWithDefaults);
-              
-              // Migrate constrained localStorage positions to database
-              for (const [componentId, position] of Object.entries(constrainedLocalPositions)) {
-                await databaseService.saveComponentPosition(componentId, position as Position);
-              }
-              
-              // Clear localStorage after successful migration
-              localStorage.removeItem('aquarium-panel-positions');
-            }
-          } catch (localStorageError) {
-            console.warn('Could not load positions from localStorage:', localStorageError);
-          }
         }
       } catch (error) {
         console.warn('Could not load positions from database, using defaults:', error);
@@ -527,32 +498,37 @@ function App() {
         </div>
 
         <div className="component-panel">
-            <TimerOverlay 
-              time={time} 
-              mood={mood} 
-              onMoodChange={handleMoodChange}
-              currentSession={currentSession}
-              isOpen={getCardOpen('timer', true)}
-              onToggle={toggleTimer}
-              isDraggable={true}
-              draggableId="timer"
-              draggablePosition={panelPositions.timer}
-            />
+            {/* Only render timer and stats when fully loaded to prevent pop-in */}
+            {isFullyLoaded && (
+              <>
+                <TimerOverlay 
+                  time={time} 
+                  mood={mood} 
+                  onMoodChange={handleMoodChange}
+                  currentSession={currentSession}
+                  isOpen={getCardOpen('timer', true)}
+                  onToggle={toggleTimer}
+                  isDraggable={true}
+                  draggableId="timer"
+                  draggablePosition={panelPositions.timer}
+                />
 
-            <DataPanel 
-              visibleCubes={visibleCubes}
-              fishInfo={fishInfo}
-              viewportPosition={viewportPosition}
-              tileDimensions={tileDimensions}
-              zoomInfo={zoomInfo}
-              fps={fps}
-              aquarium={aquariumRef}
-              isOpen={getCardOpen('stats', true)}
-              onToggle={toggleStats}
-              isDraggable={true}
-              draggableId="stats"
-              draggablePosition={panelPositions.stats}
-            />
+                <DataPanel 
+                  visibleCubes={visibleCubes}
+                  fishInfo={fishInfo}
+                  viewportPosition={viewportPosition}
+                  tileDimensions={tileDimensions}
+                  zoomInfo={zoomInfo}
+                  fps={fps}
+                  aquarium={aquariumRef}
+                  isOpen={getCardOpen('stats', true)}
+                  onToggle={toggleStats}
+                  isDraggable={true}
+                  draggableId="stats"
+                  draggablePosition={panelPositions.stats}
+                />
+              </>
+            )}
 
             <ObjectsEditor 
               isOpen={getCardOpen('objects', false)}

@@ -53,7 +53,8 @@ export default function CardComponent({
   className = ''
 }: CardComponentProps) {
   const [viewMode, setViewMode] = useState<ViewMode>(defaultViewMode);
-  const [isLoadingPreference, setIsLoadingPreference] = useState(false);
+  const [isLoadingPreference, setIsLoadingPreference] = useState(true); // Start as true to prevent initial flash
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
   // Load view preference from database on mount
   useEffect(() => {
@@ -64,22 +65,22 @@ export default function CardComponent({
     // Skip database call if componentId is invalid
     if (!componentId || componentId.trim() === '') {
       console.warn('Skipping preference load: invalid componentId');
+      setIsLoadingPreference(false);
+      setHasLoadedOnce(true);
       return;
     }
     
     try {
-      setIsLoadingPreference(true);
-      
       // Add timeout to prevent hanging database calls from blocking UI
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Database preference loading timeout')), 2000);
+        setTimeout(() => reject(new Error('Database preference loading timeout')), 1000); // Shorter timeout for better UX
       });
       
       const preferencePromise = databaseService.getComponentViewPreference(componentId);
       
       const preference = await Promise.race([preferencePromise, timeoutPromise]) as ViewMode | null;
       
-      if (preference) {
+      if (preference && preference !== defaultViewMode) {
         setViewMode(preference);
         onViewModeChange?.(preference);
       }
@@ -88,6 +89,7 @@ export default function CardComponent({
       // Continue with default view mode - don't let database issues break functionality
     } finally {
       setIsLoadingPreference(false);
+      setHasLoadedOnce(true);
     }
   };
 

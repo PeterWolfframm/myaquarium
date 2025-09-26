@@ -19,6 +19,9 @@ function AquariumContainer({ mood, onAquariumReady }) {
     }
   });
 
+  // Check if we're dragging an object sprite (not a card)
+  const isDraggingObjectSprite = active?.data?.current?.type === 'object-sprite';
+
   // Track drag hover position for tile highlighting
   useEffect(() => {
     if (!aquariumRef.current || !canvasRef.current) return;
@@ -26,8 +29,8 @@ function AquariumContainer({ mood, onAquariumReady }) {
     const canvas = canvasRef.current;
 
     const handleMouseMove = (event) => {
-      // Only highlight during drag operations
-      if (isOver && aquariumRef.current) {
+      // Only highlight during object sprite drag operations
+      if (isOver && aquariumRef.current && isDraggingObjectSprite) {
         const rect = canvas.getBoundingClientRect();
         const screenX = event.clientX - rect.left;
         const screenY = event.clientY - rect.top;
@@ -41,7 +44,7 @@ function AquariumContainer({ mood, onAquariumReady }) {
       }
     };
 
-    if (isOver) {
+    if (isOver && isDraggingObjectSprite) {
       aquariumRef.current.startDragMode();
       canvas.addEventListener('mousemove', handleMouseMove);
     } else {
@@ -52,7 +55,7 @@ function AquariumContainer({ mood, onAquariumReady }) {
     return () => {
       canvas.removeEventListener('mousemove', handleMouseMove);
     };
-  }, [isOver]);
+  }, [isOver, isDraggingObjectSprite]);
 
   useEffect(() => {
     // Initialize aquarium when component mounts
@@ -112,7 +115,7 @@ function AquariumContainer({ mood, onAquariumReady }) {
       }}
     >
       <canvas ref={canvasRef} id="aquarium-canvas" />
-      {isOver && (
+      {isOver && isDraggingObjectSprite && (
         <div className="drop-overlay">
           <div className="drop-message">
             Release to place object on highlighted tiles
