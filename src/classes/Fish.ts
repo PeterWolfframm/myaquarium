@@ -162,7 +162,7 @@ export class Fish {
                 if (this.sprite.parent) {
                     this.sprite.parent.removeChild(this.sprite);
                 }
-                this.sprite.destroy();
+                this.sprite.destroy({ texture: false }); // Keep texture in cache
             }
             
             // Create new sprite with loaded texture
@@ -311,14 +311,28 @@ export class Fish {
         const maxAttempts = 20;
         
         do {
-            x = Math.random() * this.worldWidth;
+            // Spawn across the full width of the aquarium
+            x = -FISH_CONFIG.BOUNDARY_MARGIN + Math.random() * (this.worldWidth + 2 * FISH_CONFIG.BOUNDARY_MARGIN);
             y = this.getRandomTargetY();
             attempts++;
         } while (this.isInSafeZone(x, y) && attempts < maxAttempts);
         
-        // If we couldn't find a spot outside safe zone, spawn at edges
+        // If we couldn't find a spot outside safe zone, spawn at random edges
         if (attempts >= maxAttempts) {
-            x = Math.random() > 0.5 ? -FISH_CONFIG.BOUNDARY_MARGIN : this.worldWidth + FISH_CONFIG.BOUNDARY_MARGIN;
+            const edge = Math.random();
+            if (edge < 0.25) {
+                // Left edge
+                x = -FISH_CONFIG.BOUNDARY_MARGIN;
+            } else if (edge < 0.5) {
+                // Right edge
+                x = this.worldWidth + FISH_CONFIG.BOUNDARY_MARGIN;
+            } else if (edge < 0.75) {
+                // Random position in left half
+                x = Math.random() * (this.worldWidth / 2);
+            } else {
+                // Random position in right half
+                x = (this.worldWidth / 2) + Math.random() * (this.worldWidth / 2);
+            }
             y = this.getRandomTargetY();
         }
         
@@ -387,16 +401,22 @@ export class Fish {
         
         // Check world boundaries and bounce with random direction
         if (this.sprite.x < -FISH_CONFIG.BOUNDARY_MARGIN) {
-            // Hit left boundary - choose random direction favoring right
-            this.direction = Math.random() > 0.2 ? 1 : -1; // 80% chance to go right, 20% to stay left
+            // Hit left boundary - strongly favor going right
+            this.direction = Math.random() > 0.1 ? 1 : -1; // 90% chance to go right
             this.sprite.scale.x = this.direction > 0 ? -Math.abs(this.sprite.scale.x) : Math.abs(this.sprite.scale.x);
+            
+            // Move fish slightly back into bounds to prevent getting stuck
+            this.sprite.x = -FISH_CONFIG.BOUNDARY_MARGIN + 10;
             
             // Also randomize vertical target for more chaotic bouncing behavior
             this.targetY = this.getRandomTargetY();
         } else if (this.sprite.x > this.worldWidth + FISH_CONFIG.BOUNDARY_MARGIN) {
-            // Hit right boundary - choose random direction favoring left
-            this.direction = Math.random() > 0.2 ? -1 : 1; // 80% chance to go left, 20% to stay right
+            // Hit right boundary - strongly favor going left
+            this.direction = Math.random() > 0.1 ? -1 : 1; // 90% chance to go left
             this.sprite.scale.x = this.direction > 0 ? -Math.abs(this.sprite.scale.x) : Math.abs(this.sprite.scale.x);
+            
+            // Move fish slightly back into bounds to prevent getting stuck
+            this.sprite.x = this.worldWidth + FISH_CONFIG.BOUNDARY_MARGIN - 10;
             
             // Also randomize vertical target for more chaotic bouncing behavior
             this.targetY = this.getRandomTargetY();
@@ -439,6 +459,19 @@ export class Fish {
  */
 export class FishManager {
     private cullingSystem: ViewportCulling | null = null;
+    public container: PIXI.Container;
+    public worldWidth: number;
+    public worldHeight: number;
+    public safeZone: SafeZone;
+    public fish: Fish[];
+    public maxFish: number;
+    public moodMultiplier: number;
+    private lastSyncTime: number;
+    private syncInterval: number;
+    private syncDebounceTimer: any;
+    private storeUnsubscribe: (() => void) | null;
+    private cullingCheckTimer: number;
+    private visibleFishCache: Fish[] | null;
     
     /**
      * Create a new fish manager
@@ -447,7 +480,7 @@ export class FishManager {
      * @param {number} worldHeight - World height in pixels
      * @param {Object} safeZone - Safe zone boundaries {x, y, width, height}
      */
-    constructor(container, worldWidth, worldHeight, safeZone) {
+    constructor(container: PIXI.Container, worldWidth: number, worldHeight: number, safeZone: SafeZone) {
         this.container = container;
         this.worldWidth = worldWidth;
         this.worldHeight = worldHeight;
@@ -463,6 +496,10 @@ export class FishManager {
         this.syncInterval = 5000; // Sync fish positions every 5 seconds
         this.syncDebounceTimer = null;
         
+        // Culling optimization properties
+        this.cullingCheckTimer = 0;
+        this.visibleFishCache = null;
+        
         // Initialize fish from Fish Store instead of database directly
         this.initializeFishFromStore();
         
@@ -476,7 +513,7 @@ export class FishManager {
      */
     setViewport(viewport: Viewport): void {
         if (viewport) {
-            this.cullingSystem = new ViewportCulling(viewport, 150); // 150px margin for smoother culling
+            this.cullingSystem = new ViewportCulling(viewport, 600); // Larger margin for smoother culling
             console.log('🎯 Fish culling system initialized with viewport');
         }
     }
@@ -733,7 +770,7 @@ export class FishManager {
      * Set the mood for all fish, affecting their swimming speed
      * @param {string} mood - Mood identifier ('work', 'pause', 'lunch')
      */
-    setMood(mood) {
+    setMood(mood: string) {
         const moodConfig = Object.values(MOODS).find(m => m.id === mood);
         this.moodMultiplier = moodConfig ? moodConfig.speedMultiplier : MOODS.WORK.speedMultiplier;
         
@@ -748,18 +785,31 @@ export class FishManager {
      */
     update(deltaTime) {
         if (this.cullingSystem && this.fish.length > 0) {
-            // Use culling system to determine visible fish
-            const visibleFish = this.cullingSystem.cullSprites(this.fish);
+            // Use culling system to determine visible fish (throttled for performance)
+            this.cullingCheckTimer = (this.cullingCheckTimer || 0) + deltaTime;
             
-            // Only update fish that are visible
-            visibleFish.forEach(fish => {
-                fish.update(deltaTime);
-            });
+            // Only update culling every 100ms for better performance
+            if (this.cullingCheckTimer >= 100) {
+                this.visibleFishCache = this.cullingSystem.cullSprites(this.fish);
+                this.cullingCheckTimer = 0;
+                
+                // Log culling stats occasionally for debugging
+                if (Math.random() < 0.005) { // ~0.5% chance per culling update
+                    const stats = this.cullingSystem.getCullingStats(this.fish);
+                    console.log(`🎯 Fish culling: ${stats.visible}/${stats.total} visible (${stats.cullingRatio.toFixed(1)}% culled)`);
+                }
+            }
             
-            // Log culling stats occasionally for debugging (every 100 frames)
-            if (Math.random() < 0.01) { // ~1% chance per frame
-                const stats = this.cullingSystem.getCullingStats(this.fish);
-                console.log(`🎯 Fish culling: ${stats.visible}/${stats.total} visible (${stats.cullingRatio.toFixed(1)}% culled)`);
+            // Update visible fish from cache
+            if (this.visibleFishCache) {
+                this.visibleFishCache.forEach(fish => {
+                    fish.update(deltaTime);
+                });
+            } else {
+                // Fallback during initial frames
+                this.fish.forEach(fish => {
+                    fish.update(deltaTime);
+                });
             }
         } else {
             // Fallback to updating all fish if culling system not available
@@ -794,8 +844,8 @@ export class FishManager {
                 .filter(fish => fish.id) // Only sync fish that have database IDs
                 .map(fish => ({
                     id: fish.id,
-                    position_x: fish.sprite.x,
-                    position_y: fish.sprite.y,
+                    position_x: fish.sprite?.x || 0,
+                    position_y: fish.sprite?.y || 0,
                     target_y: fish.targetY,
                     current_frame: Math.round(fish.currentFrame),
                     direction: fish.direction
@@ -826,8 +876,8 @@ export class FishManager {
             fish.worldHeight = newWorldHeight;
             fish.safeZone = newSafeZone;
             
-            // Ensure fish are within new bounds
-            if (fish.sprite.y > newWorldHeight - FISH_CONFIG.VERTICAL_MARGIN) {
+            // Ensure fish are within new bounds (only if sprite is loaded)
+            if (fish.sprite && fish.sprite.y > newWorldHeight - FISH_CONFIG.VERTICAL_MARGIN) {
                 fish.sprite.y = newWorldHeight - FISH_CONFIG.VERTICAL_MARGIN;
             }
             fish.targetY = fish.getRandomTargetY();
@@ -888,11 +938,11 @@ export class FishManager {
             }
             
             // Clear texture reference
-            fish.spriteTexture = null;
+            (fish as any).spriteTexture = null;
         });
         
         this.fish = [];
-        this.container = null;
+        this.container = null!;
         
         console.log('✅ FishManager destruction completed');
     }

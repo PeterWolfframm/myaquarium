@@ -1515,6 +1515,118 @@ class DatabaseService {
       return false;
     }
   }
+
+  /**
+   * Get chart data for FPS and fish count over time
+   * @param {number} hours - Number of hours to look back (default: 24)
+   * @param {number} dataPoints - Maximum number of data points to return (default: 50)
+   * @returns {Promise<Array>} Array of chart data points
+   */
+  async getChartData(hours: number = 24, dataPoints: number = 50): Promise<Array<{
+    timestamp: string;
+    time: string;
+    fps: number;
+    fishCount: number;
+  }>> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      const hoursAgo = new Date();
+      hoursAgo.setHours(hoursAgo.getHours() - hours);
+
+      const { data, error } = await supabase
+        .from(TABLES.PERFORMANCE_LOGS)
+        .select('framerate, fish_count, logged_at')
+        .eq('user_id', user.id)
+        .gte('logged_at', hoursAgo.toISOString())
+        .order('logged_at', { ascending: true })
+        .limit(dataPoints);
+
+      if (error) {
+        console.error('Error fetching chart data:', error);
+        return [];
+      }
+
+      if (!data || data.length === 0) return [];
+
+      // Format data for charts
+      return data.map(log => {
+        const timestamp = new Date(log.logged_at);
+        return {
+          timestamp: log.logged_at,
+          time: timestamp.toLocaleTimeString('en-US', { 
+            hour: 'numeric', 
+            minute: '2-digit',
+            hour12: true 
+          }),
+          fps: Math.round(log.framerate || 0),
+          fishCount: log.fish_count || 0
+        };
+      });
+    } catch (error) {
+      console.error('Error in getChartData:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get aggregated chart data with sampling for larger time ranges
+   * @param {number} hours - Number of hours to look back
+   * @param {number} interval - Sampling interval in minutes (default: 5)
+   * @returns {Promise<Array>} Array of aggregated chart data points
+   */
+  async getAggregatedChartData(hours: number = 24, interval: number = 5): Promise<Array<{
+    timestamp: string;
+    time: string;
+    avgFps: number;
+    maxFps: number;
+    minFps: number;
+    avgFishCount: number;
+    maxFishCount: number;
+  }>> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      const hoursAgo = new Date();
+      hoursAgo.setHours(hoursAgo.getHours() - hours);
+
+      // Use raw SQL to aggregate data by time intervals
+      const { data, error } = await supabase
+        .rpc('get_aggregated_performance_data', {
+          user_uuid: user.id,
+          hours_back: hours,
+          interval_minutes: interval
+        });
+
+      if (error) {
+        console.error('Error fetching aggregated chart data:', error);
+        // Fallback to regular method if RPC fails
+        return this.getChartData(hours, Math.floor(hours * 12)); // Approximate data points
+      }
+
+      if (!data || data.length === 0) return [];
+
+      return data.map((item: any) => ({
+        timestamp: item.time_bucket,
+        time: new Date(item.time_bucket).toLocaleTimeString('en-US', { 
+          hour: 'numeric', 
+          minute: '2-digit',
+          hour12: true 
+        }),
+        avgFps: Math.round(item.avg_fps || 0),
+        maxFps: Math.round(item.max_fps || 0),
+        minFps: Math.round(item.min_fps || 0),
+        avgFishCount: Math.round(item.avg_fish_count || 0),
+        maxFishCount: item.max_fish_count || 0
+      }));
+    } catch (error) {
+      console.error('Error in getAggregatedChartData:', error);
+      // Fallback to regular chart data
+      return this.getChartData(hours, Math.floor(hours * 12));
+    }
+  }
 }
 
 // Export singleton instance

@@ -9,7 +9,41 @@ import { AssetManager } from '../utils/AssetManager';
 import type { PerformanceLogData } from '../types/global';
 
 export class Aquarium {
-    constructor(canvasElement) {
+    app: PIXI.Application | null;
+    viewport: Viewport | null;
+    fishManager: FishManager | null;
+    objectManager: ObjectManager | null;
+    canvasElement: HTMLCanvasElement;
+    store: any; // You might want to type this properly with your Zustand store type
+    unsubscribe: (() => void) | null;
+    tileSize: number;
+    tilesHorizontal: number;
+    tilesVertical: number;
+    worldWidth: number;
+    worldHeight: number;
+    safeZone: { x: number; y: number; width: number; height: number; };
+    backgroundContainer: PIXI.Container | null;
+    objectContainer: PIXI.Container | null;
+    fishContainer: PIXI.Container | null;
+    gridContainer: PIXI.Container | null;
+    grid: PIXI.Graphics | null;
+    tileHighlightContainer: PIXI.Container | null;
+    tileHighlight: PIXI.Graphics | null;
+    isDragActive: boolean;
+    orangeCube: PIXI.Graphics | null;
+    cubePosition: { x: number; y: number; };
+    lastMoveTime: number;
+    moveInterval: number;
+    currentMood: string;
+    showGrid: boolean;
+    currentZoomLevel: number;
+    defaultVisibleVerticalTiles: number;
+    performanceLoggingEnabled: boolean;
+    lastPerformanceLogTime: number;
+    sessionStartTime: number;
+    keydownHandler: ((e: KeyboardEvent) => void) | null;
+
+    constructor(canvasElement: HTMLCanvasElement) {
         this.app = null;
         this.viewport = null;
         this.fishManager = null;
@@ -103,15 +137,15 @@ export class Aquarium {
         this.resize();
         
         console.log('Aquarium initialization completed successfully');
-        console.log(`Fish container children: ${this.fishContainer.children.length}`);
-        console.log(`Background container children: ${this.backgroundContainer.children.length}`);
+        console.log(`Fish container children: ${this.fishContainer!.children.length}`);
+        console.log(`Background container children: ${this.backgroundContainer!.children.length}`);
         
         // Log asset cache statistics
         const cacheStats = AssetManager.getCacheStats();
         console.log(`📊 Asset Cache: ${cacheStats.cacheSize} textures cached`);
     }
     
-    updateFromStore(newState) {
+    updateFromStore(newState: any) {
         // Check if grid visibility has changed
         const gridVisibilityChanged = newState.showGrid !== this.showGrid;
         
@@ -183,8 +217,8 @@ export class Aquarium {
     
     async createPixiApp() {
         // Configure PIXI for v8 - use Texture.defaultOptions instead of BaseTexture
-        if (PIXI.Texture && PIXI.Texture.defaultOptions) {
-            PIXI.Texture.defaultOptions.scaleMode = PIXI.SCALE_MODES.NEAREST;
+        if (PIXI.Texture && (PIXI.Texture as any).defaultOptions) {
+            (PIXI.Texture as any).defaultOptions.scaleMode = PIXI.SCALE_MODES.NEAREST;
         }
         
         // Create Pixi application using v8 API - initialization is now asynchronous
@@ -193,15 +227,15 @@ export class Aquarium {
         // Initialize the application with v8 async pattern
         await this.app.init({
             canvas: this.canvasElement, // 'view' is deprecated, use 'canvas'
-            resizeTo: this.canvasElement.parentElement,
+            resizeTo: this.canvasElement.parentElement || window,
             backgroundColor: COLORS.BACKGROUND,
             antialias: false, // Keep pixel art sharp
-            powerPreference: 'default', // Use safer power preference
+            powerPreference: 'default' as any, // Use safer power preference
             resolution: 1 // Fixed resolution to avoid scaling issues
         });
         
         // Disable context menu on right click - use the original canvas element
-        this.canvasElement.addEventListener('contextmenu', e => e.preventDefault());
+        this.canvasElement.addEventListener('contextmenu', (e: MouseEvent) => e.preventDefault());
     }
     
     /**
@@ -258,15 +292,15 @@ export class Aquarium {
     setupViewport() {
         // Create viewport with pixi-viewport
         this.viewport = new Viewport({
-            screenWidth: this.app.screen.width,
-            screenHeight: this.app.screen.height,
+            screenWidth: this.app!.screen.width,
+            screenHeight: this.app!.screen.height,
             worldWidth: this.worldWidth,
             worldHeight: this.worldHeight,
-            events: this.app.renderer.events // v8 uses events instead of interaction
+            events: this.app!.renderer.events // v8 uses events instead of interaction
         });
         
         // Add viewport to stage
-        this.app.stage.addChild(this.viewport);
+        this.app!.stage.addChild(this.viewport);
         
         // Calculate minimum and maximum zoom scales
         const minScale = this.calculateMinZoomScale();
@@ -295,23 +329,20 @@ export class Aquarium {
         }
         
         // Set up zoom level tracking and culling updates
-        this.viewport.on('zoomed', () => {
+        this.viewport!.on('zoomed', () => {
             this.updateCurrentZoomLevel();
             this.updateGridForScale();
             this.updateCulling(); // Update culling when zoom changes
         });
         
         // Update culling when viewport moves
-        this.viewport.on('moved', () => {
+        this.viewport!.on('moved', () => {
             this.updateCulling();
         });
         
-        // Start centered horizontally and show the bottom (ground) of the aquarium
+        // Start centered both horizontally and vertically
         const viewportCenterX = this.worldWidth / 2;
-        const viewportCenterY = Math.max(
-            this.app.screen.height / 2, 
-            this.worldHeight - (this.app.screen.height / 2)
-        );
+        const viewportCenterY = this.worldHeight / 2;
         this.viewport.moveCenter(viewportCenterX, viewportCenterY);
         
         // Set default zoom level based on default visible vertical tiles
@@ -327,13 +358,17 @@ export class Aquarium {
         this.gridContainer = new PIXI.Container();
         this.tileHighlightContainer = new PIXI.Container();
         this.fishContainer = new PIXI.Container();
+
+        // NOTE: Removed RenderGroup for fish container as it was causing relativeGroupTransform errors
+        // in PixiJS v8. The performance benefit is minimal for this use case and causes instability.
+        // If needed in the future, consider using batching or other optimization techniques.
         
         // Add containers to viewport in order (back to front)
-        this.viewport.addChild(this.backgroundContainer);
-        this.viewport.addChild(this.objectContainer); // Objects above background
-        this.viewport.addChild(this.gridContainer);
-        this.viewport.addChild(this.tileHighlightContainer); // Tile highlights above grid
-        this.viewport.addChild(this.fishContainer);
+        this.viewport!.addChild(this.backgroundContainer);
+        this.viewport!.addChild(this.objectContainer); // Objects above background
+        this.viewport!.addChild(this.gridContainer);
+        this.viewport!.addChild(this.tileHighlightContainer); // Tile highlights above grid
+        this.viewport!.addChild(this.fishContainer);
     }
     
     /**
@@ -398,7 +433,7 @@ export class Aquarium {
      * @param {number} gridY - Grid Y position (top-left tile)
      * @param {number} size - Size in tiles (default 6 for 6x6)
      */
-    showTileHighlight(gridX, gridY, size = 6) {
+    showTileHighlight(gridX: number, gridY: number, size = 6) {
         // Remove existing highlight
         this.hideTileHighlight();
         
@@ -452,9 +487,9 @@ export class Aquarium {
      * @param {number} objectSize - Size of the object (default: 6)
      * @returns {Object} {gridX, gridY, worldX, worldY}
      */
-    screenToGridCoordinates(screenX, screenY, objectSize = 6) {
+    screenToGridCoordinates(screenX: number, screenY: number, objectSize = 6) {
         // Convert screen to world coordinates using viewport
-        const worldPos = this.viewport.toWorld(screenX, screenY);
+        const worldPos = this.viewport!.toWorld(screenX, screenY);
         
         // Convert world coordinates to grid coordinates
         const gridX = Math.floor(worldPos.x / this.tileSize);
@@ -592,7 +627,7 @@ export class Aquarium {
         this.gridContainer.addChild(this.orangeCube);
         
         console.log(`Orange cube created at grid position (${this.cubePosition.x}, ${this.cubePosition.y})`);
-        console.log(`World position: (${this.orangeCube.x}, ${this.orangeCube.y})`);
+        console.log(`World position: (${this.orangeCube!.x}, ${this.orangeCube!.y})`);
     }
     
     updateOrangeCubePosition() {
@@ -730,7 +765,7 @@ export class Aquarium {
         // Create object manager
         console.log(`Creating object manager with world size: ${this.worldWidth}x${this.worldHeight}`);
         this.objectManager = new ObjectManager(
-            this.objectContainer,
+            this.objectContainer!,
             this.worldWidth,
             this.worldHeight,
             this.tileSize,
@@ -744,7 +779,7 @@ export class Aquarium {
         // Create fish manager
         console.log(`Creating fish manager with world size: ${this.worldWidth}x${this.worldHeight}`);
         this.fishManager = new FishManager(
-            this.fishContainer,
+            this.fishContainer!,
             this.worldWidth,
             this.worldHeight,
             this.safeZone
@@ -789,7 +824,7 @@ export class Aquarium {
      */
     setupEventListeners() {
         // Store reference for proper cleanup
-        this.keydownHandler = (e) => {
+        this.keydownHandler = (e: KeyboardEvent) => {
             
             // Arrow key navigation - move by tile increments
             if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'ArrowUp' || e.key === 'ArrowDown') {
@@ -803,16 +838,16 @@ export class Aquarium {
                 const currentY = this.viewport.center.y;
                 
                 if (e.key === 'ArrowLeft') {
-                    const newX = Math.max(this.app.screen.width / 2, currentX - moveDistance);
+                    const newX = Math.max(this.app!.screen.width / 2, currentX - moveDistance);
                     this.viewport.moveCenter(newX, currentY);
                 } else if (e.key === 'ArrowRight') {
-                    const newX = Math.min(this.worldWidth - this.app.screen.width / 2, currentX + moveDistance);
+                    const newX = Math.min(this.worldWidth - this.app!.screen.width / 2, currentX + moveDistance);
                     this.viewport.moveCenter(newX, currentY);
                 } else if (e.key === 'ArrowUp') {
-                    const newY = Math.max(this.app.screen.height / 2, currentY - moveDistance);
+                    const newY = Math.max(this.app!.screen.height / 2, currentY - moveDistance);
                     this.viewport.moveCenter(currentX, newY);
                 } else if (e.key === 'ArrowDown') {
-                    const newY = Math.min(this.worldHeight - this.app.screen.height / 2, currentY + moveDistance);
+                    const newY = Math.min(this.worldHeight - this.app!.screen.height / 2, currentY + moveDistance);
                     this.viewport.moveCenter(currentX, newY);
                 }
                 
@@ -833,7 +868,7 @@ export class Aquarium {
                 
                 const currentScale = this.viewport.scale.x;
                 const zoomFactor = NAVIGATION.ZOOM_FACTOR;
-                const viewportHeight = this.app.screen.height;
+                const viewportHeight = this.app!.screen.height;
                 const maxZoomScale = this.calculateMaxZoomScale();
                 
                 if (e.key === '+' || e.key === '=') {
@@ -875,8 +910,8 @@ export class Aquarium {
     
     startGameLoop() {
         // Main game loop
-        this.app.ticker.add((deltaTime) => {
-            const dt = this.app.ticker.deltaMS;
+        this.app!.ticker.add((deltaTime) => {
+            const dt = this.app!.ticker.deltaMS;
             
             // Update orange cube movement
             if (this.orangeCube) {
@@ -903,7 +938,7 @@ export class Aquarium {
         });
     }
     
-    setMood(mood) {
+    setMood(mood: string) {
         this.currentMood = mood;
         
         // Update fish speed
@@ -988,7 +1023,7 @@ export class Aquarium {
     
     // Performance monitoring
     getFPS() {
-        return this.app.ticker.FPS;
+        return this.app!.ticker.FPS;
     }
     
     getEntityCounts() {
@@ -1038,18 +1073,20 @@ export class Aquarium {
         try {
             // Get viewport bounds in world coordinates
             const viewportBounds = this.viewport.getVisibleBounds();
-            const visibleFish = [];
+            const visibleFish: { x: number, y: number }[] = [];
             
             // Check each fish to see if it's visible
             this.fishManager.fish.forEach(fish => {
-                const fishX = fish.sprite.x;
-                const fishY = fish.sprite.y;
-                
-                if (fishX >= viewportBounds.x && 
-                    fishX <= viewportBounds.x + viewportBounds.width &&
-                    fishY >= viewportBounds.y && 
-                    fishY <= viewportBounds.y + viewportBounds.height) {
-                    visibleFish.push({ x: fishX, y: fishY });
+                if (fish.sprite) {
+                    const fishX = fish.sprite.x;
+                    const fishY = fish.sprite.y;
+                    
+                    if (fishX >= viewportBounds.x && 
+                        fishX <= viewportBounds.x + viewportBounds.width &&
+                        fishY >= viewportBounds.y && 
+                        fishY <= viewportBounds.y + viewportBounds.height) {
+                        visibleFish.push({ x: fishX, y: fishY });
+                    }
                 }
             });
             
@@ -1262,7 +1299,7 @@ export class Aquarium {
      * @param {number} worldY - World Y coordinate for placement
      * @returns {Promise<boolean>} True if placement successful
      */
-    async placeObject(spriteUrl, worldX, worldY) {
+    async placeObject(spriteUrl: string, worldX: number, worldY: number) {
         if (!this.objectManager) {
             console.warn('ObjectManager not initialized');
             return false;
@@ -1273,18 +1310,23 @@ export class Aquarium {
             
             if (objectId) {
                 // Save to database
-                const objectData = this.objectManager.objects.get(objectId).toData();
-                await databaseService.savePlacedObject({
-                    object_id: objectData.id,
-                    sprite_url: objectData.spriteUrl,
-                    grid_x: objectData.gridX,
-                    grid_y: objectData.gridY,
-                    size: objectData.size,
-                    layer: objectData.layer
-                });
-                
-                console.log(`Object placed successfully with ID: ${objectId}`);
-                return true;
+                const objectData = this.objectManager.objects.get(objectId);
+                if (objectData) {
+                    await databaseService.savePlacedObject({
+                        object_id: objectData.id,
+                        sprite_url: objectData.spriteUrl,
+                        grid_x: objectData.gridX,
+                        grid_y: objectData.gridY,
+                        size: objectData.size,
+                        layer: objectData.layer
+                    });
+                    
+                    console.log(`Object placed successfully with ID: ${objectId}`);
+                    return true;
+                } else {
+                    console.warn('Failed to place object - no available space');
+                    return false;
+                }
             } else {
                 console.warn('Failed to place object - no available space');
                 return false;
@@ -1304,7 +1346,7 @@ export class Aquarium {
      * @param {number} layer - Rendering layer (default 0)
      * @returns {Promise<boolean>} True if placement successful
      */
-    async placeObjectAtGrid(spriteUrl, gridX, gridY, size = 6, layer = 0) {
+    async placeObjectAtGrid(spriteUrl: string, gridX: number, gridY: number, size = 6, layer = 0) {
         if (!this.objectManager) {
             console.warn('ObjectManager not initialized');
             return false;
@@ -1315,18 +1357,22 @@ export class Aquarium {
             
             if (objectId) {
                 // Save to database
-                const objectData = this.objectManager.objects.get(objectId).toData();
-                await databaseService.savePlacedObject({
-                    object_id: objectData.id,
-                    sprite_url: objectData.spriteUrl,
-                    grid_x: objectData.gridX,
-                    grid_y: objectData.gridY,
-                    size: objectData.size,
-                    layer: objectData.layer
-                });
-                
-                console.log(`Object placed at grid (${gridX}, ${gridY}) with ID: ${objectId}`);
-                return true;
+                const objectData = this.objectManager.objects.get(objectId);
+                if (objectData) {
+                    await databaseService.savePlacedObject({
+                        object_id: objectData.id,
+                        sprite_url: objectData.spriteUrl,
+                        grid_x: objectData.gridX,
+                        grid_y: objectData.gridY,
+                        size: objectData.size,
+                        layer: objectData.layer
+                    });
+                    
+                    console.log(`Object placed at grid (${gridX}, ${gridY}) with ID: ${objectId}`);
+                    return true;
+                } else {
+                    return false;
+                }
             } else {
                 console.warn(`Failed to place object at grid (${gridX}, ${gridY}) - position not available`);
                 return false;
@@ -1342,7 +1388,7 @@ export class Aquarium {
      * @param {string} objectId - ID of object to remove
      * @returns {Promise<boolean>} True if removal successful
      */
-    async removeObject(objectId) {
+    async removeObject(objectId: string): Promise<boolean> {
         if (!this.objectManager) {
             console.warn('ObjectManager not initialized');
             return false;
@@ -1371,7 +1417,7 @@ export class Aquarium {
      * Enable object selection with click callback
      * @param {Function} clickCallback - Function to call when object is clicked
      */
-    enableObjectSelection(clickCallback) {
+    enableObjectSelection(clickCallback: (objectId: string) => void) {
         if (this.objectManager) {
             this.objectManager.setClickCallback(clickCallback);
         }
@@ -1403,7 +1449,7 @@ export class Aquarium {
      * @param {number} screenY - Screen Y coordinate
      * @returns {Object} {worldX, worldY} World coordinates
      */
-    screenToWorld(screenX, screenY) {
+    screenToWorld(screenX: number, screenY: number) {
         if (!this.viewport) {
             return { worldX: screenX, worldY: screenY };
         }
@@ -1527,7 +1573,9 @@ export class Aquarium {
         }
         
         // Remove global event listeners
-        window.removeEventListener('keydown', this.keydownHandler);
+        if (this.keydownHandler) {
+            window.removeEventListener('keydown', this.keydownHandler);
+        }
         
         // Clear viewport event listeners
         if (this.viewport) {

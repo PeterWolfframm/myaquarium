@@ -187,7 +187,23 @@ export class AquariumObject {
  */
 export class ObjectManager {
     private cullingSystem: ViewportCulling | null = null;
-    
+    public container: PIXI.Container;
+    public worldWidth: number;
+    public worldHeight: number;
+    public tileSize: number;
+    public tilesHorizontal: number;
+    public tilesVertical: number;
+    public objects: Map<string, AquariumObject>;
+    private gridOccupancy: (string | null)[][];
+    private selectedObjectId: string | null;
+    private selectedObject: AquariumObject | null;
+    private blinkTicker: any;
+    private isBlinking: boolean;
+    private clickCallback: ((objectData: any) => void) | null;
+    private originalTint: number | null;
+    private originalAlpha: number | null;
+    private lastCullingUpdate: number;
+
     /**
      * Create a new object manager
      * @param {PIXI.Container} container - PIXI container for object sprites
@@ -197,7 +213,7 @@ export class ObjectManager {
      * @param {number} tilesHorizontal - Number of horizontal tiles
      * @param {number} tilesVertical - Number of vertical tiles
      */
-    constructor(container, worldWidth, worldHeight, tileSize, tilesHorizontal, tilesVertical) {
+    constructor(container: PIXI.Container, worldWidth: number, worldHeight: number, tileSize: number, tilesHorizontal: number, tilesVertical: number) {
         this.container = container;
         this.worldWidth = worldWidth;
         this.worldHeight = worldHeight;
@@ -218,6 +234,7 @@ export class ObjectManager {
         // Store original appearance for restoration
         this.originalTint = null;
         this.originalAlpha = null;
+        this.lastCullingUpdate = 0;
         
         this.initializeGrid();
         
@@ -230,7 +247,7 @@ export class ObjectManager {
      */
     setViewport(viewport: Viewport): void {
         if (viewport) {
-            this.cullingSystem = new ViewportCulling(viewport, 100); // 100px margin for objects
+            this.cullingSystem = new ViewportCulling(viewport, 800); // Larger margin for objects to prevent disappearing
             console.log('🎯 Object culling system initialized with viewport');
             
             // Update visibility immediately
@@ -240,17 +257,23 @@ export class ObjectManager {
 
     /**
      * Update visibility of all objects based on viewport culling
+     * Throttled for better performance
      */
     updateObjectVisibility(): void {
         if (!this.cullingSystem) return;
 
-        const objectArray = Array.from(this.objects.values());
-        this.cullingSystem.cullSprites(objectArray);
-        
-        // Log culling stats occasionally for debugging
-        if (Math.random() < 0.005) { // ~0.5% chance per call
-            const stats = this.cullingSystem.getCullingStats(objectArray);
-            console.log(`🎯 Object culling: ${stats.visible}/${stats.total} visible (${stats.cullingRatio.toFixed(1)}% culled)`);
+        // Throttle culling updates for better performance
+        const now = Date.now();
+        if (!this.lastCullingUpdate || (now - this.lastCullingUpdate) >= 200) { // Every 200ms
+            const objectArray = Array.from(this.objects.values());
+            this.cullingSystem.cullSprites(objectArray);
+            this.lastCullingUpdate = now;
+            
+            // Log culling stats occasionally for debugging
+            if (Math.random() < 0.01) { // ~1% chance per culling update
+                const stats = this.cullingSystem.getCullingStats(objectArray);
+                console.log(`🎯 Object culling: ${stats.visible}/${stats.total} visible (${stats.cullingRatio.toFixed(1)}% culled)`);
+            }
         }
     }
 
@@ -275,7 +298,7 @@ export class ObjectManager {
      * @param {string} excludeObjectId - Object ID to exclude from collision check (for movement)
      * @returns {boolean} True if area is available
      */
-    isGridAreaAvailable(gridX, gridY, size = 6, excludeObjectId = null) {
+    isGridAreaAvailable(gridX: number, gridY: number, size = 6, excludeObjectId: string | null = null) {
         // Check bounds
         if (gridX < 0 || gridY < 0 || 
             gridX + size > this.tilesHorizontal || 
@@ -303,7 +326,7 @@ export class ObjectManager {
      * @param {number} size - Size of the object (6 for 6x6)
      * @returns {boolean} True if area is within world bounds
      */
-    isGridAreaInBounds(gridX, gridY, size = 6) {
+    isGridAreaInBounds(gridX: number, gridY: number, size = 6) {
         return !(gridX < 0 || gridY < 0 || 
                 gridX + size > this.tilesHorizontal || 
                 gridY + size > this.tilesVertical);
@@ -316,7 +339,7 @@ export class ObjectManager {
      * @param {number} gridY - Starting grid Y position
      * @param {number} size - Size of the object
      */
-    markGridAreaOccupied(objectId, gridX, gridY, size = 6) {
+    markGridAreaOccupied(objectId: string, gridX: number, gridY: number, size = 6) {
         for (let y = gridY; y < gridY + size; y++) {
             for (let x = gridX; x < gridX + size; x++) {
                 this.gridOccupancy[y][x] = objectId;
@@ -330,7 +353,7 @@ export class ObjectManager {
      * @param {number} gridY - Starting grid Y position  
      * @param {number} size - Size of the area to clear
      */
-    clearGridArea(gridX, gridY, size = 6) {
+    clearGridArea(gridX: number, gridY: number, size = 6) {
         for (let y = gridY; y < gridY + size; y++) {
             for (let x = gridX; x < gridX + size; x++) {
                 if (y >= 0 && y < this.tilesVertical && 
@@ -348,7 +371,7 @@ export class ObjectManager {
      * @param {number} size - Size of object to place
      * @returns {Object|null} {gridX, gridY} or null if out of bounds
      */
-    findNearestAvailablePosition(worldX, worldY, size = 6) {
+    findNearestAvailablePosition(worldX: number, worldY: number, size = 6) {
         // Convert world coordinates to grid coordinates
         const targetGridX = Math.floor(worldX / this.tileSize);
         const targetGridY = Math.floor(worldY / this.tileSize);
@@ -379,7 +402,7 @@ export class ObjectManager {
      * @param {number} layer - Rendering layer (default: 0)
      * @returns {string|null} Object ID if successful, null if failed
      */
-    async addObject(spriteUrl, worldX, worldY, size = 6, layer = 0) {
+    async addObject(spriteUrl: string, worldX: number, worldY: number, size = 6, layer = 0) {
         const position = this.findNearestAvailablePosition(worldX, worldY, size);
         
         if (!position) {
@@ -429,7 +452,7 @@ export class ObjectManager {
      * @param {number} layer - Rendering layer (default: 0)
      * @returns {string|null} Object ID if successful, null if failed
      */
-    async addObjectAtGrid(spriteUrl, gridX, gridY, size = 6, layer = 0) {
+    async addObjectAtGrid(spriteUrl: string, gridX: number, gridY: number, size = 6, layer = 0) {
         // Check if the grid position is valid and within bounds
         if (!this.isGridAreaInBounds(gridX, gridY, size)) {
             console.warn(`Grid position (${gridX}, ${gridY}) is out of bounds for ${size}x${size} object`);
@@ -476,7 +499,7 @@ export class ObjectManager {
      * Remove an object from the aquarium
      * @param {string} objectId - ID of object to remove
      */
-    removeObject(objectId) {
+    removeObject(objectId: string) {
         const object = this.objects.get(objectId);
         if (!object) {
             console.warn(`Object ${objectId} not found`);
@@ -507,7 +530,7 @@ export class ObjectManager {
      * Load objects from data (e.g., from database)
      * @param {Array} objectsData - Array of object data
      */
-    async loadObjectsFromData(objectsData) {
+    async loadObjectsFromData(objectsData: AquariumObjectData[]) {
         // Clear existing objects
         this.clearAllObjects();
         
@@ -541,7 +564,7 @@ export class ObjectManager {
      * @param {PIXI.Sprite} sprite - Sprite to add
      * @param {number} layer - Layer of the sprite
      */
-    addSpriteToContainerInOrder(sprite, layer) {
+    addSpriteToContainerInOrder(sprite: PIXI.Sprite, layer: number) {
         // Find the correct index to insert the sprite based on layer
         let insertIndex = 0;
         
@@ -559,7 +582,7 @@ export class ObjectManager {
      * @param {string} objectId - Object ID to update
      * @param {number} newLayer - New layer value
      */
-    updateObjectLayer(objectId, newLayer) {
+    updateObjectLayer(objectId: string, newLayer: number) {
         const aquariumObject = this.objects.get(objectId);
         if (!aquariumObject) return false;
         
@@ -579,7 +602,7 @@ export class ObjectManager {
      * Move an object to foreground (increase layer by 1)
      * @param {string} objectId - Object ID to move
      */
-    moveObjectToForeground(objectId) {
+    moveObjectToForeground(objectId: string) {
         const aquariumObject = this.objects.get(objectId);
         if (!aquariumObject) return false;
         
@@ -591,7 +614,7 @@ export class ObjectManager {
      * Move an object to background (decrease layer by 1, minimum 0)
      * @param {string} objectId - Object ID to move
      */
-    moveObjectToBackground(objectId) {
+    moveObjectToBackground(objectId: string) {
         const aquariumObject = this.objects.get(objectId);
         if (!aquariumObject) return false;
         
@@ -644,7 +667,7 @@ export class ObjectManager {
      * Set click callback for object selection
      * @param {Function} callback - Function to call when an object is clicked
      */
-    setClickCallback(callback) {
+    setClickCallback(callback: ((objectData: any) => void) | null) {
         console.log(`🎯 Setting click callback: ${!!callback ? 'enabled' : 'disabled'}, objects count: ${this.objects.size}`);
         this.clickCallback = callback;
         
@@ -679,7 +702,7 @@ export class ObjectManager {
      * Select an object and make its sprite blink
      * @param {string} objectId - ID of object to select
      */
-    selectObject(objectId) {
+    selectObject(objectId: string) {
         // Clear previous selection
         this.clearSelection();
         
@@ -784,7 +807,7 @@ export class ObjectManager {
      * Public method to manually select an object (for UI selection)
      * @param {string} objectId - ID of object to select
      */
-    selectObjectById(objectId) {
+    selectObjectById(objectId: string) {
         this.selectObject(objectId);
     }
 }

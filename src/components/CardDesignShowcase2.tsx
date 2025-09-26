@@ -16,6 +16,9 @@ import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, Pagi
 import { useToast } from '@/hooks/use-toast';
 import CardComponent from './CardComponent';
 import { cn } from '@/lib/utils';
+import CombinedPerformanceChart from './CombinedPerformanceChart';
+import FishCountChart from './FishCountChart';
+import FPSChart from './FPSChart';
 
 /**
  * CardDesignShowcase2 Component
@@ -428,18 +431,18 @@ function CardDesignShowcase2({
 
   const renderAnalytics = () => (
     <div className="space-y-6">
-      {/* Chart Placeholder */}
-      <Card className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border-purple-500/20">
-        <CardHeader>
-          <CardTitle className="text-lg text-purple-300">Fish Activity Over Time</CardTitle>
-          <CardDescription>Monitor fish behavior and activity patterns</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-32 bg-slate-800/50 rounded-lg flex items-center justify-center">
-            <p className="text-gray-400">📈 Chart would go here</p>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Combined Performance Chart - Full View Only */}
+      <CombinedPerformanceChart 
+        className="w-full" 
+        timeRange={24}
+        showFullView={true}
+      />
+
+      {/* Individual Charts Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <FPSChart className="w-full" timeRange={24} />
+        <FishCountChart className="w-full" timeRange={24} />
+      </div>
 
       {/* Metrics */}
       <div className="grid grid-cols-1 gap-4">

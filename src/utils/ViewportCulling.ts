@@ -12,9 +12,9 @@ export class ViewportCulling {
     /**
      * Create a new viewport culling system
      * @param viewport - The pixi-viewport instance
-     * @param margin - Extra margin around viewport for smoother culling (default: 100px)
+     * @param margin - Extra margin around viewport for smoother culling (default: 500px)
      */
-    constructor(viewport: Viewport, margin: number = 100) {
+    constructor(viewport: Viewport, margin: number = 500) {
         this.viewport = viewport;
         this.margin = margin;
     }
