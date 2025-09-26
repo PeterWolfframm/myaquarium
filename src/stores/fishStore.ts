@@ -25,16 +25,22 @@ export const useFishStore = create<FishStoreState & FishStoreActions>((set, get)
     set({ isLoading: true, syncError: null });
     
     try {
-      // Ensure user is authenticated
-      let user = await databaseService.getCurrentUser();
+      // Check if user is authenticated, but don't automatically create anonymous users
+      const user = await databaseService.getCurrentUser();
+      
       if (!user) {
-        user = await databaseService.signInAnonymously();
-        if (!user) {
-          throw new Error('Failed to authenticate user');
-        }
+        // User is not authenticated - use guest mode
+        console.log('No authenticated user found, running in guest mode');
+        set({ 
+          fish: [],
+          isLoading: false,
+          lastSyncTime: null,
+          needsDefaultPopulation: true // Will populate with defaults locally
+        });
+        return;
       }
 
-      // Load fish from database
+      // Load fish from database for authenticated users
       const fishData = await databaseService.getAllFish();
       
       set({ 

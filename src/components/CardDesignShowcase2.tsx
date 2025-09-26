@@ -440,7 +440,7 @@ function CardDesignShowcase2({
 
       {/* Individual Charts Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <FPSChart className="w-full" timeRange={24} />
+        <FPSChart className="w-full" timeRange={1440} showTimeRangeSelector={true} />
         <FishCountChart className="w-full" timeRange={24} />
       </div>
 

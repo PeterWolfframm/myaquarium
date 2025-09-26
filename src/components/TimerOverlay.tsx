@@ -6,13 +6,7 @@ import { Badge } from './ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Separator } from './ui/separator';
 import { Avatar, AvatarFallback } from './ui/avatar';
-
-interface TimerSession {
-  id: string;
-  mood: string;
-  start_time: string;
-  duration_seconds?: number;
-}
+import type { TimerSession } from '../types/global';
 
 interface TimerOverlayProps {
   time: string;

@@ -6,6 +6,8 @@ import { useAquariumStore } from '../stores/aquariumStore';
 import { AQUARIUM_CONFIG, NAVIGATION, UI_CONFIG, COLORS, PERFORMANCE } from '../constants/index';
 import { databaseService } from '../services/database';
 import { AssetManager } from '../utils/AssetManager';
+import { performanceMonitor } from '../utils/PerformanceMonitor';
+import { fpsTracker } from '../utils/FPSTracker';
 import type { PerformanceLogData } from '../types/global';
 
 export class Aquarium {
@@ -107,6 +109,9 @@ export class Aquarium {
         this.performanceLoggingEnabled = true;
         this.lastPerformanceLogTime = 0;
         this.sessionStartTime = Date.now();
+        
+        // Initialize FPS tracker
+        fpsTracker.setCurrentMood(this.currentMood);
         
         // Event listener references for cleanup
         this.keydownHandler = null;
@@ -236,6 +241,14 @@ export class Aquarium {
         
         // Disable context menu on right click - use the original canvas element
         this.canvasElement.addEventListener('contextmenu', (e: MouseEvent) => e.preventDefault());
+        
+        // Initialize performance monitoring systems
+        performanceMonitor.setPixiApp(this.app);
+        fpsTracker.setAquariumInstance(this);
+        
+        // Start FPS tracking
+        fpsTracker.start();
+        console.log('🎯 FPS tracking started');
     }
     
     /**
@@ -946,6 +959,9 @@ export class Aquarium {
             this.fishManager.setMood(mood);
         }
         
+        // Update FPS tracker mood context
+        fpsTracker.setCurrentMood(mood);
+        
         
         console.log(`Mood set to: ${mood}`);
     }
@@ -1551,9 +1567,109 @@ export class Aquarium {
     isPerformanceLoggingEnabled(): boolean {
         return this.performanceLoggingEnabled;
     }
+
+    // ==================== FPS TRACKER CONTEXT METHODS ====================
+    
+    /**
+     * Get total objects visible on screen (for FPS tracker)
+     */
+    getObjectsOnScreen(): number {
+        const fishInfo = this.getVisibleFishInfo();
+        const objectCount = this.objectManager ? this.objectManager.getObjectCount() : 0;
+        return fishInfo.total + objectCount;
+    }
+    
+    /**
+     * Get current fish count (for FPS tracker)
+     */
+    getFishCount(): number {
+        const entityCounts = this.getEntityCounts();
+        return entityCounts.fish;
+    }
+    
+    /**
+     * Get visible objects count (for FPS tracker)
+     */
+    getVisibleObjects(): number {
+        return this.getObjectsOnScreen(); // Same as objects on screen for now
+    }
+    
+    /**
+     * Get total placed objects count (for FPS tracker)
+     */
+    getTotalPlacedObjects(): number {
+        return this.objectManager ? this.objectManager.getObjectCount() : 0;
+    }
+    
+    /**
+     * Get current zoom level (for FPS tracker)
+     */
+    getCurrentZoom(): number {
+        const zoomInfo = this.getZoomInfo();
+        return zoomInfo.currentZoom;
+    }
+    
+    /**
+     * Get visible horizontal tiles (for FPS tracker)
+     */
+    getVisibleTilesHorizontal(): number {
+        const tileDimensions = this.getVisibleTileDimensions();
+        return tileDimensions.horizontalTiles;
+    }
+    
+    /**
+     * Get visible vertical tiles (for FPS tracker)
+     */
+    getVisibleTilesVertical(): number {
+        const tileDimensions = this.getVisibleTileDimensions();
+        return tileDimensions.verticalTiles;
+    }
+    
+    /**
+     * Get viewport X position (for FPS tracker)
+     */
+    getViewportX(): number {
+        const viewportPosition = this.getViewportPosition();
+        return viewportPosition.currentX;
+    }
+    
+    /**
+     * Get viewport Y position (for FPS tracker)
+     */
+    getViewportY(): number {
+        const viewportPosition = this.getViewportPosition();
+        return viewportPosition.currentY;
+    }
+    
+    /**
+     * Get viewport X percentage (for FPS tracker)
+     */
+    getViewportPercentageX(): number {
+        const viewportPosition = this.getViewportPosition();
+        return viewportPosition.percentageX;
+    }
+    
+    /**
+     * Get viewport Y percentage (for FPS tracker)
+     */
+    getViewportPercentageY(): number {
+        const viewportPosition = this.getViewportPosition();
+        return viewportPosition.percentageY;
+    }
+    
+    /**
+     * Get grid visibility status (for FPS tracker)
+     */
+    getGridVisible(): boolean {
+        return this.showGrid;
+    }
     
     destroy() {
         console.log('🧹 Destroying Aquarium and cleaning up resources...');
+        
+        // Stop FPS tracking
+        fpsTracker.stop();
+        console.log('🛑 FPS tracking stopped');
         
         // Unsubscribe from store updates
         if (this.unsubscribe) {

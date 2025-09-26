@@ -8,6 +8,7 @@ import { Switch } from './ui/switch';
 import { Label } from './ui/label';
 import FishCountChart from './FishCountChart';
 import FPSChart from './FPSChart';
+import FPSTrackerStatus from './FPSTrackerStatus';
 
 function DataPanel({ visibleCubes, fishInfo, viewportPosition, tileDimensions, zoomInfo, fps, aquarium, isOpen, onToggle, isDraggable = false, draggableId = null, draggablePosition = null }) {
   const { showGrid, toggleGrid } = useAquariumStore();
@@ -144,12 +145,20 @@ function DataPanel({ visibleCubes, fishInfo, viewportPosition, tileDimensions, z
           </Card>
         </div>
         
+        {/* FPS Tracker Status */}
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider">Real-time Tracking</h3>
+          <FPSTrackerStatus className="w-full" />
+        </div>
+
+        <Separator />
+
         {/* Performance Charts */}
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider">Performance Charts</h3>
+          <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider">Performance History</h3>
           
           <div className="space-y-4">
-            <FPSChart className="w-full" timeRange={6} />
+            <FPSChart className="w-full" timeRange={360} showTimeRangeSelector={true} />
             <FishCountChart className="w-full" timeRange={6} />
           </div>
         </div>

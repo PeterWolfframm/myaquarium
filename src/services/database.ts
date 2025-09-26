@@ -349,6 +349,118 @@ class DatabaseService {
     }
   }
 
+  /**
+   * Sign in with email and password
+   * @param {string} email - User's email
+   * @param {string} password - User's password
+   * @returns {Promise<{data: any, error: any}>} Auth response
+   */
+  async signInWithEmail(email: string, password: string) {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        console.error('Error signing in with email:', error);
+        return { data: null, error };
+      }
+
+      return { data, error: null };
+    } catch (error) {
+      console.error('Error in signInWithEmail:', error);
+      return { data: null, error };
+    }
+  }
+
+  /**
+   * Sign up with email and password
+   * @param {string} email - User's email
+   * @param {string} password - User's password
+   * @param {string} username - User's username (optional)
+   * @returns {Promise<{data: any, error: any}>} Auth response
+   */
+  async signUpWithEmail(email: string, password: string, username?: string) {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          data: username ? { username } : undefined,
+        },
+      });
+
+      if (error) {
+        console.error('Error signing up with email:', error);
+        return { data: null, error };
+      }
+
+      return { data, error: null };
+    } catch (error) {
+      console.error('Error in signUpWithEmail:', error);
+      return { data: null, error };
+    }
+  }
+
+  /**
+   * Sign in with Google OAuth
+   * @returns {Promise<{data: any, error: any}>} Auth response
+   */
+  async signInWithGoogle() {
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+
+      if (error) {
+        console.error('Error signing in with Google:', error);
+        return { data: null, error };
+      }
+
+      return { data, error: null };
+    } catch (error) {
+      console.error('Error in signInWithGoogle:', error);
+      return { data: null, error };
+    }
+  }
+
+  /**
+   * Reset password for email
+   * @param {string} email - User's email
+   * @returns {Promise<{data: any, error: any}>} Reset response
+   */
+  async resetPassword(email: string) {
+    try {
+      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      });
+
+      if (error) {
+        console.error('Error resetting password:', error);
+        return { data: null, error };
+      }
+
+      return { data, error: null };
+    } catch (error) {
+      console.error('Error in resetPassword:', error);
+      return { data: null, error };
+    }
+  }
+
+  /**
+   * Listen to authentication state changes
+   * @param {Function} callback - Callback function for auth changes
+   * @returns {Object} Auth subscription
+   */
+  onAuthStateChange(callback: (event: string, session: any) => void) {
+    return supabase.auth.onAuthStateChange(callback);
+  }
+
   // ==================== TIME TRACKING ====================
 
   /**
@@ -1669,14 +1781,121 @@ class DatabaseService {
   }
 
   /**
-   * Get chart data for FPS and fish count over time
-   * @param {number} hours - Number of hours to look back (default: 24)
-   * @param {number} dataPoints - Maximum number of data points to return (default: 50)
-   * @returns {Promise<Array>} Array of chart data points
+   * Get the most recent performance log entry for debugging
+   * @returns {Promise<Object|null>} Most recent performance log or null
    */
-  async getChartData(hours: number = 24, dataPoints: number = 50): Promise<Array<{
+  async getLatestPerformanceLog(): Promise<any> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.warn('⚠️ Database: No authenticated user for performance log query');
+        return null;
+      }
+
+      const { data, error } = await supabase
+        .from(TABLES.PERFORMANCE_LOGS)
+        .select('*')
+        .eq('user_id', user.id)
+        .order('logged_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          console.warn('⚠️ Database: No performance logs found for user');
+        } else {
+          console.error('Error fetching latest performance log:', error);
+        }
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error in getLatestPerformanceLog:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Create a test performance log for debugging purposes
+   * @returns {Promise<boolean>} Success status
+   */
+  async createTestPerformanceLog(): Promise<boolean> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.error('❌ Database: Cannot create test log - no authenticated user');
+        return false;
+      }
+
+      const testLog = {
+        user_id: user.id,
+        framerate: 60.0,
+        objects_on_screen: 5,
+        fish_count: 3,
+        visible_objects: 8,
+        total_placed_objects: 12,
+        current_zoom: 1.0,
+        visible_tiles_horizontal: 20,
+        visible_tiles_vertical: 15,
+        visible_tiles_total: 300,
+        viewport_x: 0,
+        viewport_y: 0,
+        viewport_percentage_x: 0,
+        viewport_percentage_y: 0,
+        current_mood: 'test',
+        grid_visible: true,
+        screen_width: 1920,
+        screen_height: 1080,
+        device_pixel_ratio: 1.0,
+        memory_used_mb: 150.5,
+        memory_limit_mb: 4096.0,
+        session_duration_ms: 60000,
+        logged_at: new Date().toISOString()
+      };
+
+      const { data, error } = await supabase
+        .from(TABLES.PERFORMANCE_LOGS)
+        .insert(testLog)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('❌ Database: Error creating test performance log:', error);
+        return false;
+      }
+
+      console.log('✅ Database: Test performance log created successfully:', data);
+      return true;
+    } catch (error) {
+      console.error('❌ Database: Error in createTestPerformanceLog:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Get the most recent performance data (last 5 minutes)
+   * @returns {Promise<Array>} Array of recent chart data points
+   */
+  async getRecentChartData(): Promise<Array<{
     timestamp: string;
     time: string;
+    fps: number;
+    fishCount: number;
+  }>> {
+    return this.getChartData(5/60, 50); // 5 minutes = 0.083 hours
+  }
+
+  /**
+   * Get chart data with relative time labels (e.g., "2 min ago", "1 min ago", "now")
+   * @param {number} hours - Number of hours to look back
+   * @param {number} dataPoints - Maximum number of data points to return
+   * @returns {Promise<Array>} Array of chart data points with relative time labels
+   */
+  async getChartDataWithRelativeTimes(hours: number = 24, dataPoints: number = 50): Promise<Array<{
+    timestamp: string;
+    time: string;
+    relativeTime: string;
     fps: number;
     fishCount: number;
   }>> {
@@ -1696,21 +1915,104 @@ class DatabaseService {
         .limit(dataPoints);
 
       if (error) {
-        console.error('Error fetching chart data:', error);
+        console.error('Error fetching chart data with relative times:', error);
         return [];
       }
 
       if (!data || data.length === 0) return [];
-      
-      // Format data for charts
+
+      // Format data for charts with relative time labels
+      return data.map(log => {
+        const timestamp = new Date(log.logged_at);
+        const now = new Date();
+        const diffMs = now.getTime() - timestamp.getTime();
+        const diffMinutes = Math.floor(diffMs / 60000);
+        const diffSeconds = Math.floor((diffMs % 60000) / 1000);
+
+        let relativeTime: string;
+        if (diffMinutes === 0) {
+          if (diffSeconds <= 5) {
+            relativeTime = 'now';
+          } else {
+            relativeTime = `${diffSeconds}s ago`;
+          }
+        } else if (diffMinutes === 1) {
+          relativeTime = '1 min ago';
+        } else {
+          relativeTime = `${diffMinutes} min ago`;
+        }
+
+        return {
+          timestamp: log.logged_at,
+          time: timestamp.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+          }),
+          relativeTime,
+          fps: Math.round(log.framerate || 0),
+          fishCount: log.fish_count || 0
+        };
+      });
+    } catch (error) {
+      console.error('Error in getChartDataWithRelativeTimes:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get chart data for FPS and fish count over time
+   * @param {number} hours - Number of hours to look back (default: 24)
+   * @param {number} dataPoints - Maximum number of data points to return (default: 50)
+   * @returns {Promise<Array>} Array of chart data points
+   */
+  async getChartData(hours: number = 24, dataPoints: number = 50): Promise<Array<{
+    timestamp: string;
+    time: string;
+    fps: number;
+    fishCount: number;
+  }>> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      const hoursAgo = new Date();
+      hoursAgo.setHours(hoursAgo.getHours() - hours);
+
+      console.log(`🔍 Database: Querying performance logs for user ${user.id}`);
+      console.log(`🔍 Database: Looking for data from ${hoursAgo.toISOString()} (${hours} hours ago)`);
+
+      const { data, error } = await supabase
+        .from(TABLES.PERFORMANCE_LOGS)
+        .select('framerate, fish_count, logged_at')
+        .eq('user_id', user.id)
+        .gte('logged_at', hoursAgo.toISOString())
+        .order('logged_at', { ascending: true })
+        .limit(dataPoints);
+
+      if (error) {
+        console.error('Error fetching chart data:', error);
+        return [];
+      }
+
+      console.log(`📊 Database: Found ${data?.length || 0} performance log entries`);
+
+      if (!data || data.length === 0) {
+        console.warn('⚠️ Database: No performance data found for the specified time range');
+        return [];
+      }
+
+      // Format data for charts with proper time formatting
       return data.map(log => {
         const timestamp = new Date(log.logged_at);
         return {
           timestamp: log.logged_at,
-          time: timestamp.toLocaleTimeString('en-US', { 
-            hour: 'numeric', 
+          time: timestamp.toLocaleTimeString('en-US', {
+            hour: 'numeric',
             minute: '2-digit',
-            hour12: true 
+            second: '2-digit',
+            hour12: true
           }),
           fps: Math.round(log.framerate || 0),
           fishCount: log.fish_count || 0

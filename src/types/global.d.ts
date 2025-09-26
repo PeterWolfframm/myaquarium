@@ -295,6 +295,8 @@ export interface TimerSession {
   duration_seconds?: number;
   mood: string;
   user_id?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 // ==================== DATABASE TYPES ====================
@@ -429,6 +431,40 @@ export interface DragEndEvent {
 export interface DraggableData {
   type: 'panel';
   panelId: string;
+}
+
+// ==================== AUTHENTICATION TYPES ====================
+
+export interface User {
+  id: string;
+  email?: string;
+  phone?: string;
+  created_at: string;
+  updated_at: string | undefined;
+  email_confirmed_at?: string;
+  phone_confirmed_at?: string;
+  last_sign_in_at?: string;
+}
+
+export interface AuthStoreState {
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  isSigningIn: boolean;
+  isSigningOut: boolean;
+  error: string | null;
+}
+
+export interface AuthStoreActions {
+  signInWithEmail: (email: string, password: string) => Promise<User>;
+  signUpWithEmail: (email: string, password: string, username?: string) => Promise<User>;
+  signInWithGoogle: () => Promise<User>;
+  signInAnonymously: () => Promise<User>;
+  signOut: () => Promise<void>;
+  initializeAuth: () => Promise<void>;
+  initializeUserData: () => Promise<void>;
+  clearError: () => void;
+  reset: () => void;
 }
 
 // ==================== JSX EXTENSIONS ====================

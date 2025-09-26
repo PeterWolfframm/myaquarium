@@ -14,12 +14,12 @@ interface ChartData {
 
 interface FishCountChartProps {
   className?: string;
-  timeRange?: number; // hours
+  timeRange?: number; // minutes (default: 5)
 }
 
-const FishCountChart: React.FC<FishCountChartProps> = ({ 
-  className = '', 
-  timeRange = 24 
+const FishCountChart: React.FC<FishCountChartProps> = ({
+  className = '',
+  timeRange = 5 // Default to 5 minutes
 }) => {
   const [data, setData] = useState<ChartData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,7 +39,9 @@ const FishCountChart: React.FC<FishCountChartProps> = ({
     try {
       setLoading(true);
       setError(null);
-      const chartData = await databaseService.getChartData(timeRange, 50);
+      // Convert minutes to hours for the database service
+      const hoursForQuery = timeRange / 60;
+      const chartData = await databaseService.getChartData(hoursForQuery, 50);
       setData(chartData);
     } catch (err) {
       setError('Failed to load chart data');

@@ -6,22 +6,25 @@ import FishEditor from './components/FishEditor';
 import ObjectsEditor from './components/ObjectsEditor';
 import DataPanel from './components/DataPanel';
 import CardDesignShowcase2 from './components/CardDesignShowcase2';
+import LoginCard from './components/LoginCard';
+import UserAccountOverview from './components/UserAccountOverview';
 import DragAndDropProvider from './components/DragAndDropProvider';
 import { Toaster } from './components/ui/toaster';
 import { useAquariumStore } from './stores/aquariumStore';
 import { useFishStore } from './stores/fishStore';
 import { useUIStore } from './stores/uiStore';
 import { useCardStateStore } from './stores/cardStateStore';
+import { useAuthStore } from './stores/authStore';
 import { databaseService } from './services/database';
-import type { 
-  MoodType, 
-  TimerSession, 
-  FishInfo, 
-  ViewportPosition, 
-  TileDimensions, 
-  ZoomInfo, 
-  PanelPositions, 
-  Position 
+import type {
+  MoodType,
+  TimerSession,
+  FishInfo,
+  ViewportPosition,
+  TileDimensions,
+  ZoomInfo,
+  PanelPositions,
+  Position
 } from './types/global';
 
 // Utility function to ensure positions stay within viewport bounds
@@ -59,12 +62,12 @@ function App() {
   const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
   const [visibleCubes, setVisibleCubes] = useState<number>(0);
   const [fishInfo, setFishInfo] = useState<FishInfo>({ horizontalCount: 0, verticalCount: 0, total: 0 });
-  const [viewportPosition, setViewportPosition] = useState<ViewportPosition>({ 
-    currentX: 0, currentY: 0, maxX: 0, maxY: 0, 
-    percentageX: 0, percentageY: 0, tileX: 0, tileY: 0 
+  const [viewportPosition, setViewportPosition] = useState<ViewportPosition>({
+    currentX: 0, currentY: 0, maxX: 0, maxY: 0,
+    percentageX: 0, percentageY: 0, tileX: 0, tileY: 0
   });
-  const [tileDimensions, setTileDimensions] = useState<TileDimensions>({ 
-    horizontalTiles: 0, verticalTiles: 0, totalTiles: 0 
+  const [tileDimensions, setTileDimensions] = useState<TileDimensions>({
+    horizontalTiles: 0, verticalTiles: 0, totalTiles: 0
   });
   const [zoomInfo, setZoomInfo] = useState<ZoomInfo>({
     currentZoom: 1.0,
@@ -75,6 +78,8 @@ function App() {
   });
   const [fps, setFps] = useState<number>(0);
   const [aquariumRef, setAquariumRef] = useState<any>(null); // TODO: Type Aquarium class properly
+  const [showLogin, setShowLogin] = useState<boolean>(false);
+  const [showUserAccount, setShowUserAccount] = useState<boolean>(false);
   
   // Panel positions for drag and drop - using safe default positions
   const [panelPositions, setPanelPositions] = useState<PanelPositions>(getSafeDefaultPositions());
@@ -106,6 +111,15 @@ function App() {
     }
   };
 
+  // Authentication store
+  const {
+    user,
+    isAuthenticated,
+    isLoading: authLoading,
+    initializeAuth,
+    signOut
+  } = useAuthStore();
+
   // Get store initialization functions
   const initializeAquariumStore = useAquariumStore(state => (state as any).initializeFromDatabase);
   const initializeFishStore = useFishStore(state => (state as any).initializeFromDatabase);
@@ -116,7 +130,7 @@ function App() {
   const cardStateLoading = useCardStateStore(state => state.isLoading);
   
   // Combined loading state for components that should wait for everything to load
-  const isFullyLoaded = !aquariumLoading && !fishLoading && !uiLoading && !cardStateLoading && !positionsLoading;
+  const isFullyLoaded = !aquariumLoading && !fishLoading && !uiLoading && !cardStateLoading && !positionsLoading && !authLoading;
 
   // Load component positions from database
   useEffect(() => {
@@ -227,24 +241,27 @@ function App() {
     };
   }, [aquariumRef]);
 
-  // Initialize stores from Supabase on app start with timeout fallback
+  // Initialize authentication and stores from Supabase on app start with timeout fallback
   useEffect(() => {
-    const initializeStores = async () => {
+    const initializeApp = async () => {
       try {
-        console.log('Initializing aquarium and fish stores from Supabase...');
-        
+        console.log('Initializing authentication and stores from Supabase...');
+
+        // First initialize authentication
+        await initializeAuth();
+
         // Create timeout promises for each store initialization
         const timeoutDuration = 5000; // 5 seconds
-        
+
         const aquariumInitPromise = initializeAquariumStore();
         const fishInitPromise = initializeFishStore();
         const uiInitPromise = initializeUIStore();
         const cardStateInitPromise = initializeCardStore();
-        
+
         const timeoutPromise = new Promise((_, reject) => {
           setTimeout(() => reject(new Error('Store initialization timeout')), timeoutDuration);
         });
-        
+
         try {
           // Race the initialization against the timeout
           await Promise.race([
@@ -263,16 +280,16 @@ function App() {
             throw error;
           }
         }
-        
+
         // Initialize time tracking
         await initializeTimeTracking();
     } catch (error) {
-      console.error('Error initializing stores:', error);
+      console.error('Error initializing app:', error);
     }
   };
 
-  initializeStores();
-}, [initializeAquariumStore, initializeFishStore, initializeUIStore, initializeCardStore]);
+  initializeApp();
+}, [initializeAuth, initializeAquariumStore, initializeFishStore, initializeUIStore, initializeCardStore]);
 
   // Initialize time tracking
   const initializeTimeTracking = async (): Promise<void> => {
@@ -424,6 +441,10 @@ function App() {
     setCardOpen('stats', !isOpen);
   };
 
+  const toggleUserAccount = (): void => {
+    setShowUserAccount(!showUserAccount);
+  };
+
   const toggleObjectsManager = (): void => {
     const isOpen = getCardOpen('objects', false);
     setCardOpen('objects', !isOpen);
@@ -432,6 +453,20 @@ function App() {
   const toggleCardShowcase2 = (): void => {
     const isOpen = getCardOpen('card-showcase', false);
     setCardOpen('card-showcase', !isOpen);
+  };
+
+  const toggleLogin = (): void => {
+    setShowLogin(!showLogin);
+  };
+
+  const handleSignOut = async (): Promise<void> => {
+    try {
+      await signOut();
+      // Reload the page to reset all state
+      window.location.reload();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
   const handleSoftResetAquarium = (): void => {
@@ -465,13 +500,41 @@ function App() {
     >
       <div className="aquarium-container">
         {/* Show loading indicator while stores are initializing */}
-        {(aquariumLoading || fishLoading || uiLoading || cardStateLoading || positionsLoading) && (
+        {(aquariumLoading || fishLoading || uiLoading || cardStateLoading || positionsLoading || authLoading) && (
           <div className="loading-overlay">
             <div className="loading-spinner">🐠</div>
-            <div className="loading-text">Loading aquarium from cloud...</div>
+            <div className="loading-text">
+              {authLoading
+                ? 'Authenticating...'
+                : 'Loading aquarium from cloud...'
+              }
+            </div>
           </div>
         )}
         
+        {/* Top Status Bar */}
+        <div className="top-status-bar">
+          <div className="auth-status">
+            {isAuthenticated && user ? (
+              <div className="user-info clickable" onClick={toggleUserAccount}>
+                <span className="user-avatar">👤</span>
+                <span className="user-details">
+                  <span className="user-name">{user.email || `User ${user.id.slice(-4)}`}</span>
+                  <span className="user-status">Signed In</span>
+                </span>
+              </div>
+            ) : (
+              <div className="user-info clickable" onClick={() => setShowLogin(true)}>
+                <span className="user-avatar">👤</span>
+                <span className="user-details">
+                  <span className="user-name">Guest</span>
+                  <span className="user-status">Click to Sign In</span>
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Control Buttons */}
         <div className="control-buttons">
           <button className="control-button timer-button" onClick={toggleTimer}>
@@ -492,6 +555,18 @@ function App() {
           <button className="control-button card-showcase2-button" onClick={toggleCardShowcase2}>
             ✨ Modern UI
           </button>
+
+          {/* Authentication Button */}
+          {isAuthenticated && user ? (
+            <button className="control-button" onClick={handleSignOut} title={`Signed in as ${user.email || 'Anonymous'}`}>
+              🚪 Sign Out
+            </button>
+          ) : (
+            <button className="control-button" onClick={toggleLogin}>
+              🔐 Login
+            </button>
+          )}
+
           <button className="control-button soft-reset-button" onClick={handleSoftResetAquarium}>
             🔄 Soft Reset
           </button>
@@ -557,7 +632,7 @@ function App() {
               draggablePosition={panelPositions.fishEditor}
             />
             
-            <CardDesignShowcase2 
+            <CardDesignShowcase2
               isOpen={getCardOpen('card-showcase', false)}
               onToggle={toggleCardShowcase2}
               isDraggable={true}
@@ -565,11 +640,29 @@ function App() {
             />
         </div>
 
-        <AquariumContainer 
-          mood={mood} 
+        {/* Login Card */}
+        <LoginCard
+          isOpen={showLogin}
+          onToggle={toggleLogin}
+          isDraggable={true}
+          draggableId="login"
+          draggablePosition={panelPositions.cardShowcase2}
+        />
+
+        {/* User Account Overview */}
+        <UserAccountOverview
+          isOpen={showUserAccount}
+          onToggle={toggleUserAccount}
+          isDraggable={true}
+          draggableId="user-account"
+          draggablePosition={panelPositions.cardShowcase2}
+        />
+
+        <AquariumContainer
+          mood={mood}
           onAquariumReady={handleAquariumReady}
         />
-        
+
         <Toaster />
       </div>
     </DragAndDropProvider>
