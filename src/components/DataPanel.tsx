@@ -18,6 +18,29 @@ function DataPanel({ visibleCubes, fishInfo, viewportPosition, tileDimensions, z
     }
   };
 
+  const handleSoftResetAquarium = () => {
+    // First attempt: Try to properly destroy and reinitialize the aquarium
+    if (aquarium && aquarium.destroy) {
+      try {
+        console.log('🔄 Attempting soft reset - destroying current aquarium instance...');
+        aquarium.destroy();
+        
+        // Wait a brief moment then reload the page as fallback
+        setTimeout(() => {
+          console.log('🔄 Reloading page to complete soft reset...');
+          window.location.reload();
+        }, 100);
+      } catch (error) {
+        console.error('Error during soft reset, falling back to page reload:', error);
+        window.location.reload();
+      }
+    } else {
+      // If aquarium instance is not available, just reload
+      console.log('🔄 Aquarium instance not available, reloading page...');
+      window.location.reload();
+    }
+  };
+
   return (
     <CardComponent 
       title="📊 Stats"
@@ -148,6 +171,27 @@ function DataPanel({ visibleCubes, fishInfo, viewportPosition, tileDimensions, z
                 checked={showGrid}
                 onCheckedChange={toggleGrid}
               />
+            </div>
+          </CardContent>
+        </Card>
+        
+        {/* Soft Reset */}
+        <Card className="bg-gradient-to-br from-red-500/10 to-orange-500/10 border-red-500/20">
+          <CardContent className="p-4">
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <Label className="text-sm font-medium text-gray-200">
+                  Aquarium Reset
+                </Label>
+                <p className="text-xs text-gray-400">Reset the entire aquarium by reloading</p>
+              </div>
+              <Button 
+                className="w-full bg-red-600 hover:bg-red-700 border-red-500"
+                onClick={handleSoftResetAquarium}
+                variant="outline"
+              >
+                🔄 Soft Reset Aquarium
+              </Button>
             </div>
           </CardContent>
         </Card>

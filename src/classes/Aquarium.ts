@@ -1552,38 +1552,6 @@ export class Aquarium {
         return this.performanceLoggingEnabled;
     }
     
-    /**
-     * Soft reset the aquarium - clear all fish and spawn new ones with fresh sprites
-     * This reloads all sprites starting from new random positions
-     */
-    async softResetAquarium(): Promise<void> {
-        console.log('🔄 Starting soft reset of aquarium...');
-        
-        if (!this.fishManager) {
-            console.warn('FishManager not initialized, cannot perform soft reset');
-            return;
-        }
-        
-        try {
-            // Clear all existing fish
-            this.fishManager.clearAllFish();
-            console.log('✅ Cleared all existing fish');
-            
-            // Force clear the texture cache to ensure fresh sprite loading
-            const { AssetManager } = await import('../utils/AssetManager');
-            AssetManager.clearCache();
-            console.log('✅ Cleared sprite cache');
-            
-            // Spawn new random fish with fresh sprites
-            this.fishManager.spawnRandomFish();
-            console.log('✅ Spawned new random fish with fresh sprites');
-            
-            console.log('🎉 Soft reset completed successfully!');
-        } catch (error) {
-            console.error('Error during soft reset:', error);
-        }
-    }
-    
     destroy() {
         console.log('🧹 Destroying Aquarium and cleaning up resources...');
         

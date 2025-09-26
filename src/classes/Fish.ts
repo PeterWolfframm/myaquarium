@@ -223,9 +223,14 @@ export class Fish {
     setSpritePosition() {
         if (!this.sprite || !this.spriteReady) return;
         
-        // Always use random spawn position for more dynamic fish placement
-        // This ensures fish are spawned at random places within bounds each time
-        this.respawn();
+        if (this.initialPositionX !== undefined && this.initialPositionY !== undefined) {
+            // Restore position from database
+            this.sprite.x = this.initialPositionX;
+            this.sprite.y = this.initialPositionY;
+        } else {
+            // Random spawn position
+            this.respawn();
+        }
         
         // Mark sprite as positioned
         this.spritePositioned = true;
@@ -331,39 +336,13 @@ export class Fish {
     }
     
     /**
-     * Get a random spawn position outside the safe zone
+     * Get a random spawn position anywhere within the aquarium bounds
      * @returns {Object} Position object {x, y}
      */
     getRandomSpawnPosition() {
-        let x, y;
-        let attempts = 0;
-        const maxAttempts = 20;
-        
-        do {
-            // Spawn across the full width of the aquarium
-            x = -FISH_CONFIG.BOUNDARY_MARGIN + Math.random() * (this.worldWidth + 2 * FISH_CONFIG.BOUNDARY_MARGIN);
-            y = this.getRandomTargetY();
-            attempts++;
-        } while (this.isInSafeZone(x, y) && attempts < maxAttempts);
-        
-        // If we couldn't find a spot outside safe zone, spawn at random edges
-        if (attempts >= maxAttempts) {
-            const edge = Math.random();
-            if (edge < 0.25) {
-                // Left edge
-                x = -FISH_CONFIG.BOUNDARY_MARGIN;
-            } else if (edge < 0.5) {
-                // Right edge
-                x = this.worldWidth + FISH_CONFIG.BOUNDARY_MARGIN;
-            } else if (edge < 0.75) {
-                // Random position in left half
-                x = Math.random() * (this.worldWidth / 2);
-            } else {
-                // Random position in right half
-                x = (this.worldWidth / 2) + Math.random() * (this.worldWidth / 2);
-            }
-            y = this.getRandomTargetY();
-        }
+        // Spawn anywhere within the aquarium bounds (including safe zone)
+        const x = -FISH_CONFIG.BOUNDARY_MARGIN + Math.random() * (this.worldWidth + 2 * FISH_CONFIG.BOUNDARY_MARGIN);
+        const y = this.getRandomTargetY();
         
         return { x, y };
     }

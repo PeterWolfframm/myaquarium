@@ -463,16 +463,26 @@ function App() {
     setCardOpen('card-showcase', !isOpen);
   };
 
-  const handleSoftReset = async (): Promise<void> => {
-    if (aquariumRef && aquariumRef.softResetAquarium) {
+  const handleSoftResetAquarium = (): void => {
+    // First attempt: Try to properly destroy and reinitialize the aquarium
+    if (aquariumRef && aquariumRef.destroy) {
       try {
-        await aquariumRef.softResetAquarium();
-        console.log('Soft reset completed successfully');
+        console.log('🔄 Attempting soft reset - destroying current aquarium instance...');
+        aquariumRef.destroy();
+        
+        // Wait a brief moment then reload the page as fallback
+        setTimeout(() => {
+          console.log('🔄 Reloading page to complete soft reset...');
+          window.location.reload();
+        }, 100);
       } catch (error) {
-        console.error('Error during soft reset:', error);
+        console.error('Error during soft reset, falling back to page reload:', error);
+        window.location.reload();
       }
     } else {
-      console.warn('Aquarium not ready for soft reset');
+      // If aquarium instance is not available, just reload
+      console.log('🔄 Aquarium instance not available, reloading page...');
+      window.location.reload();
     }
   };
 
@@ -511,8 +521,8 @@ function App() {
           <button className="control-button card-showcase2-button" onClick={toggleCardShowcase2}>
             ✨ Modern UI
           </button>
-          <button className="control-button soft-reset-button" onClick={handleSoftReset}>
-            🔄 Soft Reset Aquarium
+          <button className="control-button soft-reset-button" onClick={handleSoftResetAquarium}>
+            🔄 Soft Reset
           </button>
         </div>
 
