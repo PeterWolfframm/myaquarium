@@ -1,18 +1,17 @@
 import * as PIXI from 'pixi.js';
 import { Viewport } from 'pixi-viewport';
 import { FishManager } from './Fish';
-import { BubbleManager } from './Bubble';
 import { ObjectManager } from './Object';
 import { useAquariumStore } from '../stores/aquariumStore';
-import { AQUARIUM_CONFIG, NAVIGATION, UI_CONFIG, COLORS } from '../constants/index';
+import { AQUARIUM_CONFIG, NAVIGATION, UI_CONFIG, COLORS, PERFORMANCE } from '../constants/index';
 import { databaseService } from '../services/database';
+import type { PerformanceLogData } from '../types/global';
 
 export class Aquarium {
     constructor(canvasElement) {
         this.app = null;
         this.viewport = null;
         this.fishManager = null;
-        this.bubbleManager = null;
         this.objectManager = null;
         this.canvasElement = canvasElement;
         
@@ -45,7 +44,6 @@ export class Aquarium {
         this.backgroundContainer = null;
         this.objectContainer = null;
         this.fishContainer = null;
-        this.bubbleContainer = null;
         this.gridContainer = null;
         this.grid = null;
         
@@ -70,6 +68,11 @@ export class Aquarium {
         this.currentZoomLevel = 1.0;
         this.defaultVisibleVerticalTiles = this.store.defaultVisibleVerticalTiles || 20;
         
+        // Performance logging
+        this.performanceLoggingEnabled = true;
+        this.lastPerformanceLogTime = 0;
+        this.sessionStartTime = Date.now();
+        
         this.init().catch(error => {
             console.error('Error initializing aquarium:', error);
         });
@@ -91,7 +94,6 @@ export class Aquarium {
         
         console.log('Aquarium initialization completed successfully');
         console.log(`Fish container children: ${this.fishContainer.children.length}`);
-        console.log(`Bubble container children: ${this.bubbleContainer.children.length}`);
         console.log(`Background container children: ${this.backgroundContainer.children.length}`);
     }
     
@@ -304,7 +306,6 @@ export class Aquarium {
         this.objectContainer = new PIXI.Container();
         this.gridContainer = new PIXI.Container();
         this.tileHighlightContainer = new PIXI.Container();
-        this.bubbleContainer = new PIXI.Container();
         this.fishContainer = new PIXI.Container();
         
         // Add containers to viewport in order (back to front)
@@ -312,7 +313,6 @@ export class Aquarium {
         this.viewport.addChild(this.objectContainer); // Objects above background
         this.viewport.addChild(this.gridContainer);
         this.viewport.addChild(this.tileHighlightContainer); // Tile highlights above grid
-        this.viewport.addChild(this.bubbleContainer);
         this.viewport.addChild(this.fishContainer);
     }
     
@@ -731,13 +731,6 @@ export class Aquarium {
         );
         
         
-        // Create bubble manager
-        console.log(`Creating bubble manager with world size: ${this.worldWidth}x${this.worldHeight}`);
-        this.bubbleManager = new BubbleManager(
-            this.bubbleContainer,
-            this.worldWidth,
-            this.worldHeight
-        );
         
         console.log('Entity spawning completed');
     }
@@ -749,9 +742,6 @@ export class Aquarium {
      */
     setupEventListeners() {
         window.addEventListener('keydown', (e) => {
-            if (e.key.toLowerCase() === 'b') {
-                this.bubbleContainer.visible = !this.bubbleContainer.visible;
-            }
             
             // Arrow key navigation - move by tile increments
             if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'ArrowUp' || e.key === 'ArrowDown') {
@@ -846,9 +836,13 @@ export class Aquarium {
                 this.fishManager.update(dt);
             }
             
-            
-            if (this.bubbleManager) {
-                this.bubbleManager.update(dt);
+            // Performance logging every 5 seconds
+            if (this.performanceLoggingEnabled) {
+                this.lastPerformanceLogTime += dt;
+                if (this.lastPerformanceLogTime >= PERFORMANCE.LOGGING_INTERVAL_MS) {
+                    this.logPerformanceMetrics();
+                    this.lastPerformanceLogTime = 0;
+                }
             }
         });
     }
@@ -926,9 +920,6 @@ export class Aquarium {
         }
         
         
-        if (this.bubbleManager) {
-            this.bubbleManager.resize(this.worldWidth, this.worldHeight);
-        }
     }
     
     // Public API methods
@@ -936,11 +927,6 @@ export class Aquarium {
         return this.currentMood;
     }
     
-    toggleBubbles() {
-        if (this.bubbleContainer) {
-            this.bubbleContainer.visible = !this.bubbleContainer.visible;
-        }
-    }
     
     // Performance monitoring
     getFPS() {
@@ -949,8 +935,7 @@ export class Aquarium {
     
     getEntityCounts() {
         return {
-            fish: this.fishManager ? this.fishManager.fish.length : 0,
-            bubbles: this.bubbleManager ? this.bubbleManager.bubbles.length : 0
+            fish: this.fishManager ? this.fishManager.fish.length : 0
         };
     }
     
@@ -1372,6 +1357,97 @@ export class Aquarium {
         };
     }
     
+    /**
+     * Log performance metrics to the database
+     */
+    async logPerformanceMetrics() {
+        try {
+            if (!this.app || !this.viewport) return;
+            
+            // Get basic performance metrics
+            const framerate = this.app.ticker.FPS;
+            const entityCounts = this.getEntityCounts();
+            const objectCount = this.getObjectCount();
+            const visibleTileInfo = this.getVisibleTileDimensions();
+            const viewportInfo = this.getViewportPosition();
+            const zoomInfo = this.getZoomInfo();
+            
+            // Get memory information if available
+            let memoryUsedMB: number | undefined;
+            let memoryLimitMB: number | undefined;
+            
+            if ('memory' in performance && (performance as any).memory) {
+                const memory = (performance as any).memory;
+                memoryUsedMB = memory.usedJSHeapSize / (1024 * 1024); // Convert to MB
+                memoryLimitMB = memory.totalJSHeapSize / (1024 * 1024); // Convert to MB
+            }
+            
+            // Calculate session duration
+            const sessionDurationMs = Date.now() - this.sessionStartTime;
+            
+            // Count visible objects (fish + placed objects in viewport)
+            const visibleFishInfo = this.getVisibleFishInfo();
+            const visibleObjects = visibleFishInfo.total + objectCount; // Use total object count for now
+            
+            // Prepare performance log data
+            const performanceData: PerformanceLogData = {
+                framerate: Math.round(framerate * 100) / 100, // Round to 2 decimal places
+                objects_on_screen: visibleObjects,
+                fish_count: entityCounts.fish,
+                visible_objects: visibleObjects,
+                total_placed_objects: objectCount,
+                current_zoom: zoomInfo.currentZoom,
+                visible_tiles_horizontal: visibleTileInfo.horizontalTiles,
+                visible_tiles_vertical: visibleTileInfo.verticalTiles,
+                visible_tiles_total: visibleTileInfo.totalTiles,
+                viewport_x: viewportInfo.currentX,
+                viewport_y: viewportInfo.currentY,
+                viewport_percentage_x: viewportInfo.percentageX,
+                viewport_percentage_y: viewportInfo.percentageY,
+                current_mood: this.currentMood,
+                grid_visible: this.showGrid,
+                screen_width: window.innerWidth,
+                screen_height: window.innerHeight,
+                device_pixel_ratio: window.devicePixelRatio || 1.0,
+                memory_used_mb: memoryUsedMB,
+                memory_limit_mb: memoryLimitMB,
+                session_duration_ms: sessionDurationMs
+            };
+            
+            // Log to database asynchronously (don't wait for result to avoid blocking)
+            databaseService.logPerformanceMetrics(performanceData).catch(error => {
+                console.warn('Failed to log performance metrics:', error);
+            });
+            
+            // Optional: Log to console for debugging (can be removed in production)
+            console.log(`Performance: ${framerate.toFixed(1)} FPS | Objects: ${visibleObjects} | Fish: ${entityCounts.fish} | Zoom: ${zoomInfo.currentZoom}x | Tiles: ${visibleTileInfo.horizontalTiles}x${visibleTileInfo.verticalTiles}`, {
+                mood: this.currentMood,
+                sessionMinutes: Math.round(sessionDurationMs / 60000),
+                memoryMB: memoryUsedMB ? Math.round(memoryUsedMB) : 'N/A'
+            });
+            
+        } catch (error) {
+            console.error('Error logging performance metrics:', error);
+        }
+    }
+    
+    /**
+     * Enable or disable performance logging
+     * @param {boolean} enabled - Whether to enable performance logging
+     */
+    setPerformanceLogging(enabled: boolean) {
+        this.performanceLoggingEnabled = enabled;
+        console.log(`Performance logging ${enabled ? 'enabled' : 'disabled'}`);
+    }
+    
+    /**
+     * Get performance logging status
+     * @returns {boolean} Whether performance logging is enabled
+     */
+    isPerformanceLoggingEnabled(): boolean {
+        return this.performanceLoggingEnabled;
+    }
+    
     destroy() {
         // Unsubscribe from store updates
         if (this.unsubscribe) {
@@ -1384,9 +1460,6 @@ export class Aquarium {
         }
         
         
-        if (this.bubbleManager) {
-            this.bubbleManager.destroy();
-        }
         
         if (this.app) {
             this.app.destroy(true, true);

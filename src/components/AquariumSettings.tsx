@@ -441,12 +441,6 @@ function AquariumSettings({
                       Zoom out
                     </Badge>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-400">B:</span>
-                    <Badge variant="outline" className="text-indigo-400 border-indigo-400">
-                      Toggle bubbles
-                    </Badge>
-                  </div>
                 </div>
               </CardContent>
             </Card>

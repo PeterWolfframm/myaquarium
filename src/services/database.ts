@@ -11,7 +11,8 @@ import type {
   ViewMode,
   ComponentPreference,
   ComponentPosition,
-  Position
+  Position,
+  PerformanceLogData
 } from '../types/global';
 
 /**
@@ -1336,6 +1337,181 @@ class DatabaseService {
       return true;
     } catch (error) {
       console.error('Error in deleteComponentPosition:', error);
+      return false;
+    }
+  }
+
+  // ==================== PERFORMANCE LOGGING ====================
+
+  /**
+   * Log performance metrics to the database
+   * @param {PerformanceLogData} performanceData - Performance metrics to log
+   * @returns {Promise<PerformanceLogData|null>} Logged data or null if error
+   */
+  async logPerformanceMetrics(performanceData: PerformanceLogData): Promise<PerformanceLogData | null> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const logData = {
+        user_id: user.id,
+        framerate: performanceData.framerate,
+        objects_on_screen: performanceData.objects_on_screen,
+        fish_count: performanceData.fish_count,
+        visible_objects: performanceData.visible_objects,
+        total_placed_objects: performanceData.total_placed_objects,
+        current_zoom: performanceData.current_zoom,
+        visible_tiles_horizontal: performanceData.visible_tiles_horizontal,
+        visible_tiles_vertical: performanceData.visible_tiles_vertical,
+        visible_tiles_total: performanceData.visible_tiles_total,
+        viewport_x: performanceData.viewport_x,
+        viewport_y: performanceData.viewport_y,
+        viewport_percentage_x: performanceData.viewport_percentage_x,
+        viewport_percentage_y: performanceData.viewport_percentage_y,
+        current_mood: performanceData.current_mood,
+        grid_visible: performanceData.grid_visible,
+        screen_width: performanceData.screen_width,
+        screen_height: performanceData.screen_height,
+        device_pixel_ratio: performanceData.device_pixel_ratio,
+        memory_used_mb: performanceData.memory_used_mb || null,
+        memory_limit_mb: performanceData.memory_limit_mb || null,
+        session_duration_ms: performanceData.session_duration_ms,
+        logged_at: new Date().toISOString()
+      };
+
+      const { data, error } = await supabase
+        .from(TABLES.PERFORMANCE_LOGS)
+        .insert(logData)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error logging performance metrics:', error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error in logPerformanceMetrics:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get recent performance logs for the current user
+   * @param {number} hours - Number of hours to look back (default: 24)
+   * @param {number} limit - Maximum number of logs to return (default: 100)
+   * @returns {Promise<PerformanceLogData[]>} Array of performance logs
+   */
+  async getRecentPerformanceLogs(hours: number = 24, limit: number = 100): Promise<PerformanceLogData[]> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      const hoursAgo = new Date();
+      hoursAgo.setHours(hoursAgo.getHours() - hours);
+
+      const { data, error } = await supabase
+        .from(TABLES.PERFORMANCE_LOGS)
+        .select('*')
+        .eq('user_id', user.id)
+        .gte('logged_at', hoursAgo.toISOString())
+        .order('logged_at', { ascending: false })
+        .limit(limit);
+
+      if (error) {
+        console.error('Error fetching performance logs:', error);
+        return [];
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error('Error in getRecentPerformanceLogs:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get performance statistics for the current user
+   * @param {number} hours - Number of hours to analyze (default: 24)
+   * @returns {Promise<Object|null>} Performance statistics or null if error
+   */
+  async getPerformanceStats(hours: number = 24): Promise<{
+    avgFramerate: number;
+    minFramerate: number;
+    maxFramerate: number;
+    avgObjects: number;
+    avgFish: number;
+    totalLogs: number;
+    timeRange: string;
+  } | null> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const { data, error } = await supabase
+        .rpc('get_user_performance_stats', {
+          user_uuid: user.id,
+          hours_back: hours
+        });
+
+      if (error) {
+        console.error('Error fetching performance stats:', error);
+        return null;
+      }
+
+      return data?.[0] || null;
+    } catch (error) {
+      console.error('Error in getPerformanceStats:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Clean up old performance logs (called automatically by the database function)
+   * @returns {Promise<boolean>} Success status
+   */
+  async cleanupOldPerformanceLogs(): Promise<boolean> {
+    try {
+      const { data, error } = await supabase
+        .rpc('cleanup_old_performance_logs');
+
+      if (error) {
+        console.error('Error cleaning up old performance logs:', error);
+        return false;
+      }
+
+      console.log(`Cleaned up ${data} old performance logs`);
+      return true;
+    } catch (error) {
+      console.error('Error in cleanupOldPerformanceLogs:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Delete all performance logs for the current user
+   * @returns {Promise<boolean>} Success status
+   */
+  async deleteAllPerformanceLogs(): Promise<boolean> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return false;
+
+      const { error } = await supabase
+        .from(TABLES.PERFORMANCE_LOGS)
+        .delete()
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error deleting all performance logs:', error);
+        return false;
+      }
+
+      console.log('All performance logs deleted successfully');
+      return true;
+    } catch (error) {
+      console.error('Error in deleteAllPerformanceLogs:', error);
       return false;
     }
   }

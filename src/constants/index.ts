@@ -6,7 +6,6 @@ import type {
   AquariumConfig,
   PerformanceConfig,
   FishConfig,
-  BubbleConfig,
   MoodConfig,
   ColorConfig,
   UIConfig
@@ -28,10 +27,9 @@ export const PERFORMANCE: PerformanceConfig = {
   TARGET_FPS: 60,
   UPDATE_INTERVAL_MS: 100,
   ANIMATION_FRAME_TIME_MS: 16.67, // ~60fps
-  BUBBLE_DENSITY_RATIO: 50000, // One bubble per 50k pixels
-  MIN_BUBBLES: 10,
-  MAX_BUBBLES: 50,
-  MOBILE_BREAKPOINT: 768
+  MOBILE_BREAKPOINT: 768,
+  LOGGING_INTERVAL_MS: 5000, // Log performance every 5 seconds
+  MAX_LOG_RETENTION_DAYS: 7 // Keep logs for 7 days
 } as const;
 
 // Fish Configuration
@@ -52,19 +50,6 @@ export const FISH_CONFIG: FishConfig = {
   VERTICAL_MARGIN: 50
 } as const;
 
-// Bubble Configuration
-export const BUBBLE_CONFIG: BubbleConfig = {
-  SIZE_MIN: 3,
-  SIZE_MAX: 7,
-  OPACITY_MIN: 0.3,
-  OPACITY_MAX: 0.7,
-  SPEED_MIN: 0.2,
-  SPEED_MAX: 0.5,
-  WOBBLE_MAX: 0.5,
-  WOBBLE_SPEED_MIN: 0.02,
-  WOBBLE_SPEED_MAX: 0.04,
-  WOBBLE_AMPLITUDE: 20
-} as const;
 
 // Mood System
 export const MOODS: MoodConfig = {
@@ -97,8 +82,6 @@ export const COLORS: ColorConfig = {
   ROCKS: [0x696969, 0x808080],
   GRID_LINES: 0xFFFFFF,
   ORANGE_CUBE: 0xFF6600,
-  BUBBLE_BASE: 0x87CEEB,
-  BUBBLE_HIGHLIGHT: 0xFFFFFF,
   FISH_COLORS: [0x4CAF50, 0x2196F3, 0xFF9800, 0xE91E63, 0x9C27B0, 0x00BCD4],
   EYE_WHITE: 0xFFFFFF,
   EYE_BLACK: 0x000000

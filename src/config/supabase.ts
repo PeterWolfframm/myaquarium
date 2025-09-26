@@ -14,5 +14,6 @@ export const TABLES = {
   TIME_TRACKING_SESSIONS: 'time_tracking_sessions',
   UI_SETTINGS: 'ui_settings',
   COMPONENT_PREFERENCES: 'component_preferences',
-  COMPONENT_POSITIONS: 'component_positions'
+  COMPONENT_POSITIONS: 'component_positions',
+  PERFORMANCE_LOGS: 'performance_logs'
 };

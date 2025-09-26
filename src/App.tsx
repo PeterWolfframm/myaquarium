@@ -72,6 +72,7 @@ function App() {
     minZoom: 0.1,
     maxZoom: 4.0
   });
+  const [fps, setFps] = useState<number>(0);
   const [aquariumRef, setAquariumRef] = useState<any>(null); // TODO: Type Aquarium class properly
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [showFishEditor, setShowFishEditor] = useState<boolean>(false);
@@ -372,6 +373,9 @@ function App() {
         if (aquariumRef.getZoomInfo) {
           setZoomInfo(aquariumRef.getZoomInfo());
         }
+        if (aquariumRef.getFPS) {
+          setFps(Math.round(aquariumRef.getFPS()));
+        }
       }
     };
     
@@ -500,6 +504,7 @@ function App() {
               viewportPosition={viewportPosition}
               tileDimensions={tileDimensions}
               zoomInfo={zoomInfo}
+              fps={fps}
               aquarium={aquariumRef}
               isOpen={showStats}
               onToggle={toggleStats}

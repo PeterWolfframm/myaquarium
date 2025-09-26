@@ -98,6 +98,33 @@ export interface TileDimensions {
   totalTiles: number;
 }
 
+export interface PerformanceLogData {
+  id?: string;
+  user_id?: string;
+  framerate: number;
+  objects_on_screen: number;
+  fish_count: number;
+  visible_objects: number;
+  total_placed_objects: number;
+  current_zoom: number;
+  visible_tiles_horizontal: number;
+  visible_tiles_vertical: number;
+  visible_tiles_total: number;
+  viewport_x: number;
+  viewport_y: number;
+  viewport_percentage_x: number;
+  viewport_percentage_y: number;
+  current_mood: string;
+  grid_visible: boolean;
+  screen_width: number;
+  screen_height: number;
+  device_pixel_ratio: number;
+  memory_used_mb?: number;
+  memory_limit_mb?: number;
+  logged_at?: string;
+  session_duration_ms: number;
+}
+
 export interface ZoomInfo {
   currentZoom: number;
   zoomPercentage: number;
@@ -122,10 +149,9 @@ export interface PerformanceConfig {
   TARGET_FPS: number;
   UPDATE_INTERVAL_MS: number;
   ANIMATION_FRAME_TIME_MS: number;
-  BUBBLE_DENSITY_RATIO: number;
-  MIN_BUBBLES: number;
-  MAX_BUBBLES: number;
   MOBILE_BREAKPOINT: number;
+  LOGGING_INTERVAL_MS: number;
+  MAX_LOG_RETENTION_DAYS: number;
 }
 
 export interface FishConfig {
@@ -145,18 +171,6 @@ export interface FishConfig {
   VERTICAL_MARGIN: number;
 }
 
-export interface BubbleConfig {
-  SIZE_MIN: number;
-  SIZE_MAX: number;
-  OPACITY_MIN: number;
-  OPACITY_MAX: number;
-  SPEED_MIN: number;
-  SPEED_MAX: number;
-  WOBBLE_MAX: number;
-  WOBBLE_SPEED_MIN: number;
-  WOBBLE_SPEED_MAX: number;
-  WOBBLE_AMPLITUDE: number;
-}
 
 export interface Mood {
   id: string;
@@ -181,8 +195,6 @@ export interface ColorConfig {
   ROCKS: number[];
   GRID_LINES: number;
   ORANGE_CUBE: number;
-  BUBBLE_BASE: number;
-  BUBBLE_HIGHLIGHT: number;
   FISH_COLORS: number[];
   EYE_WHITE: number;
   EYE_BLACK: number;
@@ -356,7 +368,6 @@ export interface PerformanceSettings {
   targetFPS: number;
   entityCounts: {
     fish: number;
-    bubbles: number;
   };
   isMobile: boolean;
 }

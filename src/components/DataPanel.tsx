@@ -7,7 +7,7 @@ import { Separator } from './ui/separator';
 import { Switch } from './ui/switch';
 import { Label } from './ui/label';
 
-function DataPanel({ visibleCubes, fishInfo, viewportPosition, tileDimensions, zoomInfo, aquarium, isOpen, onToggle, isDraggable = false, draggableId = null, draggablePosition = null }) {
+function DataPanel({ visibleCubes, fishInfo, viewportPosition, tileDimensions, zoomInfo, fps, aquarium, isOpen, onToggle, isDraggable = false, draggableId = null, draggablePosition = null }) {
   const { showGrid, toggleGrid } = useAquariumStore();
 
   const handleResetToDefaultZoom = () => {
@@ -69,6 +69,17 @@ function DataPanel({ visibleCubes, fishInfo, viewportPosition, tileDimensions, z
                 <span className="text-sm text-gray-400">Visible Cubes:</span>
                 <Badge variant="secondary" className="bg-green-500/20 text-green-300">
                   {visibleCubes || 0}
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-400">Framerate:</span>
+                <Badge variant="secondary" className="bg-purple-500/20 text-purple-300">
+                  {fps || 0} FPS
                 </Badge>
               </div>
             </CardContent>

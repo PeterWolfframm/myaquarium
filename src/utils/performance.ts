@@ -43,7 +43,7 @@ export function debounce<T extends (...args: any[]) => any>(func: T, delay: numb
 /**
  * Calculate optimal entity count based on screen size and performance considerations
  */
-export function calculateOptimalEntityCounts(screenWidth: number, screenHeight: number, isMobile: boolean = false): { fish: number; bubbles: number } {
+export function calculateOptimalEntityCounts(screenWidth: number, screenHeight: number, isMobile: boolean = false): { fish: number } {
   const screenArea = screenWidth * screenHeight;
   const baseArea = 1920 * 1080; // Reference full HD resolution
   const areaRatio = Math.min(screenArea / baseArea, 2); // Cap at 2x reference
@@ -52,11 +52,9 @@ export function calculateOptimalEntityCounts(screenWidth: number, screenHeight: 
   const maxFishCount = isMobile ? 30 : 60;
   
   const fishCount = Math.floor(baseFishCount + (maxFishCount - baseFishCount) * areaRatio);
-  const bubbleCount = Math.floor(screenArea / PERFORMANCE.BUBBLE_DENSITY_RATIO);
   
   return {
-    fish: Math.max(PERFORMANCE.MIN_BUBBLES, Math.min(maxFishCount, fishCount)),
-    bubbles: Math.max(PERFORMANCE.MIN_BUBBLES, Math.min(PERFORMANCE.MAX_BUBBLES, bubbleCount))
+    fish: Math.max(20, Math.min(maxFishCount, fishCount))
   };
 }
 
