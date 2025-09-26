@@ -463,6 +463,19 @@ function App() {
     setCardOpen('card-showcase', !isOpen);
   };
 
+  const handleSoftReset = async (): Promise<void> => {
+    if (aquariumRef && aquariumRef.softResetAquarium) {
+      try {
+        await aquariumRef.softResetAquarium();
+        console.log('Soft reset completed successfully');
+      } catch (error) {
+        console.error('Error during soft reset:', error);
+      }
+    } else {
+      console.warn('Aquarium not ready for soft reset');
+    }
+  };
+
 
   return (
     <DragAndDropProvider
@@ -497,6 +510,9 @@ function App() {
           </button>
           <button className="control-button card-showcase2-button" onClick={toggleCardShowcase2}>
             ✨ Modern UI
+          </button>
+          <button className="control-button soft-reset-button" onClick={handleSoftReset}>
+            🔄 Soft Reset Aquarium
           </button>
         </div>
 

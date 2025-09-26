@@ -223,14 +223,9 @@ export class Fish {
     setSpritePosition() {
         if (!this.sprite || !this.spriteReady) return;
         
-        if (this.initialPositionX !== undefined && this.initialPositionY !== undefined) {
-            // Restore position from database
-            this.sprite.x = this.initialPositionX;
-            this.sprite.y = this.initialPositionY;
-        } else {
-            // Random spawn position
-            this.respawn();
-        }
+        // Always use random spawn position for more dynamic fish placement
+        // This ensures fish are spawned at random places within bounds each time
+        this.respawn();
         
         // Mark sprite as positioned
         this.spritePositioned = true;
